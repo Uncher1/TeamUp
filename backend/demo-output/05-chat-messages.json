@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "sender_id": 1,
+    "sender_name": "Alice Martin",
+    "content": "Welcome on the StudyMate team!",
+    "created_at": "2026-05-04T19:42:54.000Z"
+  },
+  {
+    "id": 2,
+    "sender_id": 1,
+    "sender_name": "Alice Martin",
+    "content": "Welcome on the StudyMate team! Let's plan the kickoff.",
+    "created_at": "2026-05-04T19:55:01.000Z"
+  },
+  {
+    "id": 3,
+    "sender_id": 2,
+    "sender_name": "Bob Dupont",
+    "content": "Thanks Alice! I'll start the DB schema tonight.",
+    "created_at": "2026-05-04T19:55:03.000Z"
+  }
+]

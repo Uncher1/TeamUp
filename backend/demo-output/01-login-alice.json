@@ -1,0 +1,8 @@
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWxpY2VAc2Nob29sLmZyIiwiaWF0IjoxNzc3OTE3MzAwLCJleHAiOjE3Nzg1MjIxMDB9.bNGDV418r7gp_Wc4uQaI5oypeGeA4YewYMYINntqYFQ",
+  "user": {
+    "id": 1,
+    "email": "alice@school.fr",
+    "full_name": "Alice Martin"
+  }
+}

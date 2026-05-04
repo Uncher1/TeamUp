@@ -1,0 +1,39 @@
+[
+  {
+    "user_id": 3,
+    "full_name": "Chloé Lefèvre",
+    "bio": "Designer learning Flutter",
+    "avatar_url": null,
+    "skill_match": 0.5,
+    "interest_match": 0.667,
+    "score": 0.55,
+    "matched_skill_ids": [
+      4,
+      13
+    ]
+  },
+  {
+    "user_id": 5,
+    "full_name": "Erwan Tran",
+    "bio": "Mobile dev (Flutter & Kotlin)",
+    "avatar_url": null,
+    "skill_match": 0.417,
+    "interest_match": 0.333,
+    "score": 0.392,
+    "matched_skill_ids": [
+      4
+    ]
+  },
+  {
+    "user_id": 2,
+    "full_name": "Bob Dupont",
+    "bio": "Backend / data nerd",
+    "avatar_url": null,
+    "skill_match": 0.333,
+    "interest_match": 0,
+    "score": 0.233,
+    "matched_skill_ids": [
+      7
+    ]
+  }
+]

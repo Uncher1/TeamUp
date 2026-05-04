@@ -1,0 +1,48 @@
+{
+  "id": 1,
+  "email": "alice@school.fr",
+  "full_name": "Alice Martin",
+  "bio": "Frontend dev passionate about UX",
+  "avatar_url": null,
+  "created_at": "2026-05-04T19:40:20.000Z",
+  "skills": [
+    {
+      "id": 1,
+      "name": "JavaScript",
+      "category": "Frontend",
+      "level": 5
+    },
+    {
+      "id": 3,
+      "name": "React",
+      "category": "Frontend",
+      "level": 5
+    },
+    {
+      "id": 13,
+      "name": "UI/UX Design",
+      "category": "Design",
+      "level": 4
+    },
+    {
+      "id": 14,
+      "name": "Figma",
+      "category": "Design",
+      "level": 4
+    }
+  ],
+  "interests": [
+    {
+      "id": 1,
+      "name": "Web Development"
+    },
+    {
+      "id": 6,
+      "name": "Startups"
+    },
+    {
+      "id": 8,
+      "name": "Design"
+    }
+  ]
+}

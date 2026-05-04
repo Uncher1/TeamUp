@@ -1,0 +1,29 @@
+[
+  {
+    "id": 2,
+    "title": "OpenLab – student project marketplace",
+    "description": "A web platform for students to publish open-source side projects.",
+    "status": "open",
+    "created_at": "2026-05-04T19:40:21.000Z",
+    "owner_id": 2,
+    "owner_name": "Bob Dupont"
+  },
+  {
+    "id": 3,
+    "title": "CampusBot – NLP assistant for student questions",
+    "description": "An NLP chatbot that answers questions about school admin.",
+    "status": "open",
+    "created_at": "2026-05-04T19:40:21.000Z",
+    "owner_id": 4,
+    "owner_name": "Diane Bernard"
+  },
+  {
+    "id": 1,
+    "title": "StudyMate – peer revision sessions",
+    "description": "A mobile app to organize study groups by course and level.",
+    "status": "open",
+    "created_at": "2026-05-04T19:40:20.000Z",
+    "owner_id": 1,
+    "owner_name": "Alice Martin"
+  }
+]
