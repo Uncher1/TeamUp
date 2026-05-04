@@ -123,7 +123,7 @@ erDiagram
     conversations ||--o{ messages : contains
 ```
 
-Full DDL: [`db/schema.sql`](db/schema.sql) — 12 tables, foreign keys with
+Full DDL: [`db/schema.sql`](db/schema.sql) — 13 tables, foreign keys with
 `ON DELETE CASCADE`, composite indexes on hot lookups.
 
 ## Repository layout
@@ -131,7 +131,7 @@ Full DDL: [`db/schema.sql`](db/schema.sql) — 12 tables, foreign keys with
 ```
 backend/
 ├── db/
-│   ├── schema.sql           # DDL (12 tables)
+│   ├── schema.sql           # DDL (13 tables)
 │   └── seed.js              # demo users + projects + skills + interests
 ├── src/
 │   ├── config/db.js         # mysql2 pool
@@ -152,7 +152,7 @@ backend/
 
 ## Status (2026-05-04)
 
-- [x] Database design (12 tables)
+- [x] Database design (13 tables)
 - [x] Backend skeleton (Express 5, JWT, JSON, helmet, morgan)
 - [x] Auth (register, login, bcrypt + JWT, email validation)
 - [x] Users / skills / interests

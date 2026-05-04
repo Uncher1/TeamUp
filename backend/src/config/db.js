@@ -4,7 +4,7 @@ const pool = mysql.createPool({
   host:     process.env.DB_HOST     || 'localhost',
   port:     Number(process.env.DB_PORT) || 3306,
   user:     process.env.DB_USER     || 'teamup',
-  password: process.env.DB_PASSWORD || 'teamup',
+  password: process.env.DB_PASSWORD ?? 'teamup',
   database: process.env.DB_NAME     || 'teamup',
   waitForConnections: true,
   connectionLimit: 10,

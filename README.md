@@ -22,7 +22,7 @@ TeamUp/
 
 | Component         | State              | Notes                                                                |
 |-------------------|--------------------|----------------------------------------------------------------------|
-| Database design   | ✅ Done             | 12 tables, foreign keys, composite indexes — `backend/db/schema.sql` |
+| Database design   | ✅ Done             | 13 tables, foreign keys, composite indexes — `backend/db/schema.sql` |
 | Backend API       | ✅ Done             | Auth, profiles, projects, applications, matching, REST chat          |
 | Matching algo     | ✅ Done (v0)        | Weighted skill score + Jaccard interest similarity                   |
 | Frontend (Flutter)| 🚧 Mockup phase    | Workload underestimation acknowledged — Figma mockup only            |
