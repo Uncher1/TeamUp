@@ -1,0 +1,115 @@
+const express = require('express');
+const pool = require('../config/db');
+const { authRequired } = require('../middleware/auth');
+
+const router = express.Router();
+
+async function userInConversation(conversationId, userId) {
+  const [rows] = await pool.query(
+    'SELECT 1 AS x FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
+    [conversationId, userId]
+  );
+  return rows.length > 0;
+}
+
+router.get('/', authRequired, async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT c.id, c.type, c.project_id, c.created_at,
+            (SELECT MAX(created_at) FROM messages WHERE conversation_id = c.id) AS last_message_at
+       FROM conversations c
+       JOIN conversation_members cm ON cm.conversation_id = c.id
+      WHERE cm.user_id = ?
+      ORDER BY last_message_at DESC, c.created_at DESC`,
+    [req.user.id]
+  );
+  res.json(rows);
+});
+
+router.post('/direct/:userId', authRequired, async (req, res) => {
+  const other = Number(req.params.userId);
+  if (!other || other === req.user.id) {
+    return res.status(400).json({ error: 'invalid target user' });
+  }
+
+  const [users] = await pool.query('SELECT id FROM users WHERE id = ?', [other]);
+  if (!users.length) return res.status(404).json({ error: 'user not found' });
+
+  const [existing] = await pool.query(
+    `SELECT c.id
+       FROM conversations c
+       JOIN conversation_members a ON a.conversation_id = c.id AND a.user_id = ?
+       JOIN conversation_members b ON b.conversation_id = c.id AND b.user_id = ?
+      WHERE c.type = 'direct'
+      LIMIT 1`,
+    [req.user.id, other]
+  );
+  if (existing.length) return res.json({ id: existing[0].id, type: 'direct' });
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [r] = await conn.query("INSERT INTO conversations (type) VALUES ('direct')");
+    const id = r.insertId;
+    await conn.query(
+      'INSERT INTO conversation_members (conversation_id, user_id) VALUES (?, ?), (?, ?)',
+      [id, req.user.id, id, other]
+    );
+    await conn.commit();
+    res.status(201).json({ id, type: 'direct' });
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+});
+
+router.get('/:id/messages', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid conversation id' });
+  if (!(await userInConversation(id, req.user.id))) {
+    return res.status(403).json({ error: 'not a conversation member' });
+  }
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+  const before = req.query.before ? new Date(req.query.before) : null;
+
+  let sql = `SELECT m.id, m.sender_id, u.full_name AS sender_name, m.content, m.created_at
+               FROM messages m JOIN users u ON u.id = m.sender_id
+              WHERE m.conversation_id = ?`;
+  const args = [id];
+  if (before && !isNaN(before.getTime())) {
+    sql += ' AND m.created_at < ?';
+    args.push(before);
+  }
+  sql += ' ORDER BY m.created_at DESC LIMIT ?';
+  args.push(limit);
+  const [rows] = await pool.query(sql, args);
+  res.json(rows.reverse());
+});
+
+router.post('/:id/messages', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid conversation id' });
+
+  const content = (req.body && typeof req.body.content === 'string')
+    ? req.body.content.trim() : '';
+  if (!content) return res.status(400).json({ error: 'content is required' });
+  if (content.length > 4000) return res.status(400).json({ error: 'content too long' });
+
+  if (!(await userInConversation(id, req.user.id))) {
+    return res.status(403).json({ error: 'not a conversation member' });
+  }
+  const [r] = await pool.query(
+    'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)',
+    [id, req.user.id, content]
+  );
+  res.status(201).json({
+    id: r.insertId,
+    conversation_id: id,
+    sender_id: req.user.id,
+    content,
+    created_at: new Date().toISOString()
+  });
+});
+
+module.exports = router;

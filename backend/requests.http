@@ -1,0 +1,224 @@
+@host = http://localhost:3000
+
+###############################################################################
+# Health
+###############################################################################
+
+GET {{host}}/api/health
+
+
+###############################################################################
+# Authentication
+###############################################################################
+
+### Register a new account
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "uncher@school.fr",
+  "password": "password123",
+  "full_name": "Uncher Pro"
+}
+
+
+### Login as Alice (seeded — frontend / design)
+# @name loginAlice
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@school.fr",
+  "password": "password"
+}
+
+@aliceToken = {{loginAlice.response.body.token}}
+@aliceId    = {{loginAlice.response.body.user.id}}
+
+
+### Login as Bob (seeded — backend / DB)
+# @name loginBob
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bob@school.fr",
+  "password": "password"
+}
+
+@bobToken = {{loginBob.response.body.token}}
+@bobId    = {{loginBob.response.body.user.id}}
+
+
+###############################################################################
+# Profile
+###############################################################################
+
+### My profile
+GET {{host}}/api/users/me
+Authorization: Bearer {{aliceToken}}
+
+
+### Update bio
+PATCH {{host}}/api/users/me
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+{
+  "bio": "Frontend dev — currently building TeamUp."
+}
+
+
+### Public profile by id
+GET {{host}}/api/users/{{bobId}}
+Authorization: Bearer {{aliceToken}}
+
+
+###############################################################################
+# Catalogs
+###############################################################################
+
+### Skills
+GET {{host}}/api/skills
+
+
+### Interests
+GET {{host}}/api/interests
+
+
+### Replace my skills (use real ids from /api/skills)
+PUT {{host}}/api/users/me/skills
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+[
+  { "skill_id": 1, "level": 5 },
+  { "skill_id": 3, "level": 5 },
+  { "skill_id": 13, "level": 4 }
+]
+
+
+### Replace my interests
+PUT {{host}}/api/users/me/interests
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+[1, 8]
+
+
+###############################################################################
+# Projects
+###############################################################################
+
+### List open projects
+GET {{host}}/api/projects
+Authorization: Bearer {{aliceToken}}
+
+
+### Create a new project
+# @name newProject
+POST {{host}}/api/projects
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+{
+  "title": "TeamUp itself",
+  "description": "Eat your own dog food: build TeamUp using TeamUp.",
+  "required_skills": [
+    { "skill_id": 4,  "weight": 5 },
+    { "skill_id": 7,  "weight": 5 },
+    { "skill_id": 13, "weight": 3 }
+  ],
+  "interests": [2, 9]
+}
+
+@projectId = {{newProject.response.body.id}}
+
+
+### Project detail
+GET {{host}}/api/projects/{{projectId}}
+Authorization: Bearer {{aliceToken}}
+
+
+### Bob applies to Alice's seeded project (id = 1)
+POST {{host}}/api/projects/1/apply
+Authorization: Bearer {{bobToken}}
+Content-Type: application/json
+
+{
+  "message": "I can take care of the Node.js + DB part."
+}
+
+
+### Alice (owner) accepts the application — replace :aid with the actual id
+POST {{host}}/api/projects/1/applications/1
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+{
+  "action": "accept"
+}
+
+
+###############################################################################
+# Matching algorithm
+###############################################################################
+
+### Top users matching Alice's project (id = 1)
+GET {{host}}/api/matching/projects/1/users?limit=5
+Authorization: Bearer {{aliceToken}}
+
+
+### Top projects suggested for Bob
+GET {{host}}/api/matching/users/me/projects?limit=5
+Authorization: Bearer {{bobToken}}
+
+
+###############################################################################
+# Chat
+###############################################################################
+
+### Open the project team chat (must be a member)
+# @name projectConv
+POST {{host}}/api/projects/1/conversation
+Authorization: Bearer {{aliceToken}}
+
+@projectConvId = {{projectConv.response.body.id}}
+
+
+### Open a direct conversation Alice ↔ Bob
+# @name directConv
+POST {{host}}/api/conversations/direct/{{bobId}}
+Authorization: Bearer {{aliceToken}}
+
+@directConvId = {{directConv.response.body.id}}
+
+
+### Alice sends a message to the project chat
+POST {{host}}/api/conversations/{{projectConvId}}/messages
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+{
+  "content": "Welcome on the team! Let's plan the kickoff."
+}
+
+
+### Alice DMs Bob
+POST {{host}}/api/conversations/{{directConvId}}/messages
+Authorization: Bearer {{aliceToken}}
+Content-Type: application/json
+
+{
+  "content": "Hey Bob, do you have time for a sync tomorrow?"
+}
+
+
+### List my conversations
+GET {{host}}/api/conversations
+Authorization: Bearer {{aliceToken}}
+
+
+### Read messages of the project chat
+GET {{host}}/api/conversations/{{projectConvId}}/messages?limit=20
+Authorization: Bearer {{aliceToken}}
