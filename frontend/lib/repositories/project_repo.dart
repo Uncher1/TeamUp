@@ -1,4 +1,5 @@
 import '../core/api_client.dart';
+import '../models/application.dart';
 import '../models/project.dart';
 
 class ProjectRepository {
@@ -37,5 +38,16 @@ class ProjectRepository {
     await api.dio.post('/projects/$projectId/apply', data: {
       if (message != null && message.isNotEmpty) 'message': message,
     });
+  }
+
+  Future<List<Application>> applications(int projectId) async {
+    final res = await api.dio.get('/projects/$projectId/applications');
+    return (res.data as List)
+        .map((e) => Application.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> decideApplication(int projectId, int appId, String action) async {
+    await api.dio.post('/projects/$projectId/applications/$appId', data: {'action': action});
   }
 }

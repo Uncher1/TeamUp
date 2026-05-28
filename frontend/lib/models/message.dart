@@ -1,0 +1,26 @@
+class Message {
+  final int id;
+  final int conversationId;
+  final int senderId;
+  final String senderName;
+  final String content;
+  final DateTime createdAt;
+
+  const Message({
+    required this.id,
+    required this.conversationId,
+    required this.senderId,
+    required this.senderName,
+    required this.content,
+    required this.createdAt,
+  });
+
+  factory Message.fromJson(Map<String, dynamic> j) => Message(
+        id: j['id'] as int,
+        conversationId: j['conversation_id'] as int,
+        senderId: j['sender_id'] as int,
+        senderName: j['sender_name'] as String? ?? '',
+        content: j['content'] as String? ?? '',
+        createdAt: DateTime.parse(j['created_at'] as String),
+      );
+}

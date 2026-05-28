@@ -8,12 +8,18 @@ const router = express.Router();
 router.get('/', authRequired, async (req, res) => {
   const [rows] = await pool.query(
     `SELECT c.id, c.type, c.project_id, c.created_at,
+            p.title AS project_title,
+            other.id AS other_user_id,
+            other.full_name AS other_user_name,
+            (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
             (SELECT MAX(created_at) FROM messages WHERE conversation_id = c.id) AS last_message_at
        FROM conversations c
-       JOIN conversation_members cm ON cm.conversation_id = c.id
-      WHERE cm.user_id = ?
+       JOIN conversation_members cm ON cm.conversation_id = c.id AND cm.user_id = ?
+       LEFT JOIN projects p ON p.id = c.project_id
+       LEFT JOIN conversation_members cm2 ON cm2.conversation_id = c.id AND cm2.user_id != ?
+       LEFT JOIN users other ON other.id = cm2.user_id AND c.type = 'direct'
       ORDER BY last_message_at DESC, c.created_at DESC`,
-    [req.user.id]
+    [req.user.id, req.user.id]
   );
   res.json(rows);
 });

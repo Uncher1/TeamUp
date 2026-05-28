@@ -5,10 +5,14 @@ import 'core/api_client.dart';
 import 'core/storage.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/chat_provider.dart';
 import 'providers/lookup_provider.dart';
+import 'providers/matching_provider.dart';
 import 'providers/projects_provider.dart';
 import 'repositories/auth_repo.dart';
+import 'repositories/chat_repo.dart';
 import 'repositories/lookup_repo.dart';
+import 'repositories/matching_repo.dart';
 import 'repositories/project_repo.dart';
 import 'repositories/user_repo.dart';
 import 'screens/auth/login_screen.dart';
@@ -30,6 +34,8 @@ class _TeamUpAppState extends State<TeamUpApp> {
   late final UserRepository _userRepo = UserRepository(_api);
   late final ProjectRepository _projectRepo = ProjectRepository(_api);
   late final LookupRepository _lookupRepo = LookupRepository(_api);
+  late final MatchingRepository _matchingRepo = MatchingRepository(_api);
+  late final ChatRepository _chatRepo = ChatRepository(_api);
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +53,8 @@ class _TeamUpAppState extends State<TeamUpApp> {
         ),
         ChangeNotifierProvider(create: (_) => ProjectsProvider(_projectRepo)),
         ChangeNotifierProvider(create: (_) => LookupProvider(_lookupRepo)),
+        ChangeNotifierProvider(create: (_) => MatchingProvider(_matchingRepo)),
+        ChangeNotifierProvider(create: (_) => ChatProvider(_chatRepo, _storage)),
       ],
       child: MaterialApp(
         title: 'TeamUp',

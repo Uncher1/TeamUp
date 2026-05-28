@@ -123,6 +123,26 @@ router.post('/:id/apply', authRequired, async (req, res) => {
   res.status(201).json({ status: 'pending' });
 });
 
+router.get('/:id/applications', authRequired, async (req, res) => {
+  const projectId = Number(req.params.id);
+  if (!projectId) return res.status(400).json({ error: 'invalid id' });
+
+  const [projects] = await pool.query('SELECT owner_id FROM projects WHERE id = ?', [projectId]);
+  const project = projects[0];
+  if (!project) return res.status(404).json({ error: 'project not found' });
+  if (project.owner_id !== req.user.id) return res.status(403).json({ error: 'only owner can view applications' });
+
+  const [rows] = await pool.query(
+    `SELECT pa.id, pa.status, pa.message, pa.created_at,
+            u.id AS user_id, u.full_name, u.email
+       FROM project_applications pa JOIN users u ON u.id = pa.user_id
+      WHERE pa.project_id = ?
+      ORDER BY pa.created_at DESC`,
+    [projectId]
+  );
+  res.json(rows);
+});
+
 router.post('/:id/applications/:aid', authRequired, async (req, res) => {
   const projectId = Number(req.params.id);
   const appId = Number(req.params.aid);

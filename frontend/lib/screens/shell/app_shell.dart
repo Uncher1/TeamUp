@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../common/coming_soon.dart';
+import '../chat/conversations_screen.dart';
+import '../matching/matching_screen.dart';
 import '../profile/profile_screen.dart';
 import '../projects/projects_feed_screen.dart';
 
@@ -14,18 +15,10 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
 
-  static const _screens = [
+  static final _screens = const [
     ProjectsFeedScreen(),
-    ComingSoon(
-      title: 'Matching',
-      icon: Icons.auto_awesome_rounded,
-      note: 'Le matching arrive en J2.',
-    ),
-    ComingSoon(
-      title: 'Messages',
-      icon: Icons.chat_bubble_outline_rounded,
-      note: 'Le chat temps réel arrive en J3.',
-    ),
+    MatchingScreen(),
+    ConversationsScreen(),
     ProfileScreen(),
   ];
 

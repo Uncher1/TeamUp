@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
+import '../../models/application.dart';
 import '../../models/project.dart';
 import '../../providers/auth_provider.dart';
 import '../../repositories/project_repo.dart';
@@ -22,6 +23,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   bool _loading = true;
   bool _applying = false;
   bool _applied = false;
+  List<Application> _applications = [];
+  bool _loadingApps = false;
 
   @override
   void initState() {
@@ -34,13 +37,43 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       _loading = true;
       _error = null;
     });
+    final repo = context.read<ProjectRepository>();
+    final myId = context.read<AuthProvider>().user?.id;
     try {
-      final p = await context.read<ProjectRepository>().detail(widget.projectId);
+      final p = await repo.detail(widget.projectId);
       setState(() => _project = p);
+      if (p.ownerId == myId) _loadApplications();
     } catch (e) {
       setState(() => _error = ApiClient.messageFromError(e));
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadApplications() async {
+    setState(() => _loadingApps = true);
+    try {
+      final apps = await context.read<ProjectRepository>().applications(widget.projectId);
+      if (mounted) setState(() => _applications = apps);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loadingApps = false);
+    }
+  }
+
+  Future<void> _decide(Application app, String action) async {
+    try {
+      await context.read<ProjectRepository>().decideApplication(widget.projectId, app.id, action);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(action == 'accept' ? '${app.fullName} accepté !' : 'Candidature refusée.')),
+      );
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiClient.messageFromError(e))),
+      );
     }
   }
 
@@ -146,9 +179,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             subtitle: Text(m.role),
           ),
         const SizedBox(height: 24),
-        if (isOwner)
-          const _InfoLine(icon: Icons.verified_user_outlined, text: 'Tu es le porteur de ce projet.')
-        else if (isMember)
+        if (isOwner) ...[
+          const _InfoLine(icon: Icons.verified_user_outlined, text: 'Tu es le porteur de ce projet.'),
+          const SizedBox(height: 24),
+          _Label('Candidatures'),
+          const SizedBox(height: 10),
+          if (_loadingApps)
+            const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
+          else if (_applications.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text('Aucune candidature pour le moment.',
+                  style: TextStyle(color: AppTheme.textMuted)),
+            )
+          else
+            for (final app in _applications)
+              _ApplicationTile(app: app, onDecide: _decide),
+        ] else if (isMember)
           const _InfoLine(icon: Icons.check_circle_outline, text: 'Tu fais partie de cette équipe.')
         else
           ElevatedButton.icon(
@@ -209,6 +256,100 @@ class _InfoLine extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(child: Text(text)),
       ],
+    );
+  }
+}
+
+class _ApplicationTile extends StatelessWidget {
+  final Application app;
+  final Future<void> Function(Application, String) onDecide;
+  const _ApplicationTile({required this.app, required this.onDecide});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = app.status == 'pending';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+                  child: Text(
+                    app.fullName.isNotEmpty ? app.fullName[0].toUpperCase() : '?',
+                    style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(app.fullName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text(app.email, style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                    ],
+                  ),
+                ),
+                if (!isPending)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: app.status == 'accepted'
+                          ? const Color(0xFFDCFCE7)
+                          : const Color(0xFFFEE2E2),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      app.status == 'accepted' ? 'Accepté' : 'Refusé',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: app.status == 'accepted'
+                            ? const Color(0xFF15803D)
+                            : const Color(0xFFDC2626),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (app.message != null && app.message!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(app.message!,
+                  style: TextStyle(color: AppTheme.textPrimary.withValues(alpha: 0.8), fontSize: 13)),
+            ],
+            if (isPending) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => onDecide(app, 'reject'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFDC2626),
+                      side: const BorderSide(color: Color(0xFFDC2626)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text('Refuser'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => onDecide(app, 'accept'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text('Accepter'),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
