@@ -15,9 +15,9 @@ class Message {
     required this.createdAt,
   });
 
-  factory Message.fromJson(Map<String, dynamic> j) => Message(
+  factory Message.fromJson(Map<String, dynamic> j, {int fallbackConvId = 0}) => Message(
         id: j['id'] as int,
-        conversationId: j['conversation_id'] as int,
+        conversationId: (j['conversation_id'] as int?) ?? fallbackConvId,
         senderId: j['sender_id'] as int,
         senderName: j['sender_name'] as String? ?? '',
         content: j['content'] as String? ?? '',

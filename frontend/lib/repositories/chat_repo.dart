@@ -19,7 +19,7 @@ class ChatRepository {
       queryParameters: {'limit': limit},
     );
     return (res.data as List)
-        .map((e) => Message.fromJson(e as Map<String, dynamic>))
+        .map((e) => Message.fromJson(e as Map<String, dynamic>, fallbackConvId: conversationId))
         .toList();
   }
 
@@ -28,7 +28,7 @@ class ChatRepository {
       '/conversations/$conversationId/messages',
       data: {'content': content},
     );
-    return Message.fromJson(res.data as Map<String, dynamic>);
+    return Message.fromJson(res.data as Map<String, dynamic>, fallbackConvId: conversationId);
   }
 
   Future<Conversation> getOrCreateDirect(int otherUserId) async {
