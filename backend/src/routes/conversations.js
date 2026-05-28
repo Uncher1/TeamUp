@@ -1,16 +1,9 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
+const { userInConversation, createMessage } = require('../services/chat');
 
 const router = express.Router();
-
-async function userInConversation(conversationId, userId) {
-  const [rows] = await pool.query(
-    'SELECT 1 AS x FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
-    [conversationId, userId]
-  );
-  return rows.length > 0;
-}
 
 router.get('/', authRequired, async (req, res) => {
   const [rows] = await pool.query(
@@ -90,26 +83,15 @@ router.get('/:id/messages', authRequired, async (req, res) => {
 router.post('/:id/messages', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ error: 'invalid conversation id' });
-
-  const content = (req.body && typeof req.body.content === 'string')
-    ? req.body.content.trim() : '';
-  if (!content) return res.status(400).json({ error: 'content is required' });
-  if (content.length > 4000) return res.status(400).json({ error: 'content too long' });
-
-  if (!(await userInConversation(id, req.user.id))) {
-    return res.status(403).json({ error: 'not a conversation member' });
+  try {
+    const msg = await createMessage(id, req.user.id, req.body?.content);
+    // Mirror the message to any socket clients watching this conversation.
+    req.app.get('io')?.to(`conversation:${id}`).emit('message:new', msg);
+    res.status(201).json(msg);
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    throw e;
   }
-  const [r] = await pool.query(
-    'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)',
-    [id, req.user.id, content]
-  );
-  res.status(201).json({
-    id: r.insertId,
-    conversation_id: id,
-    sender_id: req.user.id,
-    content,
-    created_at: new Date().toISOString()
-  });
 });
 
 module.exports = router;

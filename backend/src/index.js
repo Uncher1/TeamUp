@@ -1,8 +1,10 @@
 require('dotenv').config();
+const http    = require('http');
 const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
 const morgan  = require('morgan');
+const { initSocket } = require('./socket');
 
 const app = express();
 app.use(helmet());
@@ -26,5 +28,9 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'internal server error' });
 });
 
+const server = http.createServer(app);
+const io = initSocket(server);
+app.set('io', io); // let REST handlers broadcast realtime events
+
 const port = Number(process.env.PORT) || 3000;
-app.listen(port, () => console.log(`TeamUp API listening on http://localhost:${port}`));
+server.listen(port, () => console.log(`TeamUp API listening on http://localhost:${port}`));
