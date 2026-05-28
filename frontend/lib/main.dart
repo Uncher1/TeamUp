@@ -5,9 +5,14 @@ import 'core/api_client.dart';
 import 'core/storage.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/lookup_provider.dart';
+import 'providers/projects_provider.dart';
 import 'repositories/auth_repo.dart';
+import 'repositories/lookup_repo.dart';
+import 'repositories/project_repo.dart';
+import 'repositories/user_repo.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/shell/app_shell.dart';
 
 void main() => runApp(const TeamUpApp());
 
@@ -22,12 +27,17 @@ class _TeamUpAppState extends State<TeamUpApp> {
   late final TokenStorage _storage = TokenStorage();
   late final ApiClient _api = ApiClient(storage: _storage);
   late final AuthRepository _authRepo = AuthRepository(_api);
+  late final UserRepository _userRepo = UserRepository(_api);
+  late final ProjectRepository _projectRepo = ProjectRepository(_api);
+  late final LookupRepository _lookupRepo = LookupRepository(_api);
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: _api),
+        Provider<UserRepository>.value(value: _userRepo),
+        Provider<ProjectRepository>.value(value: _projectRepo),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             repo: _authRepo,
@@ -35,6 +45,8 @@ class _TeamUpAppState extends State<TeamUpApp> {
             api: _api,
           )..bootstrap(),
         ),
+        ChangeNotifierProvider(create: (_) => ProjectsProvider(_projectRepo)),
+        ChangeNotifierProvider(create: (_) => LookupProvider(_lookupRepo)),
       ],
       child: MaterialApp(
         title: 'TeamUp',
@@ -58,7 +70,7 @@ class AuthGate extends StatelessWidget {
           body: Center(child: CircularProgressIndicator()),
         );
       case AuthStatus.authenticated:
-        return const HomeScreen();
+        return const AppShell();
       case AuthStatus.unauthenticated:
         return const LoginScreen();
     }
