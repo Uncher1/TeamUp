@@ -7,6 +7,7 @@ import '../../design_system/ds_placeholder.dart';
 import '../../design_system/menu_drawer.dart';
 import '../../providers/notifications_provider.dart';
 import '../feed/home_feed_screen.dart';
+import '../notifications/notifications_inbox_screen.dart';
 
 /// App shell faithful to the mockup: a top header (menu button, brand, bell)
 /// over a body that switches by [AppSection], with the hamburger [MenuDrawer].
@@ -54,7 +55,7 @@ class _AppShellState extends State<AppShell> {
       case AppSection.chat:
         return const DSPlaceholder(title: 'Chat', icon: Icons.chat_bubble_outline);
       case AppSection.notifications:
-        return const DSPlaceholder(title: 'Notifications', icon: Icons.notifications_outlined);
+        return const NotificationsInboxScreen();
       case AppSection.settings:
         return const DSPlaceholder(title: 'Settings', icon: Icons.settings_outlined);
     }
