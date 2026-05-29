@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/api_client.dart';
 import '../models/match.dart';
 import '../repositories/matching_repo.dart';
 
@@ -24,7 +25,7 @@ class MatchingProvider extends ChangeNotifier {
     try {
       projects = await _repo.myProjects();
     } catch (e) {
-      error = e.toString();
+      error = ApiClient.messageFromError(e);
     } finally {
       loading = false;
       notifyListeners();
@@ -40,7 +41,7 @@ class MatchingProvider extends ChangeNotifier {
     try {
       candidates = await _repo.usersForProject(projectId);
     } catch (e) {
-      candidatesError = e.toString();
+      candidatesError = ApiClient.messageFromError(e);
     } finally {
       loadingCandidates = false;
       notifyListeners();
