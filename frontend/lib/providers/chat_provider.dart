@@ -73,7 +73,7 @@ class ChatProvider extends ChangeNotifier {
           .build(),
     );
     _socket!.connect();
-    _socket!.emit('conversation:join', {'conversationId': convId});
+    _socket!.emit('conversation:join', convId);
     _socket!.on('message:new', (data) {
       if (data is Map) {
         final msg = Message.fromJson(Map<String, dynamic>.from(data));
@@ -87,7 +87,7 @@ class ChatProvider extends ChangeNotifier {
 
   void _leaveSocket() {
     if (_socket != null && _activeConvId != null) {
-      _socket!.emit('conversation:leave', {'conversationId': _activeConvId});
+      _socket!.emit('conversation:leave', _activeConvId);
       _socket!.disconnect();
       _socket!.dispose();
       _socket = null;
