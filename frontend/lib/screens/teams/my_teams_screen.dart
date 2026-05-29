@@ -88,7 +88,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
     case 'paused':
       return (const Color(0xFFFEF3C7), const Color(0xFFD97706));
     default:
-      return (context.palette.slate100, const Color(0xFF475569));
+      return (context.palette.slate100, context.palette.textMuted);
   }
 }
 

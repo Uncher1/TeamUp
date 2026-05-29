@@ -28,6 +28,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   Future<void> _confirmAndDelete() async {
     final userRepo = context.read<UserRepository>();
     final auth = context.read<AuthProvider>();
+    final navigator = Navigator.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -49,6 +50,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     try {
       await userRepo.deleteAccount();
       if (!mounted) return;
+      // Pop this pushed route back to the shell root before logging out, so
+      // AuthGate's LoginScreen isn't left underneath an orphaned delete screen.
+      navigator.popUntil((r) => r.isFirst);
       await auth.logout(); // returns to login via AuthGate
     } catch (e) {
       if (mounted) {

@@ -88,7 +88,7 @@ class ProfileScreen extends StatelessWidget {
                         runSpacing: 8,
                         children: [
                           for (final i in user.interests)
-                            StatusPill(label: i.name, bg: context.palette.slate100, fg: const Color(0xFF475569)),
+                            StatusPill(label: i.name, bg: context.palette.slate100, fg: context.palette.textMuted),
                         ],
                       ),
                   ],
