@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { userInConversation, createMessage } = require('../services/chat');
+const { notifyNewMessage } = require('../services/notifications');
 
 const router = express.Router();
 
@@ -91,8 +92,10 @@ router.post('/:id/messages', authRequired, async (req, res) => {
   if (!id) return res.status(400).json({ error: 'invalid conversation id' });
   try {
     const msg = await createMessage(id, req.user.id, req.body?.content);
+    const io = req.app.get('io');
     // Mirror the message to any socket clients watching this conversation.
-    req.app.get('io')?.to(`conversation:${id}`).emit('message:new', msg);
+    io?.to(`conversation:${id}`).emit('message:new', msg);
+    await notifyNewMessage(io, msg, req.user.id);
     res.status(201).json(msg);
   } catch (e) {
     if (e.status) return res.status(e.status).json({ error: e.message });

@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
+const { createNotification } = require('../services/notifications');
 
 const router = express.Router();
 
@@ -120,6 +121,16 @@ router.post('/:id/apply', authRequired, async (req, res) => {
        ON DUPLICATE KEY UPDATE message = VALUES(message), status = 'pending'`,
     [projectId, req.user.id, message]
   );
+  const [applicants] = await pool.query('SELECT full_name FROM users WHERE id = ?', [req.user.id]);
+  const [projTitle] = await pool.query('SELECT title FROM projects WHERE id = ?', [projectId]);
+  await createNotification(req.app.get('io'), {
+    userId: p.owner_id,
+    type: 'application',
+    title: `${applicants[0].full_name} a postulé à ${projTitle[0].title}`,
+    body: message || null,
+    linkType: 'project',
+    linkId: projectId,
+  });
   res.status(201).json({ status: 'pending' });
 });
 
@@ -179,6 +190,14 @@ router.post('/:id/applications/:aid', authRequired, async (req, res) => {
     await pool.query('UPDATE project_applications SET status = ? WHERE id = ?', ['rejected', appId]);
   }
 
+  await createNotification(req.app.get('io'), {
+    userId: app.user_id,
+    type: action === 'accept' ? 'team_join' : 'project_update',
+    title: action === 'accept' ? 'Ta candidature a été acceptée 🎉' : 'Ta candidature a été refusée',
+    body: null,
+    linkType: 'project',
+    linkId: projectId,
+  });
   res.json({ status: action === 'accept' ? 'accepted' : 'rejected' });
 });
 
