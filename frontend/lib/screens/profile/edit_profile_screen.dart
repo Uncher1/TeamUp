@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/skill.dart';
@@ -64,10 +65,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       messenger.showSnackBar(const SnackBar(content: Text('Profil mis à jour')));
       navigator.pop();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      messenger.showSnackBar(const SnackBar(content: Text('Échec de la mise à jour')));
+      messenger.showSnackBar(SnackBar(content: Text(ApiClient.messageFromError(e))));
     }
   }
 
