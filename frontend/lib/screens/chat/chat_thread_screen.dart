@@ -19,12 +19,14 @@ class ChatThreadScreen extends StatefulWidget {
 class _ChatThreadScreenState extends State<ChatThreadScreen> {
   final _ctrl = TextEditingController();
   final _scroll = ScrollController();
+  late final ChatProvider _chat;
 
   @override
   void initState() {
     super.initState();
+    _chat = context.read<ChatProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ChatProvider>().openConversation(widget.conversation.id);
+      _chat.openConversation(widget.conversation.id);
     });
   }
 
@@ -32,6 +34,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
   void dispose() {
     _ctrl.dispose();
     _scroll.dispose();
+    _chat.closeConversation();
     super.dispose();
   }
 

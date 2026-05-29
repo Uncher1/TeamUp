@@ -94,6 +94,12 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  /// Leaves the active conversation's socket room (call when the thread closes).
+  void closeConversation() {
+    _leaveSocket();
+    _activeConvId = null;
+  }
+
   @override
   void dispose() {
     _leaveSocket();
