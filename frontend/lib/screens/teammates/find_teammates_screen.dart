@@ -22,6 +22,8 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectsProvider>().loadMine();
+      final sid = context.read<MatchingProvider>().selectedProjectId;
+      if (sid != null) context.read<MatchingProvider>().loadCandidates(sid);
     });
   }
 
@@ -50,6 +52,20 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
         const SizedBox(height: 12),
         if (projects.loadingMine && projects.myProjects.isEmpty)
           const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
+        else if (projects.mineError != null && projects.myProjects.isEmpty)
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(projects.mineError!, style: TextStyle(color: AppTheme.textMuted)),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: () => context.read<ProjectsProvider>().loadMine(),
+                  child: const Text('Réessayer'),
+                ),
+              ],
+            ),
+          )
         else if (projects.myProjects.isEmpty)
           AppCard(
             child: Text('Crée d\'abord un projet pour trouver des coéquipiers.',
