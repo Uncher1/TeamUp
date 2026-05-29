@@ -50,6 +50,7 @@ class _TeamUpAppState extends State<TeamUpApp> {
         Provider<ApiClient>.value(value: _api),
         Provider<UserRepository>.value(value: _userRepo),
         Provider<ProjectRepository>.value(value: _projectRepo),
+        Provider<ChatRepository>.value(value: _chatRepo),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             repo: _authRepo,
