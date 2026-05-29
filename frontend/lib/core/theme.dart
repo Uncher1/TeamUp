@@ -9,6 +9,31 @@ class AppTheme {
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textMuted = Color(0xFF64748B);
 
+  static const Color primaryHover = Color(0xFF4F46E5);
+  static const Color itemHoverBg = Color(0xFFEEF2FF);
+  static const Color itemBorderHover = Color(0xFFC7D2FE);
+  static const Color slate100 = Color(0xFFF1F5F9);
+  static const Color slate200 = Color(0xFFE2E8F0);
+
+  // Gradient used by avatars (indigo-400 -> purple-500).
+  static const List<Color> avatarGradient = [Color(0xFF818CF8), Color(0xFFA855F7)];
+
+  /// Returns (background, foreground) colors for a post/notification type badge.
+  static (Color, Color) typeColors(String type) {
+    switch (type) {
+      case 'project_launch': return (Color(0xFFE0E7FF), Color(0xFF4F46E5));
+      case 'team_update':    return (Color(0xFFD1FAE5), Color(0xFF059669));
+      case 'looking_for':    return (Color(0xFFFEF3C7), Color(0xFFD97706));
+      case 'milestone':      return (Color(0xFFF3E8FF), Color(0xFF9333EA));
+      case 'team_join':      return (Color(0xFFD1FAE5), Color(0xFF059669));
+      case 'message':        return (Color(0xFFD1FAE5), Color(0xFF059669));
+      case 'application':    return (Color(0xFFE0E7FF), Color(0xFF4F46E5));
+      case 'project_update': return (Color(0xFFFEF3C7), Color(0xFFD97706));
+      case 'mention':        return (Color(0xFFF3E8FF), Color(0xFF9333EA));
+      default:               return (Color(0xFFF1F5F9), Color(0xFF475569));
+    }
+  }
+
   static ThemeData get light {
     final base = ThemeData(
       colorScheme: ColorScheme.fromSeed(
