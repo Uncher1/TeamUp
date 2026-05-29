@@ -60,6 +60,29 @@ const PROJECTS = [
     interests: ['AI', 'EdTech'] }
 ];
 
+// Demo feed posts (author email, type, content, optional project title)
+const POSTS = [
+  ['alice@school.fr', 'project_launch', "On vient de lancer StudyMate ! On cherche un dev Flutter pour rejoindre l'équipe.", 'StudyMate – peer revision sessions'],
+  ['bob@school.fr',   'looking_for',    "Je cherche un dev React pour OpenLab, le marketplace de projets étudiants.", 'OpenLab – student project marketplace'],
+  ['erwan@school.fr', 'milestone',      "100 beta-testeurs sur mon app mobile cette semaine ! 🚀", null],
+  ['diane@school.fr', 'team_update',    "CampusBot répond maintenant aux questions d'admin scolaire.", 'CampusBot – NLP assistant for student questions'],
+  ['farah@school.fr', 'general',        "Quelqu'un est chaud pour un hackathon le mois prochain ?", null],
+];
+
+// Demo likes: (post index 0-based, liker email)
+const LIKES = [
+  [0, 'bob@school.fr'], [0, 'chloe@school.fr'], [0, 'erwan@school.fr'],
+  [2, 'alice@school.fr'], [2, 'farah@school.fr'],
+  [4, 'bob@school.fr'],
+];
+
+// Demo notifications for Alice (recipient email, type, title, body)
+const NOTIFICATIONS = [
+  ['alice@school.fr', 'team_join',      'Chloé a rejoint StudyMate', null],
+  ['alice@school.fr', 'application',    'Erwan a postulé à StudyMate', "J'adore le concept, je suis dev Flutter."],
+  ['alice@school.fr', 'message',        'Nouveau message de Bob', 'Salut, on se cale un point demain ?'],
+];
+
 async function main() {
   const conn = await pool.getConnection();
   try {
@@ -134,6 +157,38 @@ async function main() {
         await conn.query(
           'INSERT INTO project_interests (project_id, interest_id) VALUES (?, ?)',
           [pid, interestId.get(name)]
+        );
+      }
+    }
+
+    // ---- Feed posts (only if the table is empty, to stay idempotent) ----
+    const [[{ postCount }]] = await conn.query('SELECT COUNT(*) AS postCount FROM posts');
+    if (postCount === 0) {
+      const [projRows] = await conn.query('SELECT id, title FROM projects');
+      const projectIdByTitle = new Map(projRows.map(r => [r.title, r.id]));
+      const insertedPostIds = [];
+      for (const [email, type, content, projectTitle] of POSTS) {
+        const [r] = await conn.query(
+          'INSERT INTO posts (author_id, type, content, project_id, comment_count) VALUES (?, ?, ?, ?, ?)',
+          [userId.get(email), type, content, projectTitle ? projectIdByTitle.get(projectTitle) : null, Math.floor(Math.random() * 6)]
+        );
+        insertedPostIds.push(r.insertId);
+      }
+      for (const [postIdx, likerEmail] of LIKES) {
+        await conn.query(
+          'INSERT IGNORE INTO post_likes (post_id, user_id) VALUES (?, ?)',
+          [insertedPostIds[postIdx], userId.get(likerEmail)]
+        );
+      }
+    }
+
+    // ---- Notifications (only if the table is empty) ----
+    const [[{ notifCount }]] = await conn.query('SELECT COUNT(*) AS notifCount FROM notifications');
+    if (notifCount === 0) {
+      for (const [email, type, title, body] of NOTIFICATIONS) {
+        await conn.query(
+          'INSERT INTO notifications (user_id, type, title, body) VALUES (?, ?, ?, ?)',
+          [userId.get(email), type, title, body]
         );
       }
     }
