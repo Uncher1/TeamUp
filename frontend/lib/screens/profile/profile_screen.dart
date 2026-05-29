@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
+import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/pills.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -13,85 +13,90 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        actions: [
-          IconButton(
-            tooltip: 'Modifier',
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const EditProfileScreen())),
-          ),
-          IconButton(
-            tooltip: 'Déconnexion',
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: () => context.read<AuthProvider>().logout(),
-          ),
-        ],
-      ),
-      body: user == null
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Row(
+      body: SafeArea(
+        child: Column(
+          children: [
+            ScreenHeader(
+              title: 'Profil',
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  onPressed: user == null
+                      ? null
+                      : () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+                ),
+              ],
+            ),
+            if (user == null)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                   children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: AppTheme.primary,
-                      child: Text(user.initials,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 22)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    GradientBanner(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
                         children: [
-                          Text(user.fullName,
-                              style: Theme.of(context).textTheme.titleLarge),
-                          Text(user.email,
-                              style: TextStyle(color: AppTheme.textMuted)),
+                          GradientAvatar(name: user.fullName, size: 64),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(user.fullName,
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+                                const SizedBox(height: 2),
+                                Text(user.email,
+                                    style: const TextStyle(color: Color(0xFFC7D2FE), fontSize: 13),
+                                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-                if (user.bio != null && user.bio!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text(user.bio!, style: const TextStyle(height: 1.5)),
-                ],
-                const SizedBox(height: 24),
-                Text('Compétences',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 10),
-                user.skills.isEmpty
-                    ? Text('Aucune compétence déclarée.',
-                        style: TextStyle(color: AppTheme.textMuted))
-                    : Wrap(
+                    if (user.bio != null && user.bio!.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      const SectionLabel('À propos'),
+                      const SizedBox(height: 8),
+                      Text(user.bio!, style: const TextStyle(height: 1.4)),
+                    ],
+                    const SizedBox(height: 20),
+                    const SectionLabel('Compétences'),
+                    const SizedBox(height: 8),
+                    if (user.skills.isEmpty)
+                      Text('Aucune compétence renseignée.', style: TextStyle(color: AppTheme.textMuted))
+                    else
+                      Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
                           for (final s in user.skills)
-                            Pill('${s.name} · ${s.level}/5', accent: true),
+                            StatusPill(label: '${s.name} · ${s.level}', bg: AppTheme.itemHoverBg, fg: AppTheme.primaryHover),
                         ],
                       ),
-                const SizedBox(height: 24),
-                Text('Centres d\'intérêt',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 10),
-                user.interests.isEmpty
-                    ? Text('Aucun intérêt déclaré.',
-                        style: TextStyle(color: AppTheme.textMuted))
-                    : Wrap(
+                    const SizedBox(height: 20),
+                    const SectionLabel('Thématiques'),
+                    const SizedBox(height: 8),
+                    if (user.interests.isEmpty)
+                      Text('Aucune thématique renseignée.', style: TextStyle(color: AppTheme.textMuted))
+                    else
+                      Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [for (final i in user.interests) Pill(i.name)],
+                        children: [
+                          for (final i in user.interests)
+                            StatusPill(label: i.name, bg: AppTheme.slate100, fg: const Color(0xFF475569)),
+                        ],
                       ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

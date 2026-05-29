@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/api_client.dart';
 import '../../core/theme.dart';
+import '../../design_system/ds.dart';
+import '../../models/skill.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/lookup_provider.dart';
 import '../../repositories/user_repo.dart';
@@ -17,9 +18,11 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _name;
   late final TextEditingController _bio;
-  final Map<int, int> _skillLevels = {}; // skillId -> level (1..5)
-  final Set<int> _interestIds = {};
-  bool _saving = false;
+
+  /// skillId -> level (1..5)
+  final Map<int, int> _skills = {};
+  final Set<int> _interests = {};
+  bool _busy = false;
 
   @override
   void initState() {
@@ -27,11 +30,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthProvider>().user;
     _name = TextEditingController(text: user?.fullName ?? '');
     _bio = TextEditingController(text: user?.bio ?? '');
-    for (final s in user?.skills ?? []) {
-      _skillLevels[s.id] = s.level;
+    for (final s in user?.skills ?? const []) {
+      _skills[s.id] = s.level;
     }
-    for (final i in user?.interests ?? []) {
-      _interestIds.add(i.id);
+    for (final i in user?.interests ?? const []) {
+      _interests.add(i.id);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<LookupProvider>().ensureLoaded();
@@ -46,28 +49,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _save() async {
-    setState(() => _saving = true);
+    setState(() => _busy = true);
     final repo = context.read<UserRepository>();
     final auth = context.read<AuthProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     try {
       await repo.updateProfile(fullName: _name.text.trim(), bio: _bio.text.trim());
-      await repo.setSkills(_skillLevels.entries
-          .map((e) => {'skill_id': e.key, 'level': e.value})
-          .toList());
-      final updated = await repo.setInterests(_interestIds.toList());
+      await repo.setSkills(
+        _skills.entries.map((e) => {'skill_id': e.key, 'level': e.value}).toList(),
+      );
+      final updated = await repo.setInterests(_interests.toList());
       auth.setUser(updated);
       if (!mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profil mis à jour.')),
-      );
-    } catch (e) {
+      messenger.showSnackBar(const SnackBar(content: Text('Profil mis à jour')));
+      navigator.pop();
+    } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiClient.messageFromError(e))),
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      setState(() => _busy = false);
+      messenger.showSnackBar(const SnackBar(content: Text('Échec de la mise à jour')));
     }
   }
 
@@ -75,107 +75,137 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final lookup = context.watch<LookupProvider>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Modifier le profil')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        children: [
-          TextField(
-            controller: _name,
-            decoration: const InputDecoration(labelText: 'Nom complet'),
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _bio,
-            decoration: const InputDecoration(
-                labelText: 'Bio', alignLabelWithHint: true),
-            minLines: 2,
-            maxLines: 5,
-          ),
-          const SizedBox(height: 24),
-          Text('Compétences', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 4),
-          Text('Sélectionne tes compétences, puis indique ton niveau (1-5).',
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-          const SizedBox(height: 10),
-          if (lookup.loading)
-            const Center(child: Padding(
-              padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final s in lookup.skills)
-                  FilterChip(
-                    label: Text(s.name),
-                    selected: _skillLevels.containsKey(s.id),
-                    onSelected: (sel) => setState(() {
-                      if (sel) {
-                        _skillLevels[s.id] = 3;
-                      } else {
-                        _skillLevels.remove(s.id);
-                      }
-                    }),
-                  ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            ScreenHeader(
+              title: 'Modifier le profil',
+              actions: [
+                TextButton(
+                  onPressed: _busy ? null : _save,
+                  child: _busy
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Enregistrer'),
+                ),
               ],
             ),
-          if (_skillLevels.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            for (final s in lookup.skills.where((s) => _skillLevels.containsKey(s.id)))
-              Row(
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                 children: [
-                  SizedBox(width: 110, child: Text(s.name)),
-                  Expanded(
-                    child: Slider(
-                      value: _skillLevels[s.id]!.toDouble(),
-                      min: 1,
-                      max: 5,
-                      divisions: 4,
-                      label: '${_skillLevels[s.id]}',
-                      onChanged: (v) =>
-                          setState(() => _skillLevels[s.id] = v.round()),
-                    ),
+                  const SectionLabel('Informations'),
+                  const SizedBox(height: 10),
+                  TextField(controller: _name, decoration: const InputDecoration(labelText: 'Nom complet')),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _bio,
+                    minLines: 3,
+                    maxLines: 6,
+                    decoration: const InputDecoration(labelText: 'Bio', alignLabelWithHint: true),
                   ),
-                  SizedBox(
-                    width: 24,
-                    child: Text('${_skillLevels[s.id]}', textAlign: TextAlign.end),
+                  const SizedBox(height: 20),
+                  const SectionLabel('Compétences'),
+                  const SizedBox(height: 4),
+                  Text('Touche pour ajouter ; règle ton niveau (1–5).',
+                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                  const SizedBox(height: 10),
+                  if (lookup.loading)
+                    const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
+                  else
+                    _SkillLevelPicker(
+                      skills: lookup.skills,
+                      selected: _skills,
+                      onAdd: (id) => setState(() => _skills[id] = 3),
+                      onRemove: (id) => setState(() => _skills.remove(id)),
+                      onLevel: (id, lv) => setState(() => _skills[id] = lv),
+                    ),
+                  const SizedBox(height: 20),
+                  const SectionLabel('Thématiques'),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final i in lookup.interests)
+                        FilterChip(
+                          label: Text(i.name),
+                          selected: _interests.contains(i.id),
+                          onSelected: (_) => setState(() {
+                            if (!_interests.add(i.id)) _interests.remove(i.id);
+                          }),
+                        ),
+                    ],
                   ),
                 ],
               ),
+            ),
           ],
-          const SizedBox(height: 24),
-          Text('Centres d\'intérêt',
-              style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final i in lookup.interests)
-                FilterChip(
-                  label: Text(i.name),
-                  selected: _interestIds.contains(i.id),
-                  onSelected: (sel) => setState(() {
-                    if (sel) {
-                      _interestIds.add(i.id);
-                    } else {
-                      _interestIds.remove(i.id);
-                    }
-                  }),
-                ),
-            ],
-          ),
-          const SizedBox(height: 28),
-          ElevatedButton(
-            onPressed: _saving ? null : _save,
-            child: _saving
-                ? const SizedBox(
-                    height: 22, width: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Enregistrer'),
-          ),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+class _SkillLevelPicker extends StatelessWidget {
+  final List<Skill> skills;
+  final Map<int, int> selected;
+  final ValueChanged<int> onAdd;
+  final ValueChanged<int> onRemove;
+  final void Function(int id, int level) onLevel;
+  const _SkillLevelPicker({
+    required this.skills,
+    required this.selected,
+    required this.onAdd,
+    required this.onRemove,
+    required this.onLevel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final chosen = skills.where((s) => selected.containsKey(s.id)).toList();
+    final available = skills.where((s) => !selected.containsKey(s.id)).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final s in chosen)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(child: Text(s.name, style: const TextStyle(fontWeight: FontWeight.w500))),
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline, size: 20),
+                  color: AppTheme.textMuted,
+                  onPressed: selected[s.id]! > 1 ? () => onLevel(s.id, selected[s.id]! - 1) : null,
+                ),
+                Text('${selected[s.id]}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline, size: 20),
+                  color: AppTheme.primary,
+                  onPressed: selected[s.id]! < 5 ? () => onLevel(s.id, selected[s.id]! + 1) : null,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  color: AppTheme.textMuted,
+                  onPressed: () => onRemove(s.id),
+                ),
+              ],
+            ),
+          ),
+        if (available.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: AppTheme.slate100, borderRadius: BorderRadius.circular(14)),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final s in available)
+                  ActionChip(label: Text('+ ${s.name}'), onPressed: () => onAdd(s.id)),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

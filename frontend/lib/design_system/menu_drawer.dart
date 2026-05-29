@@ -29,7 +29,8 @@ const _entries = <_MenuEntry>[
 class MenuDrawer extends StatelessWidget {
   final AppSection current;
   final ValueChanged<AppSection> onSelect;
-  const MenuDrawer({super.key, required this.current, required this.onSelect});
+  final VoidCallback? onProfileTap;
+  const MenuDrawer({super.key, required this.current, required this.onSelect, this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
@@ -45,25 +46,33 @@ class MenuDrawer extends StatelessWidget {
               child: BrandHeader(),
             ),
             if (user != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                child: Row(
-                  children: [
-                    GradientAvatar(name: user.fullName, size: 40),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(user.fullName,
-                              style: const TextStyle(fontWeight: FontWeight.w600)),
-                          Text(user.email,
-                              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                              overflow: TextOverflow.ellipsis),
-                        ],
+              InkWell(
+                onTap: onProfileTap == null
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                        onProfileTap!();
+                      },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                  child: Row(
+                    children: [
+                      GradientAvatar(name: user.fullName, size: 40),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(user.fullName,
+                                style: const TextStyle(fontWeight: FontWeight.w600)),
+                            Text(user.email,
+                                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                overflow: TextOverflow.ellipsis),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             Divider(color: AppTheme.slate100, height: 1),
