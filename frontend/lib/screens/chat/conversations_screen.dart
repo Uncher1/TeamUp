@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../models/conversation.dart';
 import '../../providers/chat_provider.dart';
-import 'chat_screen.dart';
+import 'chat_thread_screen.dart';
 
 class ConversationsScreen extends StatefulWidget {
   const ConversationsScreen({super.key});
@@ -101,7 +101,7 @@ class _ConvTile extends StatelessWidget {
           : null,
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => ChatScreen(conversation: conv),
+          builder: (_) => ChatThreadScreen(conversation: conv),
         ));
       },
     );
