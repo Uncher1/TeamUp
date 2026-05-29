@@ -12,6 +12,10 @@ class ProjectsProvider extends ChangeNotifier {
   String? error;
   List<Project> projects = [];
 
+  List<Project> myProjects = [];
+  bool loadingMine = false;
+  String? mineError;
+
   Future<void> load() async {
     loading = true;
     error = null;
@@ -22,6 +26,20 @@ class ProjectsProvider extends ChangeNotifier {
       error = ApiClient.messageFromError(e);
     } finally {
       loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMine() async {
+    loadingMine = true;
+    mineError = null;
+    notifyListeners();
+    try {
+      myProjects = await repo.myProjects();
+    } catch (e) {
+      mineError = ApiClient.messageFromError(e);
+    } finally {
+      loadingMine = false;
       notifyListeners();
     }
   }
