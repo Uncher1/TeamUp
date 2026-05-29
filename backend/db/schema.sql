@@ -139,3 +139,58 @@ CREATE TABLE IF NOT EXISTS messages (
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
   FOREIGN KEY (sender_id)       REFERENCES users(id)         ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- Social feed: posts + likes
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS posts (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  author_id     INT UNSIGNED NOT NULL,
+  type          ENUM('project_launch','team_update','looking_for','milestone','general')
+                  NOT NULL DEFAULT 'general',
+  content       TEXT NOT NULL,
+  project_id    INT UNSIGNED NULL,
+  comment_count INT UNSIGNED NOT NULL DEFAULT 0,
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_posts_created (created_at),
+  FOREIGN KEY (author_id)  REFERENCES users(id)    ON DELETE CASCADE,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS post_likes (
+  post_id    INT UNSIGNED NOT NULL,
+  user_id    INT UNSIGNED NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (post_id, user_id),
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- Notifications
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notifications (
+  id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT UNSIGNED NOT NULL,
+  type       ENUM('team_invite','message','project_update','mention',
+                  'team_join','project_complete','application') NOT NULL,
+  title      VARCHAR(160) NOT NULL,
+  body       VARCHAR(500),
+  link_type  VARCHAR(40),
+  link_id    INT UNSIGNED NULL,
+  is_read    BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_notif_user_created (user_id, created_at),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- Key/value user preferences (privacy, notifications, theme, language)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id       INT UNSIGNED NOT NULL,
+  setting_key   VARCHAR(60)  NOT NULL,
+  setting_value VARCHAR(255) NOT NULL,
+  PRIMARY KEY (user_id, setting_key),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
