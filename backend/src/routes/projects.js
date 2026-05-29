@@ -47,6 +47,29 @@ router.get('/', authRequired, async (_req, res) => {
   res.json(rows);
 });
 
+router.get('/mine', authRequired, async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT p.id, p.title, p.description, p.status, p.created_at,
+            u.id AS owner_id, u.full_name AS owner_name, pm.role AS my_role
+       FROM project_members pm
+       JOIN projects p ON p.id = pm.project_id
+       JOIN users u    ON u.id = p.owner_id
+      WHERE pm.user_id = ?
+      ORDER BY p.created_at DESC`,
+    [req.user.id]
+  );
+  for (const p of rows) {
+    const [members] = await pool.query(
+      `SELECT u.id, u.full_name, pm.role
+         FROM project_members pm JOIN users u ON u.id = pm.user_id
+        WHERE pm.project_id = ?`,
+      [p.id]
+    );
+    p.members = members;
+  }
+  res.json(rows);
+});
+
 router.post('/', authRequired, async (req, res) => {
   const { title, description, required_skills = [], interests = [] } = req.body || {};
   if (!title || !description) {
