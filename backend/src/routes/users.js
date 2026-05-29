@@ -35,21 +35,37 @@ router.get('/me', authRequired, async (req, res) => {
 
 router.patch('/me', authRequired, async (req, res) => {
   const { full_name, bio, avatar_url, email } = req.body || {};
-  if (email !== undefined) {
-    const normalized = String(email).trim().toLowerCase();
-    if (!EMAIL_RE.test(normalized)) return res.status(400).json({ error: 'invalid email format' });
-    const [dup] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ?', [normalized, req.user.id]);
-    if (dup.length) return res.status(409).json({ error: 'email already in use' });
-    await pool.query('UPDATE users SET email = ? WHERE id = ?', [normalized, req.user.id]);
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    if (email !== undefined) {
+      const normalized = String(email).trim().toLowerCase();
+      if (!EMAIL_RE.test(normalized)) {
+        await conn.rollback();
+        return res.status(400).json({ error: 'invalid email format' });
+      }
+      const [dup] = await conn.query('SELECT id FROM users WHERE email = ? AND id != ?', [normalized, req.user.id]);
+      if (dup.length) {
+        await conn.rollback();
+        return res.status(409).json({ error: 'email already in use' });
+      }
+      await conn.query('UPDATE users SET email = ? WHERE id = ?', [normalized, req.user.id]);
+    }
+    await conn.query(
+      `UPDATE users SET
+          full_name  = COALESCE(?, full_name),
+          bio        = COALESCE(?, bio),
+          avatar_url = COALESCE(?, avatar_url)
+        WHERE id = ?`,
+      [full_name ?? null, bio ?? null, avatar_url ?? null, req.user.id]
+    );
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
   }
-  await pool.query(
-    `UPDATE users SET
-        full_name  = COALESCE(?, full_name),
-        bio        = COALESCE(?, bio),
-        avatar_url = COALESCE(?, avatar_url)
-      WHERE id = ?`,
-    [full_name ?? null, bio ?? null, avatar_url ?? null, req.user.id]
-  );
   res.json(await loadProfile(req.user.id));
 });
 

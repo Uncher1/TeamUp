@@ -1,7 +1,6 @@
 const { Server } = require('socket.io');
 const { verify } = require('./utils/jwt');
 const { userInConversation, createMessage } = require('./services/chat');
-const pool = require('./config/db');
 const { notifyNewMessage } = require('./services/notifications');
 
 /**
