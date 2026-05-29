@@ -68,6 +68,19 @@ class _TeamUpAppState extends State<TeamUpApp> {
         title: 'TeamUp',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        // Keep a phone-width column on large screens (web/desktop): full width
+        // on real phones (<= 480), centered phone-width column beyond that.
+        builder: (context, child) => ColoredBox(
+          color: AppTheme.background,
+          child: Center(
+            child: ClipRect(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: child,
+              ),
+            ),
+          ),
+        ),
         home: const AuthGate(),
       ),
     );
