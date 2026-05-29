@@ -67,28 +67,28 @@ class ProfileScreen extends StatelessWidget {
                     const SectionLabel('Compétences'),
                     const SizedBox(height: 8),
                     if (user.skills.isEmpty)
-                      Text('Aucune compétence renseignée.', style: TextStyle(color: AppTheme.textMuted))
+                      Text('Aucune compétence renseignée.', style: TextStyle(color: context.palette.textMuted))
                     else
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
                           for (final s in user.skills)
-                            StatusPill(label: '${s.name} · ${s.level}', bg: AppTheme.itemHoverBg, fg: AppTheme.primaryHover),
+                            StatusPill(label: '${s.name} · ${s.level}', bg: context.palette.itemHoverBg, fg: context.palette.primaryHover),
                         ],
                       ),
                     const SizedBox(height: 20),
                     const SectionLabel('Thématiques'),
                     const SizedBox(height: 8),
                     if (user.interests.isEmpty)
-                      Text('Aucune thématique renseignée.', style: TextStyle(color: AppTheme.textMuted))
+                      Text('Aucune thématique renseignée.', style: TextStyle(color: context.palette.textMuted))
                     else
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
                           for (final i in user.interests)
-                            StatusPill(label: i.name, bg: AppTheme.slate100, fg: const Color(0xFF475569)),
+                            StatusPill(label: i.name, bg: context.palette.slate100, fg: const Color(0xFF475569)),
                         ],
                       ),
                   ],

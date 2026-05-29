@@ -27,7 +27,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.palette.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -54,7 +54,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     if (provider.error != null && provider.posts.isEmpty) {
       return ListView(children: [
         const SizedBox(height: 100),
-        Icon(Icons.cloud_off_rounded, size: 48, color: AppTheme.textMuted),
+        Icon(Icons.cloud_off_rounded, size: 48, color: context.palette.textMuted),
         const SizedBox(height: 12),
         Center(child: Text(provider.error!, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
@@ -69,7 +69,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         if (provider.posts.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 80),
-            child: Center(child: Text('Aucun post pour le moment.', style: TextStyle(color: AppTheme.textMuted))),
+            child: Center(child: Text('Aucun post pour le moment.', style: TextStyle(color: context.palette.textMuted))),
           )
         else
           for (final p in provider.posts) ...[
@@ -95,8 +95,8 @@ class _QuickPostBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(color: AppTheme.slate100, borderRadius: BorderRadius.circular(14)),
-              child: Text('Partage quelque chose...', style: TextStyle(color: AppTheme.textMuted)),
+              decoration: BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
+              child: Text('Partage quelque chose...', style: TextStyle(color: context.palette.textMuted)),
             ),
           ),
         ),
@@ -106,7 +106,7 @@ class _QuickPostBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           child: Container(
             width: 48, height: 48,
-            decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(14)),
             child: const Icon(Icons.add, color: Colors.white),
           ),
         ),
@@ -151,7 +151,7 @@ class _PostCard extends StatelessWidget {
                         TypeBadge(type: post.type, label: label, icon: icon),
                       ],
                     ),
-                    Text(_ago(post.createdAt), style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                    Text(_ago(post.createdAt), style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
                   ],
                 ),
               ),
@@ -163,30 +163,30 @@ class _PostCard extends StatelessWidget {
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: AppTheme.itemHoverBg, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: context.palette.itemHoverBg, borderRadius: BorderRadius.circular(10)),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.work_outline, size: 14, color: AppTheme.primaryHover),
+                  Icon(Icons.work_outline, size: 14, color: context.palette.primaryHover),
                   const SizedBox(width: 6),
-                  Flexible(child: Text(post.projectTitle!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryHover), overflow: TextOverflow.ellipsis)),
+                  Flexible(child: Text(post.projectTitle!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.primaryHover), overflow: TextOverflow.ellipsis)),
                 ],
               ),
             ),
           ],
           const SizedBox(height: 12),
-          Divider(color: AppTheme.slate100, height: 1),
+          Divider(color: context.palette.slate100, height: 1),
           const SizedBox(height: 4),
           Row(
             children: [
               _action(
                 icon: post.likedByMe ? Icons.favorite : Icons.favorite_border,
                 label: '${post.likeCount}',
-                color: post.likedByMe ? const Color(0xFFE11D48) : AppTheme.textMuted,
+                color: post.likedByMe ? const Color(0xFFE11D48) : context.palette.textMuted,
                 onTap: onLike,
               ),
-              _action(icon: Icons.mode_comment_outlined, label: '${post.commentCount}', color: AppTheme.textMuted, onTap: () {}),
-              _action(icon: Icons.share_outlined, label: 'Partager', color: AppTheme.textMuted, onTap: () {}),
+              _action(icon: Icons.mode_comment_outlined, label: '${post.commentCount}', color: context.palette.textMuted, onTap: () {}),
+              _action(icon: Icons.share_outlined, label: 'Partager', color: context.palette.textMuted, onTap: () {}),
             ],
           ),
         ],

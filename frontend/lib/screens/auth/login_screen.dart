@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 32),
                   Text('Connexion', style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 4),
-                  Text('Retrouve ton équipe.', style: TextStyle(color: AppTheme.textMuted)),
+                  Text('Retrouve ton équipe.', style: TextStyle(color: context.palette.textMuted)),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _email,

@@ -108,7 +108,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SectionLabel('Compétences'),
                   const SizedBox(height: 4),
                   Text('Touche pour ajouter ; règle ton niveau (1–5).',
-                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                      style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
                   const SizedBox(height: 10),
                   if (lookup.loading)
                     const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
@@ -176,18 +176,18 @@ class _SkillLevelPicker extends StatelessWidget {
                 Expanded(child: Text(s.name, style: const TextStyle(fontWeight: FontWeight.w500))),
                 IconButton(
                   icon: const Icon(Icons.remove_circle_outline, size: 20),
-                  color: AppTheme.textMuted,
+                  color: context.palette.textMuted,
                   onPressed: selected[s.id]! > 1 ? () => onLevel(s.id, selected[s.id]! - 1) : null,
                 ),
                 Text('${selected[s.id]}', style: const TextStyle(fontWeight: FontWeight.w600)),
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline, size: 20),
-                  color: AppTheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   onPressed: selected[s.id]! < 5 ? () => onLevel(s.id, selected[s.id]! + 1) : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, size: 18),
-                  color: AppTheme.textMuted,
+                  color: context.palette.textMuted,
                   onPressed: () => onRemove(s.id),
                 ),
               ],
@@ -196,7 +196,7 @@ class _SkillLevelPicker extends StatelessWidget {
         if (available.isNotEmpty)
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppTheme.slate100, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
             child: Wrap(
               spacing: 8,
               runSpacing: 8,

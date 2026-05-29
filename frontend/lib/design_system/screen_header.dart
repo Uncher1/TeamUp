@@ -12,8 +12,8 @@ class ScreenHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 8, 12, 8),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(bottom: BorderSide(color: AppTheme.slate100)),
+        color: context.palette.surface,
+        border: Border(bottom: BorderSide(color: context.palette.slate100)),
       ),
       child: Row(
         children: [

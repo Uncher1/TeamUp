@@ -64,7 +64,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
               child: provider.loadingMessages && provider.messages.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : provider.messages.isEmpty
-                      ? Center(child: Text('Aucun message. Dis bonjour 👋', style: TextStyle(color: AppTheme.textMuted)))
+                      ? Center(child: Text('Aucun message. Dis bonjour 👋', style: TextStyle(color: context.palette.textMuted)))
                       : ListView.builder(
                           controller: _scroll,
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -94,7 +94,7 @@ class _Bubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
         decoration: BoxDecoration(
-          color: mine ? AppTheme.primary : AppTheme.slate100,
+          color: mine ? Theme.of(context).colorScheme.primary : context.palette.slate100,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -109,16 +109,16 @@ class _Bubble extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Text(message.senderName,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.primaryHover)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.palette.primaryHover)),
               ),
             Text(message.content,
-                style: TextStyle(color: mine ? Colors.white : AppTheme.textPrimary, height: 1.3)),
+                style: TextStyle(color: mine ? Colors.white : context.palette.textPrimary, height: 1.3)),
             const SizedBox(height: 3),
             Text(
               _hm(message.createdAt),
               style: TextStyle(
                 fontSize: 10,
-                color: mine ? Colors.white70 : AppTheme.textMuted,
+                color: mine ? Colors.white70 : context.palette.textMuted,
               ),
             ),
           ],
@@ -143,8 +143,8 @@ class _InputBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(top: BorderSide(color: AppTheme.slate100)),
+        color: context.palette.surface,
+        border: Border(top: BorderSide(color: context.palette.slate100)),
       ),
       child: Row(
         children: [
@@ -168,7 +168,7 @@ class _InputBar extends StatelessWidget {
             child: Container(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(14)),
               child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
             ),
           ),

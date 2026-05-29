@@ -13,11 +13,11 @@ class DSPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 56, color: AppTheme.primary.withValues(alpha: 0.4)),
+          Icon(icon, size: 56, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 6),
-          Text('Bientôt disponible', style: TextStyle(color: AppTheme.textMuted)),
+          Text('Bientôt disponible', style: TextStyle(color: context.palette.textMuted)),
         ],
       ),
     );

@@ -12,9 +12,9 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.slate200),
+        border: Border.all(color: context.palette.slate200),
       ),
       padding: padding,
       child: child,

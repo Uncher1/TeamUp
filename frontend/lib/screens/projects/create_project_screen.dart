@@ -134,7 +134,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SectionLabel('Compétences requises'),
         const SizedBox(height: 4),
         Text('Touche pour ajouter ; règle le poids (1–5).',
-            style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+            style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
         const SizedBox(height: 10),
         if (lookup.loading)
           const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
@@ -202,7 +202,7 @@ class _SkillPicker extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, size: 18),
-                  color: AppTheme.textMuted,
+                  color: context.palette.textMuted,
                   onPressed: () => onRemove(s.id),
                 ),
               ],
@@ -211,7 +211,7 @@ class _SkillPicker extends StatelessWidget {
         if (available.isNotEmpty)
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppTheme.slate100, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -241,13 +241,13 @@ class _WeightStepper extends StatelessWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.remove_circle_outline, size: 20),
-          color: AppTheme.textMuted,
+          color: context.palette.textMuted,
           onPressed: weight > 1 ? () => onChanged(weight - 1) : null,
         ),
         Text('$weight', style: const TextStyle(fontWeight: FontWeight.w600)),
         IconButton(
           icon: const Icon(Icons.add_circle_outline, size: 20),
-          color: AppTheme.primary,
+          color: Theme.of(context).colorScheme.primary,
           onPressed: weight < 5 ? () => onChanged(weight + 1) : null,
         ),
       ],

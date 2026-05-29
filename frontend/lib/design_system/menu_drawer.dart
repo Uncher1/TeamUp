@@ -36,7 +36,7 @@ class MenuDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     return Drawer(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.palette.surface,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +66,7 @@ class MenuDrawer extends StatelessWidget {
                             Text(user.fullName,
                                 style: const TextStyle(fontWeight: FontWeight.w600)),
                             Text(user.email,
-                                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                style: TextStyle(fontSize: 12, color: context.palette.textMuted),
                                 overflow: TextOverflow.ellipsis),
                           ],
                         ),
@@ -75,7 +75,7 @@ class MenuDrawer extends StatelessWidget {
                   ),
                 ),
               ),
-            Divider(color: AppTheme.slate100, height: 1),
+            Divider(color: context.palette.slate100, height: 1),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -84,9 +84,9 @@ class MenuDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            Divider(color: AppTheme.slate100, height: 1),
+            Divider(color: context.palette.slate100, height: 1),
             ListTile(
-              leading: const Icon(Icons.logout, color: AppTheme.textMuted),
+              leading: Icon(Icons.logout, color: context.palette.textMuted),
               title: const Text('Se déconnecter'),
               onTap: () {
                 Navigator.of(context).pop();
@@ -104,7 +104,7 @@ class MenuDrawer extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Material(
-        color: selected ? AppTheme.itemHoverBg : Colors.transparent,
+        color: selected ? context.palette.itemHoverBg : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -121,18 +121,18 @@ class MenuDrawer extends StatelessWidget {
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: selected ? AppTheme.itemBorderHover : AppTheme.slate100,
+                    color: selected ? context.palette.itemBorderHover : context.palette.slate100,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(e.icon,
-                      size: 20, color: selected ? AppTheme.primaryHover : AppTheme.textMuted),
+                      size: 20, color: selected ? context.palette.primaryHover : context.palette.textMuted),
                 ),
                 const SizedBox(width: 16),
                 Text(e.label,
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: selected ? AppTheme.primaryHover : AppTheme.textPrimary)),
+                        color: selected ? context.palette.primaryHover : context.palette.textPrimary)),
               ],
             ),
           ),

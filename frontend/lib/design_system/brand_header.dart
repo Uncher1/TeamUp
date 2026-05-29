@@ -13,11 +13,11 @@ class BrandHeader extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.hexagon_outlined, size: iconSize, color: AppTheme.primary),
+        Icon(Icons.hexagon_outlined, size: iconSize, color: Theme.of(context).colorScheme.primary),
         const SizedBox(width: 8),
         Text('TeamUp',
             style: GoogleFonts.outfit(
-                fontSize: fontSize, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                fontSize: fontSize, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
       ],
     );
   }

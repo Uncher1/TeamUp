@@ -52,7 +52,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     if (provider.error != null && provider.items.isEmpty) {
       return ListView(children: [
         const SizedBox(height: 100),
-        Icon(Icons.cloud_off_rounded, size: 48, color: AppTheme.textMuted),
+        Icon(Icons.cloud_off_rounded, size: 48, color: context.palette.textMuted),
         const SizedBox(height: 12),
         Center(child: Text(provider.error!, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
@@ -62,9 +62,9 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     if (provider.items.isEmpty) {
       return ListView(children: [
         const SizedBox(height: 120),
-        Icon(Icons.notifications_none_rounded, size: 56, color: AppTheme.textMuted.withValues(alpha: 0.6)),
+        Icon(Icons.notifications_none_rounded, size: 56, color: context.palette.textMuted.withValues(alpha: 0.6)),
         const SizedBox(height: 12),
-        Center(child: Text('Aucune notification', style: TextStyle(color: AppTheme.textMuted))),
+        Center(child: Text('Aucune notification', style: TextStyle(color: context.palette.textMuted))),
       ]);
     }
     return RefreshIndicator(
@@ -102,9 +102,9 @@ class _NotificationTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: n.isRead ? AppTheme.surface : AppTheme.itemHoverBg,
+        color: n.isRead ? context.palette.surface : context.palette.itemHoverBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: n.isRead ? AppTheme.slate200 : AppTheme.itemHoverBg),
+        border: Border.all(color: n.isRead ? context.palette.slate200 : context.palette.itemHoverBg),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,10 +124,10 @@ class _NotificationTile extends StatelessWidget {
                 Text(n.title, style: const TextStyle(fontWeight: FontWeight.w600)),
                 if (n.body != null && n.body!.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(n.body!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+                  Text(n.body!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
                 ],
                 const SizedBox(height: 4),
-                Text(_ago(n.createdAt), style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                Text(_ago(n.createdAt), style: TextStyle(fontSize: 11, color: context.palette.textMuted)),
               ],
             ),
           ),
@@ -135,7 +135,7 @@ class _NotificationTile extends StatelessWidget {
             Container(
               margin: const EdgeInsets.only(left: 8, top: 4),
               width: 9, height: 9,
-              decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle),
             ),
         ],
       ),

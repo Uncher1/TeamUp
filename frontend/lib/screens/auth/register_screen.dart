@@ -62,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 24),
                   Text('Créer un compte', style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 4),
-                  Text('Rejoins TeamUp.', style: TextStyle(color: AppTheme.textMuted)),
+                  Text('Rejoins TeamUp.', style: TextStyle(color: context.palette.textMuted)),
                   const SizedBox(height: 24),
                   TextField(controller: _name, decoration: const InputDecoration(labelText: 'Nom complet')),
                   const SizedBox(height: 14),

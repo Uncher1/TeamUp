@@ -38,7 +38,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (provider.convError != null && provider.conversations.isEmpty) {
       return ListView(children: [
         const SizedBox(height: 100),
-        Icon(Icons.cloud_off_rounded, size: 48, color: AppTheme.textMuted),
+        Icon(Icons.cloud_off_rounded, size: 48, color: context.palette.textMuted),
         const SizedBox(height: 12),
         Center(child: Text(provider.convError!, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
@@ -48,9 +48,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (provider.conversations.isEmpty) {
       return ListView(children: [
         const SizedBox(height: 120),
-        Icon(Icons.forum_outlined, size: 56, color: AppTheme.textMuted.withValues(alpha: 0.6)),
+        Icon(Icons.forum_outlined, size: 56, color: context.palette.textMuted.withValues(alpha: 0.6)),
         const SizedBox(height: 12),
-        Center(child: Text('Aucune conversation', style: TextStyle(color: AppTheme.textMuted))),
+        Center(child: Text('Aucune conversation', style: TextStyle(color: context.palette.textMuted))),
       ]);
     }
     return RefreshIndicator(
@@ -58,7 +58,7 @@ class _ChatScreenState extends State<ChatScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: provider.conversations.length,
-        separatorBuilder: (_, _) => Divider(color: AppTheme.slate100, height: 1, indent: 76),
+        separatorBuilder: (context, _) => Divider(color: context.palette.slate100, height: 1, indent: 76),
         itemBuilder: (_, i) {
           final c = provider.conversations[i];
           return _ConvTile(conv: c, onTap: () => _open(c));
@@ -96,13 +96,13 @@ class _ConvTile extends StatelessWidget {
                       ),
                       if (conv.lastMessageAt != null)
                         Text(_ago(conv.lastMessageAt!),
-                            style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                            style: TextStyle(fontSize: 11, color: context.palette.textMuted)),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(conv.lastMessage ?? 'Démarre la conversation',
                       maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+                      style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
                 ],
               ),
             ),

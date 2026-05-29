@@ -31,7 +31,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
     if (provider.mineError != null && provider.myProjects.isEmpty) {
       return ListView(children: [
         const SizedBox(height: 100),
-        Icon(Icons.cloud_off_rounded, size: 48, color: AppTheme.textMuted),
+        Icon(Icons.cloud_off_rounded, size: 48, color: context.palette.textMuted),
         const SizedBox(height: 12),
         Center(child: Text(provider.mineError!, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
@@ -65,7 +65,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
           if (provider.myProjects.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 60),
-              child: Center(child: Text('Tu ne fais partie d\'aucune équipe.', style: TextStyle(color: AppTheme.textMuted))),
+              child: Center(child: Text('Tu ne fais partie d\'aucune équipe.', style: TextStyle(color: context.palette.textMuted))),
             )
           else
             for (final p in provider.myProjects) ...[
@@ -78,7 +78,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
   }
 }
 
-(Color, Color) _statusColors(String status) {
+(Color, Color) _statusColors(BuildContext context, String status) {
   switch (status) {
     case 'active':
     case 'open':
@@ -88,7 +88,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
     case 'paused':
       return (const Color(0xFFFEF3C7), const Color(0xFFD97706));
     default:
-      return (AppTheme.slate100, const Color(0xFF475569));
+      return (context.palette.slate100, const Color(0xFF475569));
   }
 }
 
@@ -98,7 +98,7 @@ class _TeamCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg) = _statusColors(project.status);
+    final (bg, fg) = _statusColors(context, project.status);
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +119,7 @@ class _TeamCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(project.description,
                           maxLines: 2, overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                          style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
                     ],
                   ],
                 ),
@@ -130,7 +130,7 @@ class _TeamCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text('${project.members.length} membre${project.members.length > 1 ? 's' : ''}',
-              style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+              style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
           const SizedBox(height: 8),
           SizedBox(
             height: 34,
@@ -141,7 +141,7 @@ class _TeamCard extends StatelessWidget {
                     left: entry.key * 22.0,
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(color: AppTheme.surface, shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: context.palette.surface, shape: BoxShape.circle),
                       child: GradientAvatar(name: entry.value.fullName, size: 30),
                     ),
                   ),

@@ -48,7 +48,7 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
         Text('Choisis un de tes projets pour voir les profils les mieux classés.',
-            style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+            style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
         const SizedBox(height: 12),
         if (projects.loadingMine && projects.myProjects.isEmpty)
           const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
@@ -57,7 +57,7 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(projects.mineError!, style: TextStyle(color: AppTheme.textMuted)),
+                Text(projects.mineError!, style: TextStyle(color: context.palette.textMuted)),
                 const SizedBox(height: 8),
                 OutlinedButton(
                   onPressed: () => context.read<ProjectsProvider>().loadMine(),
@@ -69,7 +69,7 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
         else if (projects.myProjects.isEmpty)
           AppCard(
             child: Text('Crée d\'abord un projet pour trouver des coéquipiers.',
-                style: TextStyle(color: AppTheme.textMuted)),
+                style: TextStyle(color: context.palette.textMuted)),
           )
         else
           DropdownButtonFormField<int>(
@@ -84,24 +84,24 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
             },
           ),
         const SizedBox(height: 16),
-        ..._results(matching),
+        ..._results(context, matching),
       ],
     );
   }
 
-  List<Widget> _results(MatchingProvider matching) {
+  List<Widget> _results(BuildContext context, MatchingProvider matching) {
     if (matching.selectedProjectId == null) return const [];
     if (matching.loadingCandidates) {
       return const [Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))];
     }
     if (matching.candidatesError != null) {
-      return [Center(child: Text(matching.candidatesError!, style: TextStyle(color: AppTheme.textMuted)))];
+      return [Center(child: Text(matching.candidatesError!, style: TextStyle(color: context.palette.textMuted)))];
     }
     if (matching.candidates.isEmpty) {
       return [
         Padding(
           padding: const EdgeInsets.only(top: 40),
-          child: Center(child: Text('Aucun profil classé pour ce projet.', style: TextStyle(color: AppTheme.textMuted))),
+          child: Center(child: Text('Aucun profil classé pour ce projet.', style: TextStyle(color: context.palette.textMuted))),
         ),
       ];
     }
@@ -141,26 +141,26 @@ class _CandidateCard extends StatelessWidget {
                     if (user.email != null) ...[
                       const SizedBox(height: 2),
                       Text(user.email!,
-                          style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                          style: TextStyle(fontSize: 12, color: context.palette.textMuted),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                     ],
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              StatusPill(label: '$scorePct%', bg: AppTheme.itemHoverBg, fg: AppTheme.primaryHover),
+              StatusPill(label: '$scorePct%', bg: context.palette.itemHoverBg, fg: context.palette.primaryHover),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _matchChip('Compétences', user.skillMatch),
+              _matchChip(context, 'Compétences', user.skillMatch),
               const SizedBox(width: 8),
-              _matchChip('Intérêts', user.interestMatch),
+              _matchChip(context, 'Intérêts', user.interestMatch),
             ],
           ),
           const SizedBox(height: 12),
-          Divider(color: AppTheme.slate100, height: 1),
+          Divider(color: context.palette.slate100, height: 1),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -190,16 +190,16 @@ class _CandidateCard extends StatelessWidget {
     );
   }
 
-  Widget _matchChip(String label, double value) {
+  Widget _matchChip(BuildContext context, String label, double value) {
     final pct = (value * 100).clamp(0, 100).round();
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(color: AppTheme.slate100, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(10)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+            Text(label, style: TextStyle(fontSize: 11, color: context.palette.textMuted)),
             const SizedBox(height: 2),
             Text('$pct%', style: const TextStyle(fontWeight: FontWeight.w600)),
           ],

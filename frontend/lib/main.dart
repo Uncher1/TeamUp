@@ -69,25 +69,41 @@ class _TeamUpAppState extends State<TeamUpApp> {
         ChangeNotifierProvider(create: (_) => NotificationsProvider(_notificationsRepo)),
         ChangeNotifierProvider(create: (_) => SettingsProvider(_settingsRepo)),
       ],
-      child: MaterialApp(
-        title: 'TeamUp',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        // Keep a phone-width column on large screens (web/desktop): full width
-        // on real phones (<= 480), centered phone-width column beyond that.
-        builder: (context, child) => ColoredBox(
-          color: AppTheme.background,
-          child: Center(
-            child: ClipRect(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: child,
-              ),
+      child: const _Root(),
+    );
+  }
+}
+
+class _Root extends StatelessWidget {
+  const _Root();
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final authed =
+        context.watch<AuthProvider>().status == AuthStatus.authenticated;
+    final seed = settings.seedColor;
+    // Only honor the user's dark-mode choice while authenticated; the login
+    // screen always renders light.
+    final mode = authed ? settings.themeMode : ThemeMode.light;
+    return MaterialApp(
+      title: 'TeamUp',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.build(brightness: Brightness.light, seed: seed),
+      darkTheme: AppTheme.build(brightness: Brightness.dark, seed: seed),
+      themeMode: mode,
+      builder: (context, child) => ColoredBox(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: Center(
+          child: ClipRect(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: child,
             ),
           ),
         ),
-        home: const AuthGate(),
       ),
+      home: const AuthGate(),
     );
   }
 }

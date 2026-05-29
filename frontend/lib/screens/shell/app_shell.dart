@@ -107,14 +107,14 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(bottom: BorderSide(color: AppTheme.slate100)),
+        color: context.palette.surface,
+        border: Border(bottom: BorderSide(color: context.palette.slate100)),
       ),
       child: Row(
         children: [
           IconButton(
             icon: const Icon(Icons.menu),
-            color: AppTheme.textPrimary,
+            color: context.palette.textPrimary,
             onPressed: onMenu,
           ),
           const Spacer(),
@@ -124,7 +124,7 @@ class _Header extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
-                color: AppTheme.textPrimary,
+                color: context.palette.textPrimary,
                 onPressed: onBell,
               ),
               if (unread > 0)

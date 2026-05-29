@@ -1,8 +1,111 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Semantic colors that vary by brightness. Accent-ish colors (hovers, item
+/// highlights) are derived from the active seed so the chosen Theme Color
+/// flows through the whole app. Registered on [ThemeData.extensions].
+@immutable
+class AppPalette extends ThemeExtension<AppPalette> {
+  final Color background;
+  final Color surface;
+  final Color textPrimary;
+  final Color textMuted;
+  final Color slate100; // subtle fills / dividers
+  final Color slate200; // borders
+  final Color primaryHover; // darker accent (selected text/icons)
+  final Color itemHoverBg; // selected row background
+  final Color itemBorderHover; // selected icon chip background
+
+  const AppPalette({
+    required this.background,
+    required this.surface,
+    required this.textPrimary,
+    required this.textMuted,
+    required this.slate100,
+    required this.slate200,
+    required this.primaryHover,
+    required this.itemHoverBg,
+    required this.itemBorderHover,
+  });
+
+  factory AppPalette.from(Brightness brightness, Color seed) {
+    final dark = brightness == Brightness.dark;
+    return AppPalette(
+      background: dark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      surface: dark ? const Color(0xFF1E293B) : Colors.white,
+      textPrimary: dark ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A),
+      textMuted: dark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+      slate100: dark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+      slate200: dark ? const Color(0xFF475569) : const Color(0xFFE2E8F0),
+      primaryHover: dark ? _lighten(seed, 0.08) : _darken(seed, 0.08),
+      itemHoverBg: seed.withValues(alpha: dark ? 0.22 : 0.12),
+      itemBorderHover: seed.withValues(alpha: dark ? 0.45 : 0.30),
+    );
+  }
+
+  static Color _darken(Color c, double amount) {
+    final h = HSLColor.fromColor(c);
+    return h.withLightness((h.lightness - amount).clamp(0.0, 1.0)).toColor();
+  }
+
+  static Color _lighten(Color c, double amount) {
+    final h = HSLColor.fromColor(c);
+    return h.withLightness((h.lightness + amount).clamp(0.0, 1.0)).toColor();
+  }
+
+  @override
+  AppPalette copyWith({
+    Color? background,
+    Color? surface,
+    Color? textPrimary,
+    Color? textMuted,
+    Color? slate100,
+    Color? slate200,
+    Color? primaryHover,
+    Color? itemHoverBg,
+    Color? itemBorderHover,
+  }) {
+    return AppPalette(
+      background: background ?? this.background,
+      surface: surface ?? this.surface,
+      textPrimary: textPrimary ?? this.textPrimary,
+      textMuted: textMuted ?? this.textMuted,
+      slate100: slate100 ?? this.slate100,
+      slate200: slate200 ?? this.slate200,
+      primaryHover: primaryHover ?? this.primaryHover,
+      itemHoverBg: itemHoverBg ?? this.itemHoverBg,
+      itemBorderHover: itemBorderHover ?? this.itemBorderHover,
+    );
+  }
+
+  @override
+  AppPalette lerp(ThemeExtension<AppPalette>? other, double t) {
+    if (other is! AppPalette) return this;
+    return AppPalette(
+      background: Color.lerp(background, other.background, t)!,
+      surface: Color.lerp(surface, other.surface, t)!,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textMuted: Color.lerp(textMuted, other.textMuted, t)!,
+      slate100: Color.lerp(slate100, other.slate100, t)!,
+      slate200: Color.lerp(slate200, other.slate200, t)!,
+      primaryHover: Color.lerp(primaryHover, other.primaryHover, t)!,
+      itemHoverBg: Color.lerp(itemHoverBg, other.itemHoverBg, t)!,
+      itemBorderHover: Color.lerp(itemBorderHover, other.itemBorderHover, t)!,
+    );
+  }
+}
+
+/// Sugar so widgets read `context.palette.textMuted` etc.
+extension PaletteX on BuildContext {
+  AppPalette get palette => Theme.of(this).extension<AppPalette>()!;
+}
+
 /// TeamUp visual identity, ported from the React mockup.
 class AppTheme {
+  static const Color primary = Color(0xFF6366F1); // Indigo (default seed)
+  static const Color background = Color(0xFFF8FAFC); // light default (legacy const refs)
+  static const Color surface = Colors.white;
+
   /// Selectable accent colors (Theme Color screen). Name -> seed.
   static const Map<String, Color> themeColors = {
     'Indigo': Color(0xFF6366F1),
@@ -15,19 +118,7 @@ class AppTheme {
     'Slate': Color(0xFF64748B),
   };
 
-  static const Color primary = Color(0xFF6366F1); // Indigo
-  static const Color background = Color(0xFFF8FAFC);
-  static const Color surface = Colors.white;
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textMuted = Color(0xFF64748B);
-
-  static const Color primaryHover = Color(0xFF4F46E5);
-  static const Color itemHoverBg = Color(0xFFEEF2FF);
-  static const Color itemBorderHover = Color(0xFFC7D2FE);
-  static const Color slate100 = Color(0xFFF1F5F9);
-  static const Color slate200 = Color(0xFFE2E8F0);
-
-  // Gradient used by avatars (indigo-400 -> purple-500).
+  // Gradient used by avatars (indigo-400 -> purple-500) — brand, fixed in both modes.
   static const List<Color> avatarGradient = [Color(0xFF818CF8), Color(0xFFA855F7)];
 
   /// Returns (background, foreground) colors for a post/notification type badge.
@@ -46,15 +137,22 @@ class AppTheme {
     }
   }
 
-  static ThemeData get light {
+  /// Back-compat: the original light theme with the default indigo seed.
+  static ThemeData get light => build(brightness: Brightness.light, seed: primary);
+
+  static ThemeData build({required Brightness brightness, required Color seed}) {
+    final palette = AppPalette.from(brightness, seed);
     final base = ThemeData(
+      brightness: brightness,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
-        primary: primary,
-        surface: surface,
+        seedColor: seed,
+        primary: seed,
+        brightness: brightness,
+        surface: palette.surface,
       ),
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: palette.background,
       useMaterial3: true,
+      extensions: [palette],
     );
 
     final bodyFont = GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
@@ -70,53 +168,50 @@ class AppTheme {
         headlineSmall: headingFont.headlineSmall,
         titleLarge: headingFont.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         titleMedium: headingFont.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-      ),
+      ).apply(bodyColor: palette.textPrimary, displayColor: palette.textPrimary),
       appBarTheme: AppBarTheme(
-        backgroundColor: background,
-        foregroundColor: textPrimary,
+        backgroundColor: palette.background,
+        foregroundColor: palette.textPrimary,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: GoogleFonts.outfit(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: textPrimary,
+          color: palette.textPrimary,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: seed,
           foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        fillColor: palette.surface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: palette.slate200),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: palette.slate200),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: primary, width: 1.6),
+          borderSide: BorderSide(color: seed, width: 1.6),
         ),
       ),
       cardTheme: CardThemeData(
-        color: surface,
+        color: palette.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: Color(0xFFE2E8F0)),
+          side: BorderSide(color: palette.slate200),
         ),
       ),
     );
