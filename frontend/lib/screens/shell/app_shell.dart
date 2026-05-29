@@ -6,8 +6,13 @@ import '../../design_system/ds.dart';
 import '../../design_system/ds_placeholder.dart';
 import '../../design_system/menu_drawer.dart';
 import '../../providers/notifications_provider.dart';
+import '../chat/chat_screen.dart';
 import '../feed/home_feed_screen.dart';
 import '../notifications/notifications_inbox_screen.dart';
+import '../profile/profile_screen.dart';
+import '../projects/create_project_screen.dart';
+import '../teammates/find_teammates_screen.dart';
+import '../teams/my_teams_screen.dart';
 
 /// App shell faithful to the mockup: a top header (menu button, brand, bell)
 /// over a body that switches by [AppSection], with the hamburger [MenuDrawer].
@@ -47,13 +52,13 @@ class _AppShellState extends State<AppShell> {
       case AppSection.home:
         return const HomeFeedScreen();
       case AppSection.createProject:
-        return const DSPlaceholder(title: 'Create Project', icon: Icons.add_circle_outline);
+        return const CreateProjectScreen();
       case AppSection.findTeammates:
-        return const DSPlaceholder(title: 'Find Teammates', icon: Icons.search);
+        return const FindTeammatesScreen();
       case AppSection.myTeams:
-        return const DSPlaceholder(title: 'My Teams', icon: Icons.groups_outlined);
+        return const MyTeamsScreen();
       case AppSection.chat:
-        return const DSPlaceholder(title: 'Chat', icon: Icons.chat_bubble_outline);
+        return const ChatScreen();
       case AppSection.notifications:
         return const NotificationsInboxScreen();
       case AppSection.settings:
@@ -69,6 +74,9 @@ class _AppShellState extends State<AppShell> {
       drawer: MenuDrawer(
         current: _section,
         onSelect: (s) => setState(() => _section = s),
+        onProfileTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        ),
       ),
       body: SafeArea(
         child: Column(
