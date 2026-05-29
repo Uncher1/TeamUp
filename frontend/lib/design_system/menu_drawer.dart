@@ -1,0 +1,134 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../core/theme.dart';
+import '../providers/auth_provider.dart';
+import 'brand_header.dart';
+import 'gradient_avatar.dart';
+
+/// A drawer destination the shell can switch to.
+enum AppSection { home, createProject, findTeammates, myTeams, chat, notifications, settings }
+
+class _MenuEntry {
+  final AppSection section;
+  final IconData icon;
+  final String label;
+  const _MenuEntry(this.section, this.icon, this.label);
+}
+
+const _entries = <_MenuEntry>[
+  _MenuEntry(AppSection.home, Icons.home_outlined, 'Home Feed'),
+  _MenuEntry(AppSection.createProject, Icons.add_circle_outline, 'Create Project'),
+  _MenuEntry(AppSection.findTeammates, Icons.search, 'Find Teammates'),
+  _MenuEntry(AppSection.myTeams, Icons.groups_outlined, 'My Teams'),
+  _MenuEntry(AppSection.chat, Icons.chat_bubble_outline, 'Chat'),
+  _MenuEntry(AppSection.notifications, Icons.notifications_outlined, 'Notifications'),
+  _MenuEntry(AppSection.settings, Icons.settings_outlined, 'Settings'),
+];
+
+/// Hamburger drawer faithful to the mockup: brand header, profile row, 7 items.
+class MenuDrawer extends StatelessWidget {
+  final AppSection current;
+  final ValueChanged<AppSection> onSelect;
+  const MenuDrawer({super.key, required this.current, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    return Drawer(
+      backgroundColor: AppTheme.surface,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: BrandHeader(),
+            ),
+            if (user != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                child: Row(
+                  children: [
+                    GradientAvatar(name: user.fullName, size: 40),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(user.fullName,
+                              style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text(user.email,
+                              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                              overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Divider(color: AppTheme.slate100, height: 1),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                children: [
+                  for (final e in _entries) _item(context, e),
+                ],
+              ),
+            ),
+            Divider(color: AppTheme.slate100, height: 1),
+            ListTile(
+              leading: const Icon(Icons.logout, color: AppTheme.textMuted),
+              title: const Text('Se déconnecter'),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.read<AuthProvider>().logout();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _item(BuildContext context, _MenuEntry e) {
+    final selected = e.section == current;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Material(
+        color: selected ? AppTheme.itemHoverBg : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            Navigator.of(context).pop();
+            onSelect(e.section);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? AppTheme.itemBorderHover : AppTheme.slate100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(e.icon,
+                      size: 20, color: selected ? AppTheme.primaryHover : AppTheme.textMuted),
+                ),
+                const SizedBox(width: 16),
+                Text(e.label,
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: selected ? AppTheme.primaryHover : AppTheme.textPrimary)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
