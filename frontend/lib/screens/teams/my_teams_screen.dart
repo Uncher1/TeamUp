@@ -132,15 +132,21 @@ class _TeamCard extends StatelessWidget {
           Text('${project.members.length} membre${project.members.length > 1 ? 's' : ''}',
               style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: -10,
-            children: [
-              for (final m in project.members.take(5))
-                Padding(
-                  padding: const EdgeInsets.only(right: 0),
-                  child: GradientAvatar(name: m.fullName, size: 32),
-                ),
-            ],
+          SizedBox(
+            height: 34,
+            child: Stack(
+              children: [
+                for (final entry in project.members.take(5).toList().asMap().entries)
+                  Positioned(
+                    left: entry.key * 22.0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(color: AppTheme.surface, shape: BoxShape.circle),
+                      child: GradientAvatar(name: entry.value.fullName, size: 30),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

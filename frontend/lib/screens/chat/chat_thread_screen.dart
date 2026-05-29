@@ -113,10 +113,23 @@ class _Bubble extends StatelessWidget {
               ),
             Text(message.content,
                 style: TextStyle(color: mine ? Colors.white : AppTheme.textPrimary, height: 1.3)),
+            const SizedBox(height: 3),
+            Text(
+              _hm(message.createdAt),
+              style: TextStyle(
+                fontSize: 10,
+                color: mine ? Colors.white70 : AppTheme.textMuted,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  static String _hm(DateTime t) {
+    final tl = t.toLocal();
+    return '${tl.hour.toString().padLeft(2, '0')}:${tl.minute.toString().padLeft(2, '0')}';
   }
 }
 
