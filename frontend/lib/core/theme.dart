@@ -3,6 +3,18 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// TeamUp visual identity, ported from the React mockup.
 class AppTheme {
+  /// Selectable accent colors (Theme Color screen). Name -> seed.
+  static const Map<String, Color> themeColors = {
+    'Indigo': Color(0xFF6366F1),
+    'Blue': Color(0xFF3B82F6),
+    'Emerald': Color(0xFF10B981),
+    'Rose': Color(0xFFF43F5E),
+    'Amber': Color(0xFFF59E0B),
+    'Purple': Color(0xFF8B5CF6),
+    'Cyan': Color(0xFF06B6D4),
+    'Slate': Color(0xFF64748B),
+  };
+
   static const Color primary = Color(0xFF6366F1); // Indigo
   static const Color background = Color(0xFFF8FAFC);
   static const Color surface = Colors.white;
