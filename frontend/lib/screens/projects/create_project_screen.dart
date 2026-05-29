@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/interest.dart';
@@ -68,11 +69,11 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Projet créé')),
       );
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Échec de la création')),
+        SnackBar(content: Text(ApiClient.messageFromError(e))),
       );
     }
   }
