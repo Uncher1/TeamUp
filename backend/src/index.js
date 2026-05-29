@@ -18,6 +18,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/users',         require('./routes/users'));
 app.use('/api/projects',      require('./routes/projects'));
+app.use('/api/posts',         require('./routes/posts'));
 app.use('/api/matching',      require('./routes/matching'));
 app.use('/api/conversations', require('./routes/conversations'));
 app.use('/api',               require('./routes/lookup'));
