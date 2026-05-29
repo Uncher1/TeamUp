@@ -1,6 +1,8 @@
 const { Server } = require('socket.io');
 const { verify } = require('./utils/jwt');
 const { userInConversation, createMessage } = require('./services/chat');
+const pool = require('./config/db');
+const { notifyNewMessage } = require('./services/notifications');
 
 /**
  * Attaches a Socket.IO server to an existing HTTP server.
@@ -31,6 +33,8 @@ function initSocket(server) {
   });
 
   io.on('connection', (socket) => {
+    socket.join(`user:${socket.userId}`);
+
     socket.on('conversation:join', async (conversationId, ack) => {
       const id = Number(conversationId);
       if (!id) return typeof ack === 'function' && ack({ error: 'invalid conversation id' });
@@ -58,6 +62,7 @@ function initSocket(server) {
           payload?.content
         );
         io.to(`conversation:${msg.conversation_id}`).emit('message:new', msg);
+        await notifyNewMessage(io, msg, socket.userId);
         if (typeof ack === 'function') ack({ ok: true, message: msg });
       } catch (e) {
         if (typeof ack === 'function') ack({ error: e.message || 'send failed' });
