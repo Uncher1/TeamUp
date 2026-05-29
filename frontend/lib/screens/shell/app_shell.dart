@@ -3,14 +3,15 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
-import '../../design_system/ds_placeholder.dart';
 import '../../design_system/menu_drawer.dart';
 import '../../providers/notifications_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../chat/chat_screen.dart';
 import '../feed/home_feed_screen.dart';
 import '../notifications/notifications_inbox_screen.dart';
 import '../profile/profile_screen.dart';
 import '../projects/create_project_screen.dart';
+import '../settings/settings_screen.dart';
 import '../teammates/find_teammates_screen.dart';
 import '../teams/my_teams_screen.dart';
 
@@ -32,6 +33,7 @@ class _AppShellState extends State<AppShell> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NotificationsProvider>().refreshUnread();
+      context.read<SettingsProvider>().load();
     });
   }
 
@@ -62,7 +64,7 @@ class _AppShellState extends State<AppShell> {
       case AppSection.notifications:
         return const NotificationsInboxScreen();
       case AppSection.settings:
-        return const DSPlaceholder(title: 'Settings', icon: Icons.settings_outlined);
+        return const SettingsScreen();
     }
   }
 
