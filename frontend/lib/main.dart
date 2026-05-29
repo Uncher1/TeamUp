@@ -6,13 +6,17 @@ import 'core/storage.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/feed_provider.dart';
 import 'providers/lookup_provider.dart';
 import 'providers/matching_provider.dart';
+import 'providers/notifications_provider.dart';
 import 'providers/projects_provider.dart';
 import 'repositories/auth_repo.dart';
 import 'repositories/chat_repo.dart';
+import 'repositories/feed_repo.dart';
 import 'repositories/lookup_repo.dart';
 import 'repositories/matching_repo.dart';
+import 'repositories/notifications_repo.dart';
 import 'repositories/project_repo.dart';
 import 'repositories/user_repo.dart';
 import 'screens/auth/login_screen.dart';
@@ -36,6 +40,8 @@ class _TeamUpAppState extends State<TeamUpApp> {
   late final LookupRepository _lookupRepo = LookupRepository(_api);
   late final MatchingRepository _matchingRepo = MatchingRepository(_api);
   late final ChatRepository _chatRepo = ChatRepository(_api);
+  late final FeedRepository _feedRepo = FeedRepository(_api);
+  late final NotificationsRepository _notificationsRepo = NotificationsRepository(_api);
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +61,8 @@ class _TeamUpAppState extends State<TeamUpApp> {
         ChangeNotifierProvider(create: (_) => LookupProvider(_lookupRepo)),
         ChangeNotifierProvider(create: (_) => MatchingProvider(_matchingRepo)),
         ChangeNotifierProvider(create: (_) => ChatProvider(_chatRepo, _storage)),
+        ChangeNotifierProvider(create: (_) => FeedProvider(_feedRepo)),
+        ChangeNotifierProvider(create: (_) => NotificationsProvider(_notificationsRepo)),
       ],
       child: MaterialApp(
         title: 'TeamUp',
