@@ -6,3 +6,4 @@ export 'screen_header.dart';
 export 'section_label.dart';
 export 'status_pill.dart';
 export 'type_badge.dart';
+export 'settings_widgets.dart';
