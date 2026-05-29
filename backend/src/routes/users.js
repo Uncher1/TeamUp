@@ -1,6 +1,8 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
+const { hash, verify } = require('../utils/password');
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const router = express.Router();
 
@@ -32,7 +34,14 @@ router.get('/me', authRequired, async (req, res) => {
 });
 
 router.patch('/me', authRequired, async (req, res) => {
-  const { full_name, bio, avatar_url } = req.body || {};
+  const { full_name, bio, avatar_url, email } = req.body || {};
+  if (email !== undefined) {
+    const normalized = String(email).trim().toLowerCase();
+    if (!EMAIL_RE.test(normalized)) return res.status(400).json({ error: 'invalid email format' });
+    const [dup] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ?', [normalized, req.user.id]);
+    if (dup.length) return res.status(409).json({ error: 'email already in use' });
+    await pool.query('UPDATE users SET email = ? WHERE id = ?', [normalized, req.user.id]);
+  }
   await pool.query(
     `UPDATE users SET
         full_name  = COALESCE(?, full_name),
@@ -89,6 +98,62 @@ router.put('/me/interests', authRequired, async (req, res) => {
     conn.release();
   }
   res.json(await loadProfile(req.user.id));
+});
+
+router.put('/me/password', authRequired, async (req, res) => {
+  const current = req.body?.current_password ?? '';
+  const next = req.body?.new_password ?? '';
+  if (next.length < 8) return res.status(400).json({ error: 'new password must be at least 8 characters' });
+  const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+  if (!rows.length) return res.status(404).json({ error: 'user not found' });
+  if (!(await verify(current, rows[0].password_hash))) {
+    return res.status(401).json({ error: 'current password is incorrect' });
+  }
+  await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [await hash(next), req.user.id]);
+  res.json({ ok: true });
+});
+
+router.delete('/me', authRequired, async (req, res) => {
+  await pool.query('DELETE FROM users WHERE id = ?', [req.user.id]);
+  res.json({ deleted: true });
+});
+
+router.get('/me/settings', authRequired, async (req, res) => {
+  const [rows] = await pool.query(
+    'SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?',
+    [req.user.id]
+  );
+  const out = {};
+  for (const r of rows) out[r.setting_key] = r.setting_value;
+  res.json(out);
+});
+
+router.put('/me/settings', authRequired, async (req, res) => {
+  const body = (req.body && typeof req.body === 'object' && !Array.isArray(req.body)) ? req.body : {};
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    for (const [k, v] of Object.entries(body)) {
+      await conn.query(
+        `INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES (?, ?, ?)
+           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+        [req.user.id, String(k).slice(0, 60), String(v).slice(0, 255)]
+      );
+    }
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+  const [rows] = await pool.query(
+    'SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?',
+    [req.user.id]
+  );
+  const out = {};
+  for (const r of rows) out[r.setting_key] = r.setting_value;
+  res.json(out);
 });
 
 router.get('/:id', authRequired, async (req, res) => {
