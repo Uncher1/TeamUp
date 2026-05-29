@@ -21,6 +21,7 @@ app.use('/api/projects',      require('./routes/projects'));
 app.use('/api/posts',         require('./routes/posts'));
 app.use('/api/matching',      require('./routes/matching'));
 app.use('/api/conversations', require('./routes/conversations'));
+app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api',               require('./routes/lookup'));
 
 app.use((err, _req, res, _next) => {
