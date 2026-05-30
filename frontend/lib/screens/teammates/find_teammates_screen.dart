@@ -92,16 +92,17 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
   List<Widget> _results(BuildContext context, MatchingProvider matching) {
     if (matching.selectedProjectId == null) return const [];
     if (matching.loadingCandidates) {
-      return const [Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))];
+      return const [SkeletonList()];
     }
     if (matching.candidatesError != null) {
       return [Center(child: Text(matching.candidatesError!, style: TextStyle(color: context.palette.textMuted)))];
     }
     if (matching.candidates.isEmpty) {
-      return [
-        Padding(
-          padding: const EdgeInsets.only(top: 40),
-          child: Center(child: Text('Aucun profil classé pour ce projet.', style: TextStyle(color: context.palette.textMuted))),
+      return const [
+        EmptyState(
+          icon: Icons.person_search_outlined,
+          title: 'Aucun coéquipier trouvé',
+          subtitle: 'Aucun profil ne correspond encore aux compétences de ce projet.',
         ),
       ];
     }

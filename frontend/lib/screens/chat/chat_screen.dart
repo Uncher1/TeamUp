@@ -33,7 +33,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<ChatProvider>();
     if (provider.loadingConvs && provider.conversations.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const SingleChildScrollView(child: SkeletonList());
     }
     if (provider.convError != null && provider.conversations.isEmpty) {
       return ListView(children: [
@@ -46,12 +46,11 @@ class _ChatScreenState extends State<ChatScreen> {
       ]);
     }
     if (provider.conversations.isEmpty) {
-      return ListView(children: [
-        const SizedBox(height: 120),
-        Icon(Icons.forum_outlined, size: 56, color: context.palette.textMuted.withValues(alpha: 0.6)),
-        const SizedBox(height: 12),
-        Center(child: Text('Aucune conversation', style: TextStyle(color: context.palette.textMuted))),
-      ]);
+      return const EmptyState(
+        icon: Icons.forum_outlined,
+        title: 'Aucune conversation',
+        subtitle: 'Lance une discussion depuis un profil ou un projet.',
+      );
     }
     return RefreshIndicator(
       onRefresh: () => context.read<ChatProvider>().loadConversations(),

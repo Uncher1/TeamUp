@@ -49,7 +49,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
 
   Widget _body(FeedProvider provider) {
     if (provider.loading && provider.posts.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const SingleChildScrollView(child: SkeletonList());
     }
     if (provider.error != null && provider.posts.isEmpty) {
       return ListView(children: [
@@ -67,9 +67,10 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         _QuickPostBar(onTap: _openComposer),
         const SizedBox(height: 12),
         if (provider.posts.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 80),
-            child: Center(child: Text('Aucun post pour le moment.', style: TextStyle(color: context.palette.textMuted))),
+          EmptyState(
+            icon: Icons.dynamic_feed_outlined,
+            title: 'Aucun post pour l\'instant',
+            subtitle: 'Sois le premier à partager quelque chose avec ta communauté.',
           )
         else
           for (final p in provider.posts) ...[

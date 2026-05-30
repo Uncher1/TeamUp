@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
+import '../../design_system/ds.dart';
 import '../../models/app_notification.dart';
 import '../../providers/notifications_provider.dart';
 
@@ -47,7 +48,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
 
   Widget _body(NotificationsProvider provider) {
     if (provider.loading && provider.items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const SingleChildScrollView(child: SkeletonList());
     }
     if (provider.error != null && provider.items.isEmpty) {
       return ListView(children: [
@@ -60,12 +61,11 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
       ]);
     }
     if (provider.items.isEmpty) {
-      return ListView(children: [
-        const SizedBox(height: 120),
-        Icon(Icons.notifications_none_rounded, size: 56, color: context.palette.textMuted.withValues(alpha: 0.6)),
-        const SizedBox(height: 12),
-        Center(child: Text('Aucune notification', style: TextStyle(color: context.palette.textMuted))),
-      ]);
+      return const EmptyState(
+        icon: Icons.notifications_none,
+        title: 'Aucune notification',
+        subtitle: 'Tes notifications apparaîtront ici.',
+      );
     }
     return RefreshIndicator(
       onRefresh: () => context.read<NotificationsProvider>().load(),

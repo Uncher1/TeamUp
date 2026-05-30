@@ -26,7 +26,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<ProjectsProvider>();
     if (provider.loadingMine && provider.myProjects.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const SingleChildScrollView(child: SkeletonList());
     }
     if (provider.mineError != null && provider.myProjects.isEmpty) {
       return ListView(children: [
@@ -63,9 +63,10 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
           ),
           const SizedBox(height: 16),
           if (provider.myProjects.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 60),
-              child: Center(child: Text('Tu ne fais partie d\'aucune équipe.', style: TextStyle(color: context.palette.textMuted))),
+            const EmptyState(
+              icon: Icons.groups_2_outlined,
+              title: 'Aucune équipe',
+              subtitle: 'Crée un projet ou rejoins une équipe pour commencer.',
             )
           else
             for (final p in provider.myProjects) ...[
