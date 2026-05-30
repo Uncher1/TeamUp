@@ -32,6 +32,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _googleSoon() => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La connexion avec Google arrive bientôt.')),
+      );
+
   @override
   Widget build(BuildContext context) {
     final busy = context.watch<AuthProvider>().busy;
@@ -71,6 +75,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Text('Se connecter'),
                   ),
+                  const SizedBox(height: 16),
+                  const OrDivider(),
+                  const SizedBox(height: 16),
+                  GoogleAuthButton(onPressed: busy ? () {} : _googleSoon),
                   const SizedBox(height: 12),
                   Center(
                     child: TextButton(
