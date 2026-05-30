@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/user.dart';
@@ -18,7 +19,7 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           children: [
             ScreenHeader(
-              title: 'Profil',
+              title: context.tr('prof.title'),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
@@ -60,7 +61,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     if (user.bio != null && user.bio!.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      const SectionLabel('À propos'),
+                      SectionLabel(context.tr('prof.about')),
                       const SizedBox(height: 8),
                       Text(user.bio!, style: const TextStyle(height: 1.4)),
                     ],
@@ -68,7 +69,7 @@ class ProfileScreen extends StatelessWidget {
                     // ── Info block (academic + contact) ──────────────────
                     if (_hasInfoFields(user)) ...[
                       const SizedBox(height: 20),
-                      const SectionLabel('Informations'),
+                      SectionLabel(context.tr('prof.info')),
                       const SizedBox(height: 8),
                       AppCard(
                         child: Column(
@@ -91,7 +92,7 @@ class ProfileScreen extends StatelessWidget {
                     // ── Social links ─────────────────────────────────────
                     if (_hasSocialFields(user)) ...[
                       const SizedBox(height: 20),
-                      const SectionLabel('Liens'),
+                      SectionLabel(context.tr('prof.links')),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -121,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
                           if (user.website != null && user.website!.isNotEmpty)
                             _SocialChip(
                               icon: Icons.link,
-                              label: 'Site web',
+                              label: context.tr('help.website'),
                               value: user.website!,
                               context: context,
                             ),
@@ -130,10 +131,10 @@ class ProfileScreen extends StatelessWidget {
                     ],
 
                     const SizedBox(height: 20),
-                    const SectionLabel('Compétences'),
+                    SectionLabel(context.tr('cp.skills')),
                     const SizedBox(height: 8),
                     if (user.skills.isEmpty)
-                      Text('Aucune compétence renseignée.', style: TextStyle(color: context.palette.textMuted))
+                      Text(context.tr('prof.noSkills'), style: TextStyle(color: context.palette.textMuted))
                     else
                       Wrap(
                         spacing: 8,
@@ -144,10 +145,10 @@ class ProfileScreen extends StatelessWidget {
                         ],
                       ),
                     const SizedBox(height: 20),
-                    const SectionLabel('Thématiques'),
+                    SectionLabel(context.tr('proj.themes')),
                     const SizedBox(height: 8),
                     if (user.interests.isEmpty)
-                      Text('Aucune thématique renseignée.', style: TextStyle(color: context.palette.textMuted))
+                      Text(context.tr('prof.noThemes'), style: TextStyle(color: context.palette.textMuted))
                     else
                       Wrap(
                         spacing: 8,

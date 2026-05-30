@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/skill.dart';
@@ -115,6 +116,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final auth = context.read<AuthProvider>();
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final savedMsg = context.tr('ep.saved');
     try {
       await repo.updateProfile(
         fullName: _name.text.trim(),
@@ -137,7 +139,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final updated = await repo.setInterests(_interests.toList());
       auth.setUser(updated);
       if (!mounted) return;
-      messenger.showSnackBar(const SnackBar(content: Text('Profil mis à jour')));
+      messenger.showSnackBar(SnackBar(content: Text(savedMsg)));
       navigator.pop();
     } catch (e) {
       if (!mounted) return;
@@ -159,13 +161,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           children: [
             ScreenHeader(
-              title: 'Modifier le profil',
+              title: context.tr('ep.title'),
               actions: [
                 TextButton(
                   onPressed: _busy ? null : _save,
                   child: _busy
                       ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Enregistrer'),
+                      : Text(context.tr('common.save')),
                 ),
               ],
             ),
@@ -188,7 +190,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: _pickAvatar,
-                          child: const Text('Changer la photo'),
+                          child: Text(context.tr('ep.changePhoto')),
                         ),
                         if (hasPhoto)
                           TextButton(
@@ -197,76 +199,76 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               foregroundColor: context.palette.textMuted,
                               textStyle: const TextStyle(fontSize: 12),
                             ),
-                            child: const Text('Retirer'),
+                            child: Text(context.tr('ep.remove')),
                           ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 12),
 
-                  const SectionLabel('Informations'),
+                  SectionLabel(context.tr('prof.info')),
                   const SizedBox(height: 10),
-                  TextField(controller: _name, decoration: const InputDecoration(labelText: 'Nom complet')),
+                  TextField(controller: _name, decoration: InputDecoration(labelText: context.tr('register.fullName'))),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _bio,
                     minLines: 3,
                     maxLines: 6,
-                    decoration: const InputDecoration(labelText: 'Bio', alignLabelWithHint: true),
+                    decoration: InputDecoration(labelText: context.tr('cp.bio'), alignLabelWithHint: true),
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Coordonnées ──────────────────────────────────────────
-                  const SectionLabel('Coordonnées'),
+                  // ── Contact ──────────────────────────────────────────────
+                  SectionLabel(context.tr('ep.contact')),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _phone,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Téléphone',
-                      prefixIcon: Icon(Icons.phone_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.tr('ep.phone'),
+                      prefixIcon: const Icon(Icons.phone_outlined),
                     ),
                   ),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _location,
-                    decoration: const InputDecoration(
-                      labelText: 'Localisation',
-                      prefixIcon: Icon(Icons.location_on_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.tr('ep.location'),
+                      prefixIcon: const Icon(Icons.location_on_outlined),
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Académique ───────────────────────────────────────────
-                  const SectionLabel('Académique'),
+                  // ── Academic ─────────────────────────────────────────────
+                  SectionLabel(context.tr('ep.academic')),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _school,
-                    decoration: const InputDecoration(
-                      labelText: 'École',
-                      prefixIcon: Icon(Icons.school_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.tr('cp.school'),
+                      prefixIcon: const Icon(Icons.school_outlined),
                     ),
                   ),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _department,
-                    decoration: const InputDecoration(
-                      labelText: 'Filière',
-                      prefixIcon: Icon(Icons.account_tree_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.tr('ep.department'),
+                      prefixIcon: const Icon(Icons.account_tree_outlined),
                     ),
                   ),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _studyYear,
-                    decoration: const InputDecoration(
-                      labelText: 'Année',
-                      prefixIcon: Icon(Icons.calendar_today_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.tr('ep.year'),
+                      prefixIcon: const Icon(Icons.calendar_today_outlined),
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Liens ────────────────────────────────────────────────
-                  const SectionLabel('Liens'),
+                  // ── Links ─────────────────────────────────────────────────
+                  SectionLabel(context.tr('prof.links')),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _github,
@@ -295,17 +297,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   TextField(
                     controller: _website,
                     keyboardType: TextInputType.url,
-                    decoration: const InputDecoration(
-                      labelText: 'Site web',
-                      prefixIcon: Icon(Icons.link),
+                    decoration: InputDecoration(
+                      labelText: context.tr('help.website'),
+                      prefixIcon: const Icon(Icons.link),
                     ),
                   ),
                   const SizedBox(height: 20),
 
                   // ── Compétences ──────────────────────────────────────────
-                  const SectionLabel('Compétences'),
+                  SectionLabel(context.tr('cp.skills')),
                   const SizedBox(height: 4),
-                  Text('Touche pour ajouter ; règle ton niveau (1–5).',
+                  Text(context.tr('cp.skillsHint'),
                       style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
                   const SizedBox(height: 10),
                   if (lookup.loading)
@@ -319,7 +321,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       onLevel: (id, lv) => setState(() => _skills[id] = lv),
                     ),
                   const SizedBox(height: 20),
-                  const SectionLabel('Thématiques'),
+                  SectionLabel(context.tr('proj.themes')),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,

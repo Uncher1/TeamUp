@@ -357,6 +357,26 @@ const Map<String, Map<String, String>> _strings = {
     // Notifications inbox
     'ninbox.markAll': 'Mark all as read',
     'ninbox.emptySub': 'Your notifications will appear here.',
+
+    // Profile
+    'prof.title': 'Profile',
+    'prof.about': 'About',
+    'prof.info': 'Information',
+    'prof.links': 'Links',
+    'prof.noSkills': 'No skills listed.',
+    'prof.noThemes': 'No topics listed.',
+
+    // Edit profile
+    'ep.title': 'Edit profile',
+    'ep.changePhoto': 'Change photo',
+    'ep.remove': 'Remove',
+    'ep.contact': 'Contact',
+    'ep.phone': 'Phone',
+    'ep.location': 'Location',
+    'ep.academic': 'Academic',
+    'ep.department': 'Field of study',
+    'ep.year': 'Year',
+    'ep.saved': 'Profile updated',
   },
   'fr': {
     // Common
@@ -702,6 +722,26 @@ const Map<String, Map<String, String>> _strings = {
     // Notifications inbox
     'ninbox.markAll': 'Tout marquer lu',
     'ninbox.emptySub': 'Tes notifications apparaîtront ici.',
+
+    // Profile
+    'prof.title': 'Profil',
+    'prof.about': 'À propos',
+    'prof.info': 'Informations',
+    'prof.links': 'Liens',
+    'prof.noSkills': 'Aucune compétence renseignée.',
+    'prof.noThemes': 'Aucune thématique renseignée.',
+
+    // Edit profile
+    'ep.title': 'Modifier le profil',
+    'ep.changePhoto': 'Changer la photo',
+    'ep.remove': 'Retirer',
+    'ep.contact': 'Coordonnées',
+    'ep.phone': 'Téléphone',
+    'ep.location': 'Localisation',
+    'ep.academic': 'Académique',
+    'ep.department': 'Filière',
+    'ep.year': 'Année',
+    'ep.saved': 'Profil mis à jour',
   },
 };
 
