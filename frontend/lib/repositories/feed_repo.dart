@@ -5,8 +5,10 @@ class FeedRepository {
   final ApiClient api;
   FeedRepository(this.api);
 
-  Future<List<Post>> list() async {
-    final res = await api.dio.get('/posts');
+  Future<List<Post>> list({int? before, int limit = 50}) async {
+    final Map<String, dynamic> qp = {'limit': limit};
+    if (before != null) qp['before'] = before;
+    final res = await api.dio.get('/posts', queryParameters: qp);
     return (res.data as List).map((e) => Post.fromJson(e as Map<String, dynamic>)).toList();
   }
 

@@ -15,12 +15,29 @@ class HomeFeedScreen extends StatefulWidget {
 }
 
 class _HomeFeedScreenState extends State<HomeFeedScreen> {
+  late final ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<FeedProvider>().load();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final pos = _scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 300) {
+      context.read<FeedProvider>().loadMore();
+    }
   }
 
   Future<void> _openComposer() async {
@@ -61,24 +78,57 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         Center(child: OutlinedButton(onPressed: () => context.read<FeedProvider>().load(), child: const Text('Réessayer'))),
       ]);
     }
-    return ListView(
+
+    final hasPosts = provider.posts.isNotEmpty;
+    // Item count: header bar + (posts * 2 items each with spacer) + optional footer
+    // We use a flat children list instead of itemBuilder for simplicity, same as before,
+    // but switch to ListView.builder for the scroll controller to attach properly.
+    final postItems = hasPosts ? provider.posts : <Post>[];
+    // Build item count: 1 (quick post bar) + 1 (spacer) + posts*2 (card + spacer) + 1 empty/footer
+    final baseCount = 2 + (hasPosts ? postItems.length * 2 : 1);
+    final showFooter = hasPosts && (provider.loadingMore || !provider.hasMore);
+    final itemCount = baseCount + (showFooter ? 1 : 0);
+
+    return ListView.builder(
+      controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      children: [
-        _QuickPostBar(onTap: _openComposer),
-        const SizedBox(height: 12),
-        if (provider.posts.isEmpty)
-          EmptyState(
-            icon: Icons.dynamic_feed_outlined,
-            title: 'Aucun post pour l\'instant',
-            subtitle: 'Sois le premier à partager quelque chose avec ta communauté.',
-          )
-        else
-          for (final p in provider.posts) ...[
-            _PostCard(post: p, onLike: () => context.read<FeedProvider>().toggleLike(p)),
-            const SizedBox(height: 12),
-          ],
-      ],
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        // index 0: quick post bar
+        if (index == 0) return _QuickPostBar(onTap: _openComposer);
+        // index 1: spacer after bar
+        if (index == 1) {
+          if (!hasPosts) {
+            return EmptyState(
+              icon: Icons.dynamic_feed_outlined,
+              title: 'Aucun post pour l\'instant',
+              subtitle: 'Sois le premier à partager quelque chose avec ta communauté.',
+            );
+          }
+          return const SizedBox(height: 12);
+        }
+        // posts start at index 2
+        if (hasPosts) {
+          final postIndex = index - 2;
+          final cardIndex = postIndex ~/ 2;
+          final isSpacer = postIndex.isOdd;
+          if (cardIndex < postItems.length) {
+            if (isSpacer) return const SizedBox(height: 12);
+            final p = postItems[cardIndex];
+            return _PostCard(post: p, onLike: () => context.read<FeedProvider>().toggleLike(p));
+          }
+        }
+        // Footer: loading more indicator or end marker
+        if (provider.loadingMore) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+          );
+        }
+        // !hasMore — minimal end marker
+        return const SizedBox.shrink();
+      },
     );
   }
 }

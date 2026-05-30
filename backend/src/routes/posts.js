@@ -17,9 +17,12 @@ const FEED_SELECT = `
 
 router.get('/', authRequired, async (req, res) => {
   const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+  const before = Number(req.query.before) || null;
+  const where = before ? 'WHERE p.id < ?' : '';
+  const params = before ? [req.user.id, before, limit] : [req.user.id, limit];
   const [rows] = await pool.query(
-    `${FEED_SELECT} ORDER BY p.created_at DESC LIMIT ?`,
-    [req.user.id, limit]
+    `${FEED_SELECT} ${where} ORDER BY p.created_at DESC, p.id DESC LIMIT ?`,
+    params
   );
   res.json(rows.map(r => ({ ...r, liked_by_me: !!r.liked_by_me })));
 });
