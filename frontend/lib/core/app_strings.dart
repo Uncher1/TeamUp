@@ -160,6 +160,32 @@ const Map<String, Map<String, String>> _strings = {
     'time.min': '{n} min ago',
     'time.hour': '{n} h ago',
     'time.day': '{n} d ago',
+
+    // About
+    'about.users': 'Users',
+    'about.projects': 'Projects',
+    'about.schools': 'Schools',
+    'about.desc': 'TeamUp is a student social network that helps students collaborate on projects, find teammates with complementary skills, and build together.',
+    'about.madeBy': 'Made with ❤️ by',
+    'about.copyright': '© 2026 — Student project',
+
+    // Theme color
+    'theme.choose': 'Choose a color',
+    'theme.note': 'The theme color applies to buttons, links and accent elements across the app.',
+    'theme.active': 'Active',
+
+    // Delete account
+    'del.warnTitle': 'This action is irreversible',
+    'del.warnBody': 'Deleting your account will permanently erase all your data, projects and memberships.',
+    'del.whatTitle': 'What will be deleted',
+    'del.item1': 'Your profile and personal data',
+    'del.item2': 'All your projects',
+    'del.item3': 'Your team memberships',
+    'del.item4': 'Messages and conversations',
+    'del.confirm': 'I understand this action is irreversible and all my data will be deleted.',
+    'del.cta': 'Delete my account',
+    'del.dialogTitle': 'Delete account?',
+    'del.dialogBody': 'This action is irreversible. All your data will be permanently deleted.',
   },
   'fr': {
     // Common
@@ -308,6 +334,32 @@ const Map<String, Map<String, String>> _strings = {
     'time.min': 'il y a {n} min',
     'time.hour': 'il y a {n} h',
     'time.day': 'il y a {n} j',
+
+    // About
+    'about.users': 'Utilisateurs',
+    'about.projects': 'Projets',
+    'about.schools': 'Écoles',
+    'about.desc': 'TeamUp est un réseau social étudiant qui aide les étudiants à collaborer sur des projets, à trouver des coéquipiers aux compétences complémentaires et à construire ensemble.',
+    'about.madeBy': 'Fait avec ❤️ par',
+    'about.copyright': '© 2026 — Projet étudiant',
+
+    // Theme color
+    'theme.choose': 'Choisir une couleur',
+    'theme.note': "La couleur du thème s'applique aux boutons, liens et éléments d'accent de toute l'app.",
+    'theme.active': 'Actif',
+
+    // Delete account
+    'del.warnTitle': 'Cette action est irréversible',
+    'del.warnBody': 'La suppression de ton compte effacera définitivement toutes tes données, projets et adhésions.',
+    'del.whatTitle': 'Ce qui sera supprimé',
+    'del.item1': 'Ton profil et tes données personnelles',
+    'del.item2': 'Tous tes projets',
+    'del.item3': 'Tes adhésions aux équipes',
+    'del.item4': 'Messages et conversations',
+    'del.confirm': 'Je comprends que cette action est irréversible et que toutes mes données seront supprimées.',
+    'del.cta': 'Supprimer mon compte',
+    'del.dialogTitle': 'Supprimer le compte ?',
+    'del.dialogBody': 'Cette action est irréversible. Toutes tes données seront définitivement supprimées.',
   },
 };
 

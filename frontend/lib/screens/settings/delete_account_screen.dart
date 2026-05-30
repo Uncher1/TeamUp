@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
@@ -19,10 +20,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   bool _busy = false;
 
   static const _items = [
-    (Icons.person_outline, 'Ton profil et tes données personnelles'),
-    (Icons.work_outline, 'Tous tes projets'),
-    (Icons.groups_outlined, 'Tes adhésions aux équipes'),
-    (Icons.chat_bubble_outline, 'Messages et conversations'),
+    (Icons.person_outline, 'del.item1'),
+    (Icons.work_outline, 'del.item2'),
+    (Icons.groups_outlined, 'del.item3'),
+    (Icons.chat_bubble_outline, 'del.item4'),
   ];
 
   Future<void> _confirmAndDelete() async {
@@ -32,15 +33,14 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer le compte ?'),
-        content: const Text(
-            'Cette action est irréversible. Toutes tes données seront définitivement supprimées.'),
+        title: Text(context.tr('del.dialogTitle')),
+        content: Text(context.tr('del.dialogBody')),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Annuler')),
+              onPressed: () => Navigator.of(ctx).pop(false), child: Text(context.tr('common.cancel'))),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Supprimer', style: TextStyle(color: Color(0xFFDC2626))),
+            child: Text(context.tr('common.delete'), style: const TextStyle(color: Color(0xFFDC2626))),
           ),
         ],
       ),
@@ -67,7 +67,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   Widget build(BuildContext context) {
     final p = context.palette;
     return SettingsScaffold(
-      title: 'Supprimer le compte',
+      title: context.tr('set.delete'),
       children: [
         Container(
           padding: const EdgeInsets.all(16),
@@ -75,25 +75,24 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             color: const Color(0xFFFEE2E2),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626)),
-            SizedBox(width: 12),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626)),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Cette action est irréversible',
-                    style: TextStyle(
+                Text(context.tr('del.warnTitle'),
+                    style: const TextStyle(
                         fontWeight: FontWeight.w600, color: Color(0xFFB91C1C))),
-                SizedBox(height: 4),
-                Text(
-                    'La suppression de ton compte effacera définitivement toutes tes données, projets et adhésions.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
+                const SizedBox(height: 4),
+                Text(context.tr('del.warnBody'),
+                    style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
               ]),
             ),
           ]),
         ),
         const SizedBox(height: 20),
-        const SettingsSectionLabel('Ce qui sera supprimé'),
-        for (final (icon, label) in _items)
+        SettingsSectionLabel(context.tr('del.whatTitle')),
+        for (final (icon, labelKey) in _items)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Container(
@@ -105,7 +104,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               child: Row(children: [
                 Icon(icon, size: 18, color: const Color(0xFFEF4444)),
                 const SizedBox(width: 10),
-                Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFFB91C1C))),
+                Text(context.tr(labelKey), style: const TextStyle(fontSize: 13, color: Color(0xFFB91C1C))),
               ]),
             ),
           ),
@@ -119,7 +118,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             child: Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                'Je comprends que cette action est irréversible et que toutes mes données seront supprimées.',
+                context.tr('del.confirm'),
                 style: TextStyle(fontSize: 12, color: p.textMuted),
               ),
             ),
@@ -132,7 +131,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           child: _busy
               ? const SizedBox(
                   width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Supprimer mon compte'),
+              : Text(context.tr('del.cta')),
         ),
       ],
     );

@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
-  static const _stats = [('10K+', 'Utilisateurs'), ('500+', 'Projets'), ('150+', 'Écoles')];
+  static const _stats = [('10K+', 'about.users'), ('500+', 'about.projects'), ('150+', 'about.schools')];
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return SettingsScaffold(
-      title: 'À propos',
+      title: context.tr('set.about'),
       children: [
         Center(
           child: Column(children: [
@@ -39,7 +40,7 @@ class AboutScreen extends StatelessWidget {
         ),
         Row(
           children: [
-            for (final (value, label) in _stats)
+            for (final (value, labelKey) in _stats)
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -52,7 +53,7 @@ class AboutScreen extends StatelessWidget {
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Theme.of(context).colorScheme.primary)),
-                    Text(label, style: TextStyle(fontSize: 11, color: p.textMuted)),
+                    Text(context.tr(labelKey), style: TextStyle(fontSize: 11, color: p.textMuted)),
                   ]),
                 ),
               ),
@@ -67,7 +68,7 @@ class AboutScreen extends StatelessWidget {
             border: Border.all(color: p.slate200),
           ),
           child: Text(
-            'TeamUp est un réseau social étudiant qui aide les étudiants à collaborer sur des projets, à trouver des coéquipiers aux compétences complémentaires et à construire ensemble.',
+            context.tr('about.desc'),
             style: TextStyle(fontSize: 13, height: 1.5, color: p.textMuted),
           ),
         ),
@@ -76,10 +77,10 @@ class AboutScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: p.slate100, borderRadius: BorderRadius.circular(14)),
           child: Column(children: [
-            Text('Fait avec ❤️ par', style: TextStyle(fontSize: 12, color: p.textMuted)),
+            Text(context.tr('about.madeBy'), style: TextStyle(fontSize: 12, color: p.textMuted)),
             Text('Team 28', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: p.textPrimary)),
             const SizedBox(height: 2),
-            Text('© 2026 — Projet étudiant', style: TextStyle(fontSize: 11, color: p.textMuted)),
+            Text(context.tr('about.copyright'), style: TextStyle(fontSize: 11, color: p.textMuted)),
           ]),
         ),
       ],

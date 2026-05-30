@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/settings_provider.dart';
@@ -14,9 +15,9 @@ class ThemeColorScreen extends StatelessWidget {
     final s = context.watch<SettingsProvider>();
     final entries = AppTheme.themeColors.entries.toList();
     return SettingsScaffold(
-      title: 'Thème',
+      title: context.tr('set.theme'),
       children: [
-        const SettingsSectionLabel('Choisir une couleur'),
+        SettingsSectionLabel(context.tr('theme.choose')),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
@@ -39,7 +40,7 @@ class ThemeColorScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: p.slate100, borderRadius: BorderRadius.circular(14)),
           child: Text(
-            'La couleur du thème s\'applique aux boutons, liens et éléments d\'accent de toute l\'app.',
+            context.tr('theme.note'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: p.textMuted),
           ),
@@ -87,10 +88,10 @@ class _ColorTile extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 13, fontWeight: FontWeight.w500, color: p.textPrimary)),
             if (selected)
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: Text('Actif',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF059669))),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(context.tr('theme.active'),
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF059669))),
               ),
           ],
         ),
