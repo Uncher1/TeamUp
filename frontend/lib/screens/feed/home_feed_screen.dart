@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -58,6 +60,26 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         ],
         child: CommentsSheet(postId: post.id),
       ),
+    );
+  }
+
+  Future<void> _share(Post p) async {
+    final text = '${p.authorName}: ${p.content}';
+    // Native share sheet on Android/iOS (the APK target).
+    if (!kIsWeb) {
+      await Share.share(text);
+      return;
+    }
+    // Web: a desktop browser often has no native share sheet, so show our own
+    // bottom sheet with the text + a copy action (always visible feedback).
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: context.palette.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _ShareSheet(text: text),
     );
   }
 
@@ -141,7 +163,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 post: p,
                 onLike: () => context.read<FeedProvider>().toggleLike(p),
                 onComment: () => _openComments(p),
-                onShare: () => Share.share('${p.authorName}: ${p.content}'),
+                onShare: () => _share(p),
               );
           }
         }
@@ -302,5 +324,69 @@ class _PostCard extends StatelessWidget {
     if (d.inMinutes < 60) return 'il y a ${d.inMinutes} min';
     if (d.inHours < 24) return 'il y a ${d.inHours} h';
     return 'il y a ${d.inDays} j';
+  }
+}
+
+/// Web share sheet: shows the post text + a copy action (desktop browsers
+/// usually have no native share sheet).
+class _ShareSheet extends StatelessWidget {
+  final String text;
+  const _ShareSheet({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: p.slate200, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('Partager cette publication',
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: p.textPrimary)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: p.slate100, borderRadius: BorderRadius.circular(12)),
+              child: Text(text, style: TextStyle(fontSize: 13, color: p.textPrimary)),
+            ),
+            const SizedBox(height: 16),
+            AppButton(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+                try {
+                  await Clipboard.setData(ClipboardData(text: text));
+                } catch (_) {}
+                navigator.pop();
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Texte copié — prêt à partager')),
+                );
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.copy, size: 18, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Copier le texte'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
