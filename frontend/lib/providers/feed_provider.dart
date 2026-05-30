@@ -72,6 +72,13 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void bumpCommentCount(int postId) {
+    for (final p in posts) {
+      if (p.id == postId) p.commentCount++;
+    }
+    notifyListeners();
+  }
+
   Future<bool> createPost({required String type, required String content}) async {
     try {
       final created = await _repo.create(type: type, content: content);

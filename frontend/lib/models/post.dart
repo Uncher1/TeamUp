@@ -2,7 +2,7 @@ class Post {
   final int id;
   final String type;
   final String content;
-  final int commentCount;
+  int commentCount;
   final DateTime createdAt;
   final int authorId;
   final String authorName;

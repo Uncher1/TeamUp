@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/post.dart';
 import '../../providers/feed_provider.dart';
+import '../../repositories/feed_repo.dart';
+import 'comments_sheet.dart';
 import 'create_post_sheet.dart';
 
 class HomeFeedScreen extends StatefulWidget {
@@ -38,6 +41,24 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     if (pos.pixels >= pos.maxScrollExtent - 300) {
       context.read<FeedProvider>().loadMore();
     }
+  }
+
+  Future<void> _openComments(Post post) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.palette.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: context.read<FeedProvider>()),
+          Provider.value(value: context.read<FeedRepository>()),
+        ],
+        child: CommentsSheet(postId: post.id),
+      ),
+    );
   }
 
   Future<void> _openComposer() async {
@@ -116,7 +137,12 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           if (cardIndex < postItems.length) {
             if (isSpacer) return const SizedBox(height: 12);
             final p = postItems[cardIndex];
-            return _PostCard(post: p, onLike: () => context.read<FeedProvider>().toggleLike(p));
+            return _PostCard(
+                post: p,
+                onLike: () => context.read<FeedProvider>().toggleLike(p),
+                onComment: () => _openComments(p),
+                onShare: () => Share.share('${p.authorName}: ${p.content}'),
+              );
           }
         }
         // Footer: loading more indicator or end marker
@@ -176,7 +202,14 @@ const _typeMeta = {
 class _PostCard extends StatelessWidget {
   final Post post;
   final VoidCallback onLike;
-  const _PostCard({required this.post, required this.onLike});
+  final VoidCallback onComment;
+  final VoidCallback onShare;
+  const _PostCard({
+    required this.post,
+    required this.onLike,
+    required this.onComment,
+    required this.onShare,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -235,8 +268,8 @@ class _PostCard extends StatelessWidget {
                 color: post.likedByMe ? const Color(0xFFE11D48) : context.palette.textMuted,
                 onTap: onLike,
               ),
-              _action(icon: Icons.mode_comment_outlined, label: '${post.commentCount}', color: context.palette.textMuted, onTap: () {}),
-              _action(icon: Icons.share_outlined, label: 'Partager', color: context.palette.textMuted, onTap: () {}),
+              _action(icon: Icons.mode_comment_outlined, label: '${post.commentCount}', color: context.palette.textMuted, onTap: onComment),
+              _action(icon: Icons.share_outlined, label: 'Partager', color: context.palette.textMuted, onTap: onShare),
             ],
           ),
         ],

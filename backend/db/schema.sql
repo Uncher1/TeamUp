@@ -178,6 +178,17 @@ CREATE TABLE IF NOT EXISTS post_likes (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS post_comments (
+  id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  post_id    INT UNSIGNED NOT NULL,
+  author_id  INT UNSIGNED NOT NULL,
+  content    VARCHAR(2000) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_post_comments_post (post_id, created_at),
+  FOREIGN KEY (post_id)   REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- ---------------------------------------------------------------------------
 -- Notifications
 -- ---------------------------------------------------------------------------

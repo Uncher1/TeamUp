@@ -67,6 +67,57 @@ router.post('/:id/like', authRequired, async (req, res) => {
   res.json({ liked, like_count: cnt[0].like_count });
 });
 
+router.get('/:id/comments', authRequired, async (req, res) => {
+  const postId = Number(req.params.id);
+  if (!postId) return res.status(400).json({ error: 'invalid id' });
+  const [rows] = await pool.query(
+    `SELECT c.id, c.content, c.created_at,
+            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar
+       FROM post_comments c JOIN users u ON u.id = c.author_id
+      WHERE c.post_id = ?
+      ORDER BY c.created_at ASC`,
+    [postId]
+  );
+  res.json(rows);
+});
+
+router.post('/:id/comments', authRequired, async (req, res) => {
+  const postId = Number(req.params.id);
+  if (!postId) return res.status(400).json({ error: 'invalid id' });
+  const content = (req.body?.content ?? '').trim();
+  if (!content) return res.status(400).json({ error: 'content is required' });
+  if (content.length > 2000) return res.status(400).json({ error: 'content too long' });
+
+  const [posts] = await pool.query('SELECT id FROM posts WHERE id = ?', [postId]);
+  if (!posts.length) return res.status(404).json({ error: 'post not found' });
+
+  const conn = await pool.getConnection();
+  let insertId;
+  try {
+    await conn.beginTransaction();
+    const [r] = await conn.query(
+      'INSERT INTO post_comments (post_id, author_id, content) VALUES (?, ?, ?)',
+      [postId, req.user.id, content]
+    );
+    insertId = r.insertId;
+    await conn.query('UPDATE posts SET comment_count = comment_count + 1 WHERE id = ?', [postId]);
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+  const [rows] = await pool.query(
+    `SELECT c.id, c.content, c.created_at,
+            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar
+       FROM post_comments c JOIN users u ON u.id = c.author_id
+      WHERE c.id = ?`,
+    [insertId]
+  );
+  res.status(201).json(rows[0]);
+});
+
 router.delete('/:id', authRequired, async (req, res) => {
   const postId = Number(req.params.id);
   if (!postId) return res.status(400).json({ error: 'invalid id' });

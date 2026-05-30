@@ -57,6 +57,7 @@ class _TeamUpAppState extends State<TeamUpApp> {
         Provider<UserRepository>.value(value: _userRepo),
         Provider<ProjectRepository>.value(value: _projectRepo),
         Provider<ChatRepository>.value(value: _chatRepo),
+        Provider<FeedRepository>.value(value: _feedRepo),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             repo: _authRepo,
