@@ -4,6 +4,14 @@ A student social network for forming project teams.
 
 > Mid-Project Follow-Up presentation — Team 28 — 2026-05-05.
 
+## 📲 Télécharger l'app (Android)
+
+[![Télécharger l'APK](https://img.shields.io/badge/T%C3%A9l%C3%A9charger-APK%20Android-6366F1?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Uncher1/TeamUp/releases/latest)
+
+Récupère le dernier **APK** depuis la page **[Releases](https://github.com/Uncher1/TeamUp/releases/latest)**,
+transfère-le sur ton téléphone Android et installe-le (autorise « Installer depuis
+des sources inconnues » si Android le demande).
+
 ## What is TeamUp?
 
 A platform where students publish project ideas (academic or personal),

@@ -104,6 +104,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  /// Reactive password-strength checklist (✗ red → ✓ green), shown only once
+  /// the user starts typing — mirrors the change-password screen.
+  List<Widget> _passwordRules() {
+    final p = context.palette;
+    final pwd = _password.text;
+    final rules = <(String, bool)>[
+      ('Au moins 8 caractères', pwd.length >= 8),
+      ('Une lettre majuscule', pwd.contains(RegExp(r'[A-Z]'))),
+      ('Une lettre minuscule', pwd.contains(RegExp(r'[a-z]'))),
+      ('Un chiffre', pwd.contains(RegExp(r'[0-9]'))),
+      ('Un caractère spécial', pwd.contains(RegExp(r'[^A-Za-z0-9]'))),
+    ];
+    return [
+      for (final (label, met) in rules)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 16,
+              height: 16,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: met ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(met ? Icons.check : Icons.close,
+                  size: 10,
+                  color: met ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+            ),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(fontSize: 12, color: p.textMuted)),
+          ]),
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final busy = context.watch<AuthProvider>().busy;
@@ -141,8 +178,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextField(
                     controller: _password,
                     obscureText: true,
+                    onChanged: (_) => setState(() {}),
                     decoration: const InputDecoration(labelText: 'Mot de passe (min. 8 caractères)'),
                   ),
+                  if (_password.text.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    ..._passwordRules(),
+                  ],
                   const SizedBox(height: 24),
                   AppButton(
                     onPressed: busy ? null : _submit,

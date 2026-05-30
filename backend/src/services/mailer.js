@@ -17,7 +17,7 @@ function brandedHtml({ title, intro, note }) {
 <html lang="fr"><body style="margin:0;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
   <div style="max-width:480px;margin:0 auto;padding:24px;">
     <div style="text-align:center;padding:4px 0 18px;font-size:22px;font-weight:700;color:#0f172a;">
-      <span style="color:#6366F1;">&#x2B22;</span> TeamUp
+      <span style="color:#6366F1;">&#x2B21;</span> TeamUp
     </div>
     <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;">
       <h1 style="margin:0 0 12px;font-size:18px;color:#0f172a;">${title}</h1>

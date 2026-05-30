@@ -132,17 +132,14 @@ router.post('/google', async (req, res) => {
   const isNew = !user;
   if (!user) {
     // New Google account → sign up. Password is random (account uses Google).
+    // Google has already verified the e-mail, so we mark it verified up front
+    // (no XXXX-XXXX code needed — that step is only for classic sign-ups).
     const password_hash = await hash(crypto.randomBytes(24).toString('hex'));
     const [result] = await pool.query(
-      'INSERT INTO users (email, password_hash, full_name) VALUES (?, ?, ?)',
+      'INSERT INTO users (email, password_hash, full_name, email_verified) VALUES (?, ?, ?, 1)',
       [email, password_hash, fullName]
     );
-    const id = result.insertId;
-    // Per product requirement, new sign-ups verify by e-mail code — including
-    // Google ones. (Google e-mails are already verified by Google, so this is
-    // technically redundant; flip the next line to skip it for Google.)
-    await issueVerification(id, email, fullName);
-    user = { id, email, full_name: fullName, email_verified: 0 };
+    user = { id: result.insertId, email, full_name: fullName, email_verified: 1 };
   }
 
   const token = sign({ sub: user.id, email: user.email });
