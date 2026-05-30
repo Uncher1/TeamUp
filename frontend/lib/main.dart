@@ -23,6 +23,8 @@ import 'repositories/settings_repo.dart';
 import 'repositories/user_repo.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/common/splash_screen.dart';
+import 'screens/onboarding/complete_profile_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/shell/app_shell.dart';
 
 void main() => runApp(const TeamUpApp());
@@ -114,13 +116,25 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = context.watch<AuthProvider>().status;
-    switch (status) {
+    final auth = context.watch<AuthProvider>();
+    switch (auth.status) {
       case AuthStatus.unknown:
         return const SplashScreen();
       case AuthStatus.authenticated:
+        // Brand-new accounts are routed through profile completion first.
+        if (auth.justRegistered) {
+          return CompleteProfileScreen(
+            onDone: () => context.read<AuthProvider>().clearJustRegistered(),
+          );
+        }
         return const AppShell();
       case AuthStatus.unauthenticated:
+        // First launch ever shows the intro before the login screen.
+        if (!auth.onboarded) {
+          return OnboardingScreen(
+            onDone: () => context.read<AuthProvider>().setOnboarded(),
+          );
+        }
         return const LoginScreen();
     }
   }

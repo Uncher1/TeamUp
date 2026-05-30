@@ -20,8 +20,16 @@ class AuthProvider extends ChangeNotifier {
   bool busy = false;
   String? error;
 
+  /// First-launch onboarding seen? (device-local). Loaded in [bootstrap].
+  bool onboarded = false;
+
+  /// True right after a successful registration, so the shell can route the
+  /// new user through profile completion. Cleared on login or once handled.
+  bool justRegistered = false;
+
   /// Called once at launch: restores a session from a stored token.
   Future<void> bootstrap() async {
+    onboarded = await storage.readOnboarded();
     final token = await storage.read();
     if (token == null) {
       status = AuthStatus.unauthenticated;
@@ -39,12 +47,25 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> login(String email, String password) =>
-      _run(() => repo.login(email.trim(), password));
+      _run(() => repo.login(email.trim(), password), markRegistered: false);
 
   Future<bool> register(String fullName, String email, String password) =>
-      _run(() => repo.register(fullName.trim(), email.trim(), password));
+      _run(() => repo.register(fullName.trim(), email.trim(), password), markRegistered: true);
 
-  Future<bool> _run(Future<AuthResult> Function() action) async {
+  /// Marks first-launch onboarding as completed (persisted).
+  Future<void> setOnboarded() async {
+    onboarded = true;
+    await storage.setOnboarded();
+    notifyListeners();
+  }
+
+  /// Called once the post-registration profile-completion step is handled.
+  void clearJustRegistered() {
+    justRegistered = false;
+    notifyListeners();
+  }
+
+  Future<bool> _run(Future<AuthResult> Function() action, {required bool markRegistered}) async {
     busy = true;
     error = null;
     notifyListeners();
@@ -58,6 +79,7 @@ class AuthProvider extends ChangeNotifier {
         user = result.user;
       }
       status = AuthStatus.authenticated;
+      justRegistered = markRegistered;
       return true;
     } catch (e) {
       error = ApiClient.messageFromError(e);
