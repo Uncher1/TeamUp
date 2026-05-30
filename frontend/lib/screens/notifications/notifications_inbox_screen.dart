@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../design_system/menu_drawer.dart';
@@ -50,12 +51,12 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
           child: Row(
             children: [
-              Text('Notifications', style: Theme.of(context).textTheme.titleLarge),
+              Text(context.tr('nav.notifications'), style: Theme.of(context).textTheme.titleLarge),
               const Spacer(),
               if (provider.unread > 0)
                 TextButton(
                   onPressed: () => context.read<NotificationsProvider>().markAllRead(),
-                  child: const Text('Tout marquer lu'),
+                  child: Text(context.tr('ninbox.markAll')),
                 ),
             ],
           ),
@@ -76,14 +77,14 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
         const SizedBox(height: 12),
         Center(child: Text(provider.error!, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
-        Center(child: OutlinedButton(onPressed: () => context.read<NotificationsProvider>().load(), child: const Text('Réessayer'))),
+        Center(child: OutlinedButton(onPressed: () => context.read<NotificationsProvider>().load(), child: Text(context.tr('feed.retry')))),
       ]);
     }
     if (provider.items.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.notifications_none,
-        title: 'Aucune notification',
-        subtitle: 'Tes notifications apparaîtront ici.',
+        title: context.tr('popup.empty'),
+        subtitle: context.tr('ninbox.emptySub'),
       );
     }
     return RefreshIndicator(
@@ -157,7 +158,7 @@ class _NotificationTile extends StatelessWidget {
                   Text(n.body!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
                 ],
                 const SizedBox(height: 4),
-                Text(_ago(n.createdAt), style: TextStyle(fontSize: 11, color: context.palette.textMuted)),
+                Text(timeAgo(context, n.createdAt), style: TextStyle(fontSize: 11, color: context.palette.textMuted)),
               ],
             ),
           ),
@@ -173,11 +174,4 @@ class _NotificationTile extends StatelessWidget {
     );
   }
 
-  static String _ago(DateTime t) {
-    final d = DateTime.now().difference(t);
-    if (d.inMinutes < 1) return "à l'instant";
-    if (d.inMinutes < 60) return 'il y a ${d.inMinutes} min';
-    if (d.inHours < 24) return 'il y a ${d.inHours} h';
-    return 'il y a ${d.inDays} j';
-  }
 }

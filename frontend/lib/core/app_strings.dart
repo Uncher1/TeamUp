@@ -346,6 +346,17 @@ const Map<String, Map<String, String>> _strings = {
     'timeline.shortR': '1-2 weeks',
     'timeline.mediumR': '1-2 months',
     'timeline.longR': '3+ months',
+
+    // Chat
+    'chat.emptyTitle': 'No conversation',
+    'chat.emptySub': 'Start a chat from a profile or a project.',
+    'chat.start': 'Start the conversation',
+    'chat.noMessages': 'No messages yet. Say hi 👋',
+    'chat.inputHint': 'Message...',
+
+    // Notifications inbox
+    'ninbox.markAll': 'Mark all as read',
+    'ninbox.emptySub': 'Your notifications will appear here.',
   },
   'fr': {
     // Common
@@ -680,6 +691,17 @@ const Map<String, Map<String, String>> _strings = {
     'timeline.shortR': '1-2 semaines',
     'timeline.mediumR': '1-2 mois',
     'timeline.longR': '3+ mois',
+
+    // Chat
+    'chat.emptyTitle': 'Aucune conversation',
+    'chat.emptySub': 'Lance une discussion depuis un profil ou un projet.',
+    'chat.start': 'Démarre la conversation',
+    'chat.noMessages': 'Aucun message. Dis bonjour 👋',
+    'chat.inputHint': 'Message...',
+
+    // Notifications inbox
+    'ninbox.markAll': 'Tout marquer lu',
+    'ninbox.emptySub': 'Tes notifications apparaîtront ici.',
   },
 };
 

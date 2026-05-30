@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/conversation.dart';
@@ -64,7 +65,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
               child: provider.loadingMessages && provider.messages.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : provider.messages.isEmpty
-                      ? Center(child: Text('Aucun message. Dis bonjour 👋', style: TextStyle(color: context.palette.textMuted)))
+                      ? Center(child: Text(context.tr('chat.noMessages'), style: TextStyle(color: context.palette.textMuted)))
                       : ListView.builder(
                           controller: _scroll,
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -155,9 +156,9 @@ class _InputBar extends StatelessWidget {
               maxLines: 4,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
-              decoration: const InputDecoration(
-                hintText: 'Message...',
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: InputDecoration(
+                hintText: context.tr('chat.inputHint'),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
             ),
           ),

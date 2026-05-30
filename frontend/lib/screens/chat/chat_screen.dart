@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/conversation.dart';
@@ -42,14 +43,14 @@ class _ChatScreenState extends State<ChatScreen> {
         const SizedBox(height: 12),
         Center(child: Text(provider.convError!, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
-        Center(child: OutlinedButton(onPressed: () => context.read<ChatProvider>().loadConversations(), child: const Text('Réessayer'))),
+        Center(child: OutlinedButton(onPressed: () => context.read<ChatProvider>().loadConversations(), child: Text(context.tr('feed.retry')))),
       ]);
     }
     if (provider.conversations.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.forum_outlined,
-        title: 'Aucune conversation',
-        subtitle: 'Lance une discussion depuis un profil ou un projet.',
+        title: context.tr('chat.emptyTitle'),
+        subtitle: context.tr('chat.emptySub'),
       );
     }
     return RefreshIndicator(
@@ -95,12 +96,12 @@ class _ConvTile extends StatelessWidget {
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
                       if (conv.lastMessageAt != null)
-                        Text(_ago(conv.lastMessageAt!),
+                        Text(timeAgo(context, conv.lastMessageAt!),
                             style: TextStyle(fontSize: 11, color: context.palette.textMuted)),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(conv.lastMessage ?? 'Démarre la conversation',
+                  Text(conv.lastMessage ?? context.tr('chat.start'),
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
                 ],
@@ -112,11 +113,4 @@ class _ConvTile extends StatelessWidget {
     );
   }
 
-  static String _ago(DateTime t) {
-    final d = DateTime.now().difference(t);
-    if (d.inMinutes < 1) return "à l'instant";
-    if (d.inMinutes < 60) return 'il y a ${d.inMinutes} min';
-    if (d.inHours < 24) return 'il y a ${d.inHours} h';
-    return 'il y a ${d.inDays} j';
-  }
 }
