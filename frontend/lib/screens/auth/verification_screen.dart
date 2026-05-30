@@ -1,32 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
-
-/// Forces the code field to the `XXXX-XXXX` shape: uppercase letters + digits,
-/// a dash auto-inserted after the 4th character, max 8 alphanumerics.
-class _CodeInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue _, TextEditingValue next) {
-    var raw = next.text.toUpperCase().replaceAll(RegExp('[^A-Z0-9]'), '');
-    if (raw.length > 8) raw = raw.substring(0, 8);
-    final buf = StringBuffer();
-    for (var i = 0; i < raw.length; i++) {
-      if (i == 4) buf.write('-');
-      buf.write(raw[i]);
-    }
-    final text = buf.toString();
-    return TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
-    );
-  }
-}
 
 class VerificationScreen extends StatefulWidget {
   const VerificationScreen({super.key});
@@ -131,7 +110,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     autofocus: true,
                     textAlign: TextAlign.center,
                     textCapitalization: TextCapitalization.characters,
-                    inputFormatters: [_CodeInputFormatter()],
+                    inputFormatters: [CodeInputFormatter()],
                     onChanged: (_) => setState(() {}),
                     onSubmitted: (_) => _verify(),
                     style: const TextStyle(

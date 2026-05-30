@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,28 +19,58 @@ class EmailScreen extends StatefulWidget {
 class _EmailScreenState extends State<EmailScreen> {
   final _new = TextEditingController();
   final _confirm = TextEditingController();
+  final _code = TextEditingController();
   bool _busy = false;
+  bool _codeSent = false; // phase 1 (request) → phase 2 (confirm)
+  int _cooldown = 0;
+  Timer? _timer;
 
   @override
   void dispose() {
     _new.dispose();
     _confirm.dispose();
+    _code.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
-  Future<void> _save() async {
+  void _snack(String m) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+
+  void _startCooldown() {
+    setState(() => _cooldown = 30);
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return;
+      setState(() => _cooldown--);
+      if (_cooldown <= 0) t.cancel();
+    });
+  }
+
+  Future<void> _requestCode() async {
     final email = _new.text.trim();
-    if (email.isEmpty) {
-      _snack('Saisis une nouvelle adresse e-mail.');
-      return;
-    }
+    if (email.isEmpty) return _snack('Saisis une nouvelle adresse e-mail.');
     if (email != _confirm.text.trim()) {
-      _snack('Les deux adresses ne correspondent pas.');
-      return;
+      return _snack('Les deux adresses ne correspondent pas.');
     }
     setState(() => _busy = true);
     try {
-      final user = await context.read<UserRepository>().updateProfile(email: email);
+      await context.read<UserRepository>().requestEmailChange(email);
+      if (!mounted) return;
+      setState(() => _codeSent = true);
+      _startCooldown();
+    } catch (e) {
+      if (mounted) _snack(ApiClient.messageFromError(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _confirmCode() async {
+    if (_code.text.length != 9) return;
+    setState(() => _busy = true);
+    try {
+      final user = await context.read<UserRepository>().confirmChange(_code.text);
       if (!mounted) return;
       context.read<AuthProvider>().setUser(user);
       _snack('Adresse e-mail mise à jour.');
@@ -50,8 +82,16 @@ class _EmailScreenState extends State<EmailScreen> {
     }
   }
 
-  void _snack(String m) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+  Future<void> _resend() async {
+    if (_cooldown > 0) return;
+    _startCooldown();
+    try {
+      await context.read<UserRepository>().resendChange();
+      if (mounted) _snack('Un nouveau code a été envoyé.');
+    } catch (e) {
+      if (mounted) _snack(ApiClient.messageFromError(e));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +103,7 @@ class _EmailScreenState extends State<EmailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: context.palette.itemHoverBg,
+            color: p.itemHoverBg,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
@@ -91,7 +131,14 @@ class _EmailScreenState extends State<EmailScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        const SettingsSectionLabel('Changer d\'adresse'),
+        if (!_codeSent) ..._requestPhase(p, current) else ..._confirmPhase(p, current),
+      ],
+    );
+  }
+
+  // ── Phase 1: enter the new address ─────────────────────────────────────────
+  List<Widget> _requestPhase(AppPalette p, String current) => [
+        const SettingsSectionLabel("Changer d'adresse"),
         TextField(
           controller: _new,
           keyboardType: TextInputType.emailAddress,
@@ -103,33 +150,75 @@ class _EmailScreenState extends State<EmailScreen> {
           controller: _confirm,
           keyboardType: TextInputType.emailAddress,
           decoration: const InputDecoration(
-              labelText: 'Confirmer l\'adresse', prefixIcon: Icon(Icons.mail_outline)),
+              labelText: "Confirmer l'adresse", prefixIcon: Icon(Icons.mail_outline)),
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFEF3C7),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Row(children: [
-            Icon(Icons.info_outline, size: 16, color: Color(0xFFD97706)),
-            SizedBox(width: 8),
-            Expanded(
-                child: Text(
-                    "Un e-mail de confirmation sera envoyé à ton ancienne adresse pour valider le changement.",
-                    style: TextStyle(fontSize: 12, color: Color(0xFF92400E)))),
-          ]),
-        ),
+        _infoBox(
+            "Un code de confirmation sera envoyé à ton adresse actuelle. "
+            "Le changement ne sera appliqué qu'une fois ce code saisi ici."),
         const SizedBox(height: 20),
         AppButton(
-          onPressed: _busy ? null : _save,
+          onPressed: _busy ? null : _requestCode,
           child: _busy
-              ? const SizedBox(
-                  width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Enregistrer'),
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Envoyer le code'),
         ),
-      ],
-    );
-  }
+      ];
+
+  // ── Phase 2: enter the code received on the OLD address ─────────────────────
+  List<Widget> _confirmPhase(AppPalette p, String current) => [
+        const SettingsSectionLabel('Confirmer le changement'),
+        Text(
+          'Saisis le code à 8 caractères envoyé à $current.',
+          style: TextStyle(fontSize: 13, color: p.textMuted),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _code,
+          autofocus: true,
+          textAlign: TextAlign.center,
+          textCapitalization: TextCapitalization.characters,
+          inputFormatters: [CodeInputFormatter()],
+          onChanged: (_) => setState(() {}),
+          onSubmitted: (_) => _confirmCode(),
+          style: const TextStyle(
+              fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: 5, fontFamily: 'monospace'),
+          decoration: const InputDecoration(hintText: 'XXXX-XXXX'),
+        ),
+        const SizedBox(height: 16),
+        AppButton(
+          onPressed: (_busy || _code.text.length != 9) ? null : _confirmCode,
+          child: _busy
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Confirmer le changement'),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: TextButton(
+            onPressed: _cooldown > 0 ? null : _resend,
+            child: Text(_cooldown > 0 ? 'Renvoyer le code ($_cooldown s)' : 'Renvoyer le code'),
+          ),
+        ),
+        Center(
+          child: TextButton(
+            onPressed: () => setState(() => _codeSent = false),
+            child: Text('Annuler', style: TextStyle(color: p.textMuted)),
+          ),
+        ),
+      ];
+
+  Widget _infoBox(String text) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(children: [
+          const Icon(Icons.info_outline, size: 16, color: Color(0xFFD97706)),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text(text,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF92400E)))),
+        ]),
+      );
 }

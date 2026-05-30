@@ -3,8 +3,13 @@ const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { hash, verify } = require('../utils/password');
 const { getSettings, enabled } = require('../services/settings');
-const { sendEmailChanged, sendPasswordChanged } = require('../services/mailer');
+const {
+  sendEmailChangeRequest, sendPasswordChangeRequest,
+  sendEmailChanged, sendPasswordChanged,
+} = require('../services/mailer');
+const { generateCode } = require('../utils/code');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CHANGE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 const router = express.Router();
 
@@ -39,66 +44,30 @@ router.get('/me', authRequired, async (req, res) => {
 });
 
 router.patch('/me', authRequired, async (req, res) => {
-  const { full_name, bio, avatar_url, email,
+  // NOTE: e-mail is intentionally NOT editable here — it goes through the
+  // confirm-by-code flow (POST /me/email/request + /me/change/confirm).
+  const { full_name, bio, avatar_url,
           phone, school, department, study_year, location,
           github, linkedin, twitter, website } = req.body || {};
-  let oldEmail = null;
-  let changedEmail = null;
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
-    if (email !== undefined) {
-      const normalized = String(email).trim().toLowerCase();
-      if (!EMAIL_RE.test(normalized)) {
-        await conn.rollback();
-        return res.status(400).json({ error: 'invalid email format' });
-      }
-      const [cur] = await conn.query('SELECT email FROM users WHERE id = ?', [req.user.id]);
-      if (cur.length && cur[0].email !== normalized) {
-        const [dup] = await conn.query('SELECT id FROM users WHERE email = ? AND id != ?', [normalized, req.user.id]);
-        if (dup.length) {
-          await conn.rollback();
-          return res.status(409).json({ error: 'email already in use' });
-        }
-        await conn.query('UPDATE users SET email = ? WHERE id = ?', [normalized, req.user.id]);
-        oldEmail = cur[0].email;
-        changedEmail = normalized;
-      }
-    }
-    await conn.query(
-      `UPDATE users SET
-          full_name  = COALESCE(?, full_name),
-          bio        = COALESCE(?, bio),
-          avatar_url = COALESCE(?, avatar_url),
-          phone      = COALESCE(?, phone),
-          school     = COALESCE(?, school),
-          department = COALESCE(?, department),
-          study_year = COALESCE(?, study_year),
-          location   = COALESCE(?, location),
-          github     = COALESCE(?, github),
-          linkedin   = COALESCE(?, linkedin),
-          twitter    = COALESCE(?, twitter),
-          website    = COALESCE(?, website)
-        WHERE id = ?`,
-      [full_name ?? null, bio ?? null, avatar_url ?? null,
-       phone ?? null, school ?? null, department ?? null, study_year ?? null, location ?? null,
-       github ?? null, linkedin ?? null, twitter ?? null, website ?? null, req.user.id]
-    );
-    await conn.commit();
-  } catch (e) {
-    await conn.rollback();
-    throw e;
-  } finally {
-    conn.release();
-  }
-  if (oldEmail && changedEmail) {
-    // Notify the OLD address that the email changed (best-effort, non-blocking).
-    try {
-      await sendEmailChanged({ to: oldEmail, newEmail: changedEmail });
-    } catch (e) {
-      console.error('[mail] email-changed send failed:', e.message);
-    }
-  }
+  await pool.query(
+    `UPDATE users SET
+        full_name  = COALESCE(?, full_name),
+        bio        = COALESCE(?, bio),
+        avatar_url = COALESCE(?, avatar_url),
+        phone      = COALESCE(?, phone),
+        school     = COALESCE(?, school),
+        department = COALESCE(?, department),
+        study_year = COALESCE(?, study_year),
+        location   = COALESCE(?, location),
+        github     = COALESCE(?, github),
+        linkedin   = COALESCE(?, linkedin),
+        twitter    = COALESCE(?, twitter),
+        website    = COALESCE(?, website)
+      WHERE id = ?`,
+    [full_name ?? null, bio ?? null, avatar_url ?? null,
+     phone ?? null, school ?? null, department ?? null, study_year ?? null, location ?? null,
+     github ?? null, linkedin ?? null, twitter ?? null, website ?? null, req.user.id]
+  );
   res.json(await loadProfile(req.user.id));
 });
 
@@ -149,23 +118,120 @@ router.put('/me/interests', authRequired, async (req, res) => {
   res.json(await loadProfile(req.user.id));
 });
 
+// Step 1 (password): verify current + new, stash a PENDING password and e-mail
+// a confirmation code. The password is NOT changed until the code is confirmed.
 router.put('/me/password', authRequired, async (req, res) => {
   const current = req.body?.current_password ?? '';
   const next = req.body?.new_password ?? '';
   if (next.length < 8) return res.status(400).json({ error: 'new password must be at least 8 characters' });
-  const [rows] = await pool.query('SELECT password_hash, email FROM users WHERE id = ?', [req.user.id]);
+  const [rows] = await pool.query('SELECT password_hash, email, full_name FROM users WHERE id = ?', [req.user.id]);
   if (!rows.length) return res.status(404).json({ error: 'user not found' });
   if (!(await verify(current, rows[0].password_hash))) {
     return res.status(401).json({ error: 'current password is incorrect' });
   }
-  await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [await hash(next), req.user.id]);
-  // Security confirmation email (best-effort, non-blocking).
-  try {
-    await sendPasswordChanged({ to: rows[0].email });
-  } catch (e) {
-    console.error('[mail] password-changed send failed:', e.message);
+  const code = generateCode();
+  const expires = new Date(Date.now() + CHANGE_TTL_MS);
+  await pool.query(
+    `UPDATE users SET pending_change_type = 'password', pending_password_hash = ?,
+        pending_email = NULL, pending_change_code = ?, pending_change_expires = ?
+       WHERE id = ?`,
+    [await hash(next), code, expires, req.user.id]
+  );
+  sendPasswordChangeRequest({ to: rows[0].email, code, name: rows[0].full_name })
+    .catch((e) => console.error('[mail] password-change-request failed:', e.message));
+  res.json({ sent: true });
+});
+
+// Step 1 (email): validate the new address, stash it as PENDING and e-mail a
+// confirmation code to the user's CURRENT (old) address. E-mail unchanged yet.
+router.post('/me/email/request', authRequired, async (req, res) => {
+  const email = String(req.body?.email ?? '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'invalid email format' });
+  const [rows] = await pool.query('SELECT email, full_name FROM users WHERE id = ?', [req.user.id]);
+  if (!rows.length) return res.status(404).json({ error: 'user not found' });
+  if (rows[0].email === email) return res.status(400).json({ error: 'this is already your address' });
+  const [dup] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ?', [email, req.user.id]);
+  if (dup.length) return res.status(409).json({ error: 'email already in use' });
+
+  const code = generateCode();
+  const expires = new Date(Date.now() + CHANGE_TTL_MS);
+  await pool.query(
+    `UPDATE users SET pending_change_type = 'email', pending_email = ?,
+        pending_password_hash = NULL, pending_change_code = ?, pending_change_expires = ?
+       WHERE id = ?`,
+    [email, code, expires, req.user.id]
+  );
+  // Code goes to the CURRENT address so the old e-mail owner approves the switch.
+  sendEmailChangeRequest({ to: rows[0].email, newEmail: email, code, name: rows[0].full_name })
+    .catch((e) => console.error('[mail] email-change-request failed:', e.message));
+  res.json({ sent: true });
+});
+
+// Step 2: confirm a pending e-mail/password change with the code, then apply it.
+router.post('/me/change/confirm', authRequired, async (req, res) => {
+  const code = String(req.body?.code ?? '').trim().toUpperCase();
+  if (!code) return res.status(400).json({ error: 'code is required' });
+  const [rows] = await pool.query(
+    `SELECT email, pending_change_type, pending_email, pending_password_hash,
+            pending_change_code, pending_change_expires
+       FROM users WHERE id = ?`,
+    [req.user.id]
+  );
+  const u = rows[0];
+  if (!u) return res.status(404).json({ error: 'user not found' });
+  if (!u.pending_change_type || !u.pending_change_code) {
+    return res.status(400).json({ error: 'aucune demande en attente' });
   }
-  res.json({ ok: true });
+  if (u.pending_change_code !== code) return res.status(400).json({ error: 'code incorrect' });
+  if (u.pending_change_expires && new Date(u.pending_change_expires).getTime() < Date.now()) {
+    return res.status(400).json({ error: 'code expiré, renvoie un nouveau code' });
+  }
+
+  const clear = `pending_change_type = NULL, pending_email = NULL,
+                 pending_password_hash = NULL, pending_change_code = NULL,
+                 pending_change_expires = NULL`;
+
+  if (u.pending_change_type === 'email') {
+    // Re-check uniqueness at apply time (another account may have taken it).
+    const [dup] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ?', [u.pending_email, req.user.id]);
+    if (dup.length) {
+      await pool.query(`UPDATE users SET ${clear} WHERE id = ?`, [req.user.id]);
+      return res.status(409).json({ error: 'email already in use' });
+    }
+    await pool.query(`UPDATE users SET email = ?, ${clear} WHERE id = ?`, [u.pending_email, req.user.id]);
+    sendEmailChanged({ to: u.email, newEmail: u.pending_email })
+      .catch((e) => console.error('[mail] email-changed failed:', e.message));
+  } else if (u.pending_change_type === 'password') {
+    await pool.query(`UPDATE users SET password_hash = ?, ${clear} WHERE id = ?`, [u.pending_password_hash, req.user.id]);
+    sendPasswordChanged({ to: u.email })
+      .catch((e) => console.error('[mail] password-changed failed:', e.message));
+  }
+  res.json({ confirmed: true, type: u.pending_change_type, user: await loadProfile(req.user.id) });
+});
+
+// Re-issues a fresh code for the pending change.
+router.post('/me/change/resend', authRequired, async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT email, full_name, pending_change_type, pending_email
+       FROM users WHERE id = ?`,
+    [req.user.id]
+  );
+  const u = rows[0];
+  if (!u || !u.pending_change_type) return res.status(400).json({ error: 'aucune demande en attente' });
+  const code = generateCode();
+  const expires = new Date(Date.now() + CHANGE_TTL_MS);
+  await pool.query(
+    'UPDATE users SET pending_change_code = ?, pending_change_expires = ? WHERE id = ?',
+    [code, expires, req.user.id]
+  );
+  if (u.pending_change_type === 'email') {
+    sendEmailChangeRequest({ to: u.email, newEmail: u.pending_email, code, name: u.full_name })
+      .catch((e) => console.error('[mail] resend email-change failed:', e.message));
+  } else {
+    sendPasswordChangeRequest({ to: u.email, code, name: u.full_name })
+      .catch((e) => console.error('[mail] resend password-change failed:', e.message));
+  }
+  res.json({ sent: true });
 });
 
 router.delete('/me', authRequired, async (req, res) => {

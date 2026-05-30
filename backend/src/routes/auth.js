@@ -131,9 +131,8 @@ router.post('/google', async (req, res) => {
   let user = rows[0];
   const isNew = !user;
   if (!user) {
-    // New Google account → sign up. Password is random (account uses Google).
-    // Google has already verified the e-mail, so we mark it verified up front
-    // (no XXXX-XXXX code needed — that step is only for classic sign-ups).
+    // New Google account → sign up (random password; the account uses Google).
+    // Marked verified immediately — no code step for Google sign-ups.
     const password_hash = await hash(crypto.randomBytes(24).toString('hex'));
     const [result] = await pool.query(
       'INSERT INTO users (email, password_hash, full_name, email_verified) VALUES (?, ?, ?, 1)',

@@ -73,7 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final outcome = await handleGoogleSignIn(context);
     if (!mounted || !outcome.signedIn) return;
     if (outcome.isNew) {
-      // New Google account → reveal AuthGate (verification screen).
+      // New Google account → reveal AuthGate, which routes to profile completion.
       Navigator.of(context).pop();
       return;
     }
@@ -181,10 +181,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onChanged: (_) => setState(() {}),
                     decoration: const InputDecoration(labelText: 'Mot de passe (min. 8 caractères)'),
                   ),
-                  if (_password.text.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    ..._passwordRules(),
-                  ],
+                  // Smoothly expand/collapse the strength checklist.
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOut,
+                      opacity: _password.text.isEmpty ? 0.0 : 1.0,
+                      child: _password.text.isEmpty
+                          ? const SizedBox(width: double.infinity)
+                          : Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: _passwordRules(),
+                              ),
+                            ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   AppButton(
                     onPressed: busy ? null : _submit,
