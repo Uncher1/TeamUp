@@ -100,6 +100,35 @@ extension PaletteX on BuildContext {
   AppPalette get palette => Theme.of(this).extension<AppPalette>()!;
 }
 
+/// Pushed routes fade in while sliding up a few pixels, and the outgoing
+/// route fades out — a calm "modern app" page transition on every platform.
+class _FadeSlideTransitionsBuilder extends PageTransitionsBuilder {
+  const _FadeSlideTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final inCurve = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+    final outCurve = CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeInCubic);
+    return FadeTransition(
+      opacity: inCurve,
+      child: FadeTransition(
+        opacity: Tween<double>(begin: 1, end: 0.6).animate(outCurve),
+        child: SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 0.035), end: Offset.zero)
+              .animate(inCurve),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 /// TeamUp visual identity, ported from the React mockup.
 class AppTheme {
   static const Color primary = Color(0xFF6366F1); // Indigo (default seed)
@@ -153,6 +182,14 @@ class AppTheme {
       scaffoldBackgroundColor: palette.background,
       useMaterial3: true,
       extensions: [palette],
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: _FadeSlideTransitionsBuilder(),
+        TargetPlatform.iOS: _FadeSlideTransitionsBuilder(),
+        TargetPlatform.windows: _FadeSlideTransitionsBuilder(),
+        TargetPlatform.macOS: _FadeSlideTransitionsBuilder(),
+        TargetPlatform.linux: _FadeSlideTransitionsBuilder(),
+        TargetPlatform.fuchsia: _FadeSlideTransitionsBuilder(),
+      }),
     );
 
     final bodyFont = GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
