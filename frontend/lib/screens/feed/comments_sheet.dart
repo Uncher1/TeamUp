@@ -5,6 +5,7 @@ import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/comment.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../repositories/feed_repo.dart';
 
@@ -82,6 +83,92 @@ class _CommentsSheetState extends State<CommentsSheet> {
     }
   }
 
+  Future<void> _editComment(Comment comment) async {
+    final controller = TextEditingController(text: comment.content);
+    // Hoist context reads before any await
+    final repo = context.read<FeedRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifier le commentaire'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: null,
+          decoration: const InputDecoration(hintText: 'Contenu du commentaire'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final newText = controller.text.trim();
+    if (newText.isEmpty) return;
+
+    try {
+      final updated = await repo.editComment(widget.postId, comment.id, newText);
+      if (!mounted) return;
+      setState(() {
+        final idx = _comments.indexWhere((c) => c.id == comment.id);
+        if (idx != -1) _comments = [..._comments]..[idx] = updated;
+      });
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(ApiClient.messageFromError(e))),
+      );
+    }
+  }
+
+  Future<void> _deleteComment(Comment comment) async {
+    // Hoist context reads before any await
+    final repo = context.read<FeedRepository>();
+    final feedProvider = context.read<FeedProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer le commentaire'),
+        content: const Text('Cette action est irréversible.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await repo.deleteComment(widget.postId, comment.id);
+      if (!mounted) return;
+      setState(() {
+        _comments = _comments.where((c) => c.id != comment.id).toList();
+      });
+      feedProvider.decrementCommentCount(widget.postId);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(ApiClient.messageFromError(e))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -147,12 +234,21 @@ class _CommentsSheetState extends State<CommentsSheet> {
         subtitle: 'Sois le premier à commenter.',
       );
     }
+    final myId = context.read<AuthProvider>().user?.id;
     return ListView.separated(
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       itemCount: _comments.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, i) => _CommentRow(comment: _comments[i]),
+      itemBuilder: (context, i) {
+        final c = _comments[i];
+        return _CommentRow(
+          comment: c,
+          isOwn: myId != null && c.authorId == myId,
+          onEdit: () => _editComment(c),
+          onDelete: () => _deleteComment(c),
+        );
+      },
     );
   }
 
@@ -216,9 +312,20 @@ class _CommentsSheetState extends State<CommentsSheet> {
   }
 }
 
+enum _CommentAction { edit, delete }
+
 class _CommentRow extends StatelessWidget {
   final Comment comment;
-  const _CommentRow({required this.comment});
+  final bool isOwn;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _CommentRow({
+    required this.comment,
+    required this.isOwn,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +356,28 @@ class _CommentRow extends StatelessWidget {
             ],
           ),
         ),
+        if (isOwn)
+          PopupMenuButton<_CommentAction>(
+            icon: Icon(Icons.more_horiz, size: 18, color: context.palette.textMuted),
+            padding: EdgeInsets.zero,
+            onSelected: (action) {
+              if (action == _CommentAction.edit) {
+                onEdit();
+              } else {
+                onDelete();
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: _CommentAction.edit,
+                child: Text('Modifier'),
+              ),
+              PopupMenuItem(
+                value: _CommentAction.delete,
+                child: Text('Supprimer', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
       ],
     );
   }

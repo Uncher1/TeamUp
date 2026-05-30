@@ -37,6 +37,18 @@ class FeedRepository {
     return Comment.fromJson(res.data as Map<String, dynamic>);
   }
 
+  Future<Comment> editComment(int postId, int commentId, String content) async {
+    final res = await api.dio.patch(
+      '/posts/$postId/comments/$commentId',
+      data: {'content': content},
+    );
+    return Comment.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  Future<void> deleteComment(int postId, int commentId) async {
+    await api.dio.delete('/posts/$postId/comments/$commentId');
+  }
+
   /// Toggles the like; returns (liked, likeCount).
   Future<(bool, int)> toggleLike(int postId) async {
     final res = await api.dio.post('/posts/$postId/like');

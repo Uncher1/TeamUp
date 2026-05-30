@@ -118,6 +118,52 @@ router.post('/:id/comments', authRequired, async (req, res) => {
   res.status(201).json(rows[0]);
 });
 
+router.patch('/:id/comments/:cid', authRequired, async (req, res) => {
+  const cid = Number(req.params.cid);
+  if (!cid) return res.status(400).json({ error: 'invalid id' });
+  const content = (req.body?.content ?? '').trim();
+  if (!content) return res.status(400).json({ error: 'content is required' });
+  if (content.length > 2000) return res.status(400).json({ error: 'content too long' });
+
+  const [rows] = await pool.query('SELECT author_id FROM post_comments WHERE id = ?', [cid]);
+  if (!rows.length) return res.status(404).json({ error: 'comment not found' });
+  if (rows[0].author_id !== req.user.id) return res.status(403).json({ error: 'not your comment' });
+
+  await pool.query('UPDATE post_comments SET content = ? WHERE id = ?', [content, cid]);
+  const [updated] = await pool.query(
+    `SELECT c.id, c.content, c.created_at,
+            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar
+       FROM post_comments c JOIN users u ON u.id = c.author_id
+      WHERE c.id = ?`,
+    [cid]
+  );
+  res.json(updated[0]);
+});
+
+router.delete('/:id/comments/:cid', authRequired, async (req, res) => {
+  const postId = Number(req.params.id);
+  const cid = Number(req.params.cid);
+  if (!postId || !cid) return res.status(400).json({ error: 'invalid id' });
+
+  const [rows] = await pool.query('SELECT author_id FROM post_comments WHERE id = ? AND post_id = ?', [cid, postId]);
+  if (!rows.length) return res.status(404).json({ error: 'comment not found' });
+  if (rows[0].author_id !== req.user.id) return res.status(403).json({ error: 'not your comment' });
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    await conn.query('DELETE FROM post_comments WHERE id = ?', [cid]);
+    await conn.query('UPDATE posts SET comment_count = GREATEST(comment_count - 1, 0) WHERE id = ?', [postId]);
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+  res.json({ deleted: true });
+});
+
 router.delete('/:id', authRequired, async (req, res) => {
   const postId = Number(req.params.id);
   if (!postId) return res.status(400).json({ error: 'invalid id' });
