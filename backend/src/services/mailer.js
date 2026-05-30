@@ -69,7 +69,7 @@ async function sendEmailChangeRequest({ to, newEmail, code, name }) {
     html: brandedHtml({
       title: "Demande de changement d'adresse e-mail",
       intro:
-        `Bonjour${name ? ' ' + name : ''},<br><br>` +
+        `Bonjour,<br><br>` +
         `Une demande a été faite le <b>${frenchDateTime()}</b> pour remplacer l'adresse e-mail de ton compte TeamUp par&nbsp;:` +
         `<div style="margin:12px 0;padding:10px 14px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;font-weight:600;color:#0f172a;">${newEmail}</div>` +
         `Par sécurité, ce changement doit être <b>validé depuis ton adresse actuelle</b> (celle-ci). Saisis ce code dans l'application&nbsp;:` +
@@ -88,7 +88,7 @@ async function sendPasswordChangeRequest({ to, code, name }) {
     html: brandedHtml({
       title: 'Demande de changement de mot de passe',
       intro:
-        `Bonjour${name ? ' ' + name : ''},<br><br>` +
+        `Bonjour,<br><br>` +
         `Une demande de changement de mot de passe a été faite sur ton compte TeamUp le <b>${frenchDateTime()}</b>. Pour la valider, saisis ce code dans l'application&nbsp;:` +
         codeBlockHtml(code) +
         `<span style="font-size:13px;color:#94a3b8;">Le code expire dans 30&nbsp;minutes. Ton mot de passe actuel <b>reste valable</b> tant que le changement n'est pas confirmé.</span>`,
@@ -144,7 +144,7 @@ async function sendVerificationCode({ to, code, name }) {
     html: brandedHtml({
       title: 'Vérifie ton adresse e-mail',
       intro:
-        `Bienvenue${name ? ' ' + name : ''} ! Saisis ce code dans l'application pour activer ton compte TeamUp :` +
+        `Bienvenue ! Saisis ce code dans l'application pour activer ton compte TeamUp :` +
         codeBlock +
         `<span style="font-size:13px;color:#94a3b8;">Ce code expire dans 30&nbsp;minutes.</span>`,
       note: "Si tu n'es pas à l'origine de cette inscription, ignore simplement cet e-mail.",
