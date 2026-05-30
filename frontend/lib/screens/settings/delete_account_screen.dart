@@ -126,8 +126,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           ),
         ]),
         const SizedBox(height: 12),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+        AppButton(
+          color: const Color(0xFFDC2626),
           onPressed: (!_confirmed || _busy) ? null : _confirmAndDelete,
           child: _busy
               ? const SizedBox(

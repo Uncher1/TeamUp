@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
-import '../../design_system/brand_header.dart';
+import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
 import 'register_screen.dart';
 
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onSubmitted: (_) => busy ? null : _submit(),
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
+                  AppButton(
                     onPressed: busy ? null : _submit,
                     child: busy
                         ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))

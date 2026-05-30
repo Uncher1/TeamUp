@@ -121,7 +121,7 @@ class _EmailScreenState extends State<EmailScreen> {
           ]),
         ),
         const SizedBox(height: 20),
-        ElevatedButton(
+        AppButton(
           onPressed: _busy ? null : _save,
           child: _busy
               ? const SizedBox(

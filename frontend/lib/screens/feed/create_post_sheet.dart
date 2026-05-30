@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../design_system/ds.dart';
 import '../../providers/feed_provider.dart';
 
 /// Bottom sheet to compose a new post. Pops itself on success.
@@ -77,14 +78,11 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
             decoration: const InputDecoration(hintText: 'Partage quelque chose...'),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _busy ? null : _submit,
-              child: _busy
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Publier'),
-            ),
+          AppButton(
+            onPressed: _busy ? null : _submit,
+            child: _busy
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('Publier'),
           ),
         ],
       ),

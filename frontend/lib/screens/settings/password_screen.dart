@@ -115,7 +115,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
             ),
           const SizedBox(height: 16),
         ],
-        ElevatedButton(
+        AppButton(
           onPressed: _busy ? null : _save,
           child: _busy
               ? const SizedBox(

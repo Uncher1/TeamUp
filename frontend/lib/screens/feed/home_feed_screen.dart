@@ -90,9 +90,8 @@ class _QuickPostBar extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(14),
+          child: PressableScale(
+            onPressed: onTap,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
@@ -101,9 +100,8 @@ class _QuickPostBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+        PressableScale(
+          onPressed: onTap,
           child: Container(
             width: 48, height: 48,
             decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(14)),
@@ -196,9 +194,8 @@ class _PostCard extends StatelessWidget {
 
   Widget _action({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
     return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: onTap,
+      child: PressableScale(
+        onPressed: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(

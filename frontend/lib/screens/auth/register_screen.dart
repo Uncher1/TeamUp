@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
-import '../../design_system/brand_header.dart';
+import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -78,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: const InputDecoration(labelText: 'Mot de passe (min. 8 caractères)'),
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
+                  AppButton(
                     onPressed: busy ? null : _submit,
                     child: busy
                         ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
