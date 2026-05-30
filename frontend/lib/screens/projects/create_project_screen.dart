@@ -9,6 +9,29 @@ import '../../models/skill.dart';
 import '../../providers/lookup_provider.dart';
 import '../../providers/projects_provider.dart';
 
+// ---------------------------------------------------------------------------
+// Category options
+// ---------------------------------------------------------------------------
+const _kCategories = [
+  ('Mobile App', Icons.phone_iphone),
+  ('Web App', Icons.language),
+  ('IA / ML', Icons.psychology_outlined),
+  ('Jeu vidéo', Icons.sports_esports_outlined),
+  ('Hardware / IoT', Icons.memory),
+  ('Data', Icons.bar_chart),
+  ('Design', Icons.brush_outlined),
+  ('Autre', Icons.category_outlined),
+];
+
+// ---------------------------------------------------------------------------
+// Timeline options  (code, label, range)
+// ---------------------------------------------------------------------------
+const _kTimelines = [
+  ('short', 'Court', '1-2 semaines'),
+  ('medium', 'Moyen', '1-2 mois'),
+  ('long', 'Long', '3+ mois'),
+];
+
 class CreateProjectScreen extends StatefulWidget {
   const CreateProjectScreen({super.key});
 
@@ -23,6 +46,11 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   /// skillId -> weight (1..5)
   final Map<int, int> _skills = {};
   final Set<int> _interests = {};
+
+  String? _category;
+  int _teamSize = 3;
+  String? _timeline;
+
   bool _busy = false;
 
   @override
@@ -57,6 +85,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
             requiredSkills:
                 _skills.entries.map((e) => {'skill_id': e.key, 'weight': e.value}).toList(),
             interests: _interests.toList(),
+            category: _category,
+            teamSize: _teamSize,
+            timeline: _timeline,
           );
       if (!mounted) return;
       _title.clear();
@@ -64,6 +95,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       setState(() {
         _skills.clear();
         _interests.clear();
+        _category = null;
+        _timeline = null;
+        _teamSize = 3;
         _busy = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,9 +115,13 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   @override
   Widget build(BuildContext context) {
     final lookup = context.watch<LookupProvider>();
+    final primary = Theme.of(context).colorScheme.primary;
+    final palette = context.palette;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
+        // ── Banner ──────────────────────────────────────────────────────────
         GradientBanner(
           child: Row(
             children: [
@@ -103,7 +141,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Nouveau projet',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
                     SizedBox(height: 2),
                     Text('Construis quelque chose avec ton équipe',
                         style: TextStyle(color: Color(0xFFC7D2FE), fontSize: 12)),
@@ -114,6 +153,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           ),
         ),
         const SizedBox(height: 20),
+
+        // ── Informations ────────────────────────────────────────────────────
         const SectionLabel('Informations'),
         const SizedBox(height: 10),
         TextField(
@@ -131,13 +172,110 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           ),
         ),
         const SizedBox(height: 20),
+
+        // ── Catégorie ────────────────────────────────────────────────────────
+        const SectionLabel('Catégorie'),
+        const SizedBox(height: 10),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 2.4,
+          children: [
+            for (final (value, icon) in _kCategories)
+              _CategoryCard(
+                label: value,
+                icon: icon,
+                selected: _category == value,
+                onTap: () => setState(() => _category = value),
+              ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // ── Taille de l'équipe ───────────────────────────────────────────────
+        const SectionLabel('Taille de l\'équipe'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          decoration: BoxDecoration(
+            color: palette.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: palette.slate200),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _RoundButton(
+                icon: Icons.remove,
+                onPressed: _teamSize > 2
+                    ? () => setState(() => _teamSize = (_teamSize - 1).clamp(2, 10))
+                    : null,
+                bgColor: palette.slate100,
+              ),
+              const SizedBox(width: 28),
+              Column(
+                children: [
+                  Text(
+                    '$_teamSize',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: primary,
+                    ),
+                  ),
+                  Text(
+                    'membres',
+                    style: TextStyle(fontSize: 12, color: palette.textMuted),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 28),
+              _RoundButton(
+                icon: Icons.add,
+                onPressed: _teamSize < 10
+                    ? () => setState(() => _teamSize = (_teamSize + 1).clamp(2, 10))
+                    : null,
+                bgColor: palette.slate100,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // ── Durée estimée ────────────────────────────────────────────────────
+        const SectionLabel('Durée estimée'),
+        const SizedBox(height: 10),
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1.6,
+          children: [
+            for (final (code, label, range) in _kTimelines)
+              _TimelineCard(
+                label: label,
+                range: range,
+                selected: _timeline == code,
+                onTap: () => setState(() => _timeline = code),
+              ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // ── Compétences requises ─────────────────────────────────────────────
         const SectionLabel('Compétences requises'),
         const SizedBox(height: 4),
         Text('Touche pour ajouter ; règle le poids (1–5).',
-            style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+            style: TextStyle(fontSize: 12, color: palette.textMuted)),
         const SizedBox(height: 10),
         if (lookup.loading)
-          const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
+          const Center(
+              child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
         else
           _SkillPicker(
             skills: lookup.skills,
@@ -147,6 +285,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
             onWeight: (id, w) => setState(() => _skills[id] = w),
           ),
         const SizedBox(height: 20),
+
+        // ── Thématiques ──────────────────────────────────────────────────────
         const SectionLabel('Thématiques'),
         const SizedBox(height: 10),
         _InterestPicker(
@@ -157,18 +297,187 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           }),
         ),
         const SizedBox(height: 24),
-        ElevatedButton.icon(
+
+        // ── Submit ───────────────────────────────────────────────────────────
+        AppButton(
+          expand: true,
           onPressed: _busy ? null : _submit,
-          icon: _busy
-              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Icon(Icons.add_circle_outline),
-          label: const Text('Créer le projet'),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _busy
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.add_circle_outline),
+              const SizedBox(width: 8),
+              const Text('Créer le projet'),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
+// ---------------------------------------------------------------------------
+// _CategoryCard
+// ---------------------------------------------------------------------------
+class _CategoryCard extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CategoryCard({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final palette = context.palette;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        decoration: BoxDecoration(
+          color: selected ? palette.itemHoverBg : palette.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? primary : palette.slate200,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: selected ? palette.primaryHover : palette.textMuted),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected ? palette.primaryHover : palette.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _TimelineCard
+// ---------------------------------------------------------------------------
+class _TimelineCard extends StatelessWidget {
+  final String label;
+  final String range;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TimelineCard({
+    required this.label,
+    required this.range,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final palette = context.palette;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        decoration: BoxDecoration(
+          color: selected ? palette.itemHoverBg : palette.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? primary : palette.slate200,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: selected ? palette.primaryHover : palette.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              range,
+              style: TextStyle(
+                fontSize: 11,
+                color: selected ? palette.primaryHover : palette.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _RoundButton
+// ---------------------------------------------------------------------------
+class _RoundButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final Color bgColor;
+
+  const _RoundButton({
+    required this.icon,
+    required this.onPressed,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: bgColor,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(
+            icon,
+            size: 22,
+            color: onPressed != null
+                ? context.palette.textPrimary
+                : context.palette.textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _SkillPicker  (unchanged)
+// ---------------------------------------------------------------------------
 class _SkillPicker extends StatelessWidget {
   final List<Skill> skills;
   final Map<int, int> selected;
@@ -211,7 +520,8 @@ class _SkillPicker extends StatelessWidget {
         if (available.isNotEmpty)
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
+            decoration:
+                BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -229,6 +539,9 @@ class _SkillPicker extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// _WeightStepper  (unchanged)
+// ---------------------------------------------------------------------------
 class _WeightStepper extends StatelessWidget {
   final int weight;
   final ValueChanged<int> onChanged;
@@ -255,6 +568,9 @@ class _WeightStepper extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// _InterestPicker  (unchanged)
+// ---------------------------------------------------------------------------
 class _InterestPicker extends StatelessWidget {
   final List<Interest> interests;
   final Set<int> selected;

@@ -101,6 +101,22 @@ class _TeamCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = _statusColors(context, project.status);
+    final palette = context.palette;
+
+    // Build meta items (only when non-null)
+    final metaItems = <_MetaItem>[
+      if (project.category != null)
+        _MetaItem(icon: Icons.category_outlined, label: project.category!),
+      if (project.teamSize != null)
+        _MetaItem(
+            icon: Icons.group_outlined,
+            label: '${project.teamSize} membre${project.teamSize! > 1 ? 's' : ''}'),
+      if (project.timeline != null)
+        _MetaItem(
+            icon: Icons.schedule,
+            label: _timelineLabel(project.timeline!)),
+    ];
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +137,7 @@ class _TeamCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(project.description,
                           maxLines: 2, overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+                          style: TextStyle(fontSize: 12, color: palette.textMuted)),
                     ],
                   ],
                 ),
@@ -130,9 +146,28 @@ class _TeamCard extends StatelessWidget {
               StatusPill(label: project.status, bg: bg, fg: fg),
             ],
           ),
+          if (metaItems.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: [
+                for (final item in metaItems)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(item.icon, size: 13, color: palette.textMuted),
+                      const SizedBox(width: 4),
+                      Text(item.label,
+                          style: TextStyle(fontSize: 12, color: palette.textMuted)),
+                    ],
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           Text('${project.members.length} membre${project.members.length > 1 ? 's' : ''}',
-              style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+              style: TextStyle(fontSize: 12, color: palette.textMuted)),
           const SizedBox(height: 8),
           SizedBox(
             height: 34,
@@ -143,7 +178,7 @@ class _TeamCard extends StatelessWidget {
                     left: entry.key * 22.0,
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(color: context.palette.surface, shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: palette.surface, shape: BoxShape.circle),
                       child: GradientAvatar(name: entry.value.fullName, size: 30),
                     ),
                   ),
@@ -153,5 +188,24 @@ class _TeamCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _MetaItem {
+  final IconData icon;
+  final String label;
+  const _MetaItem({required this.icon, required this.label});
+}
+
+String _timelineLabel(String code) {
+  switch (code) {
+    case 'short':
+      return 'Court';
+    case 'medium':
+      return 'Moyen';
+    case 'long':
+      return 'Long';
+    default:
+      return code;
   }
 }

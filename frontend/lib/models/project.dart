@@ -36,6 +36,9 @@ class Project {
   final List<RequiredSkill> requiredSkills;
   final List<Interest> interests;
   final List<ProjectMember> members;
+  final String? category;
+  final int? teamSize;
+  final String? timeline;
 
   const Project({
     required this.id,
@@ -47,6 +50,9 @@ class Project {
     this.requiredSkills = const [],
     this.interests = const [],
     this.members = const [],
+    this.category,
+    this.teamSize,
+    this.timeline,
   });
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
@@ -68,5 +74,8 @@ class Project {
                 ?.map((e) => ProjectMember.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             const [],
+        category: json['category'] as String?,
+        teamSize: (json['team_size'] as num?)?.toInt(),
+        timeline: json['timeline'] as String?,
       );
 }

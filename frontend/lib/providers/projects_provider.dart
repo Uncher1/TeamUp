@@ -49,12 +49,18 @@ class ProjectsProvider extends ChangeNotifier {
     required String description,
     List<Map<String, int>> requiredSkills = const [],
     List<int> interests = const [],
+    String? category,
+    int? teamSize,
+    String? timeline,
   }) async {
     final created = await repo.create(
       title: title,
       description: description,
       requiredSkills: requiredSkills,
       interests: interests,
+      category: category,
+      teamSize: teamSize,
+      timeline: timeline,
     );
     projects = [created, ...projects];
     notifyListeners();

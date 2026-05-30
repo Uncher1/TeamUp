@@ -7,7 +7,8 @@ const router = express.Router();
 
 async function loadProject(id) {
   const [projects] = await pool.query(
-    `SELECT p.id, p.title, p.description, p.status, p.created_at,
+    `SELECT p.id, p.title, p.description, p.category, p.team_size, p.timeline,
+            p.status, p.created_at,
             u.id AS owner_id, u.full_name AS owner_name
        FROM projects p JOIN users u ON u.id = p.owner_id
       WHERE p.id = ?`,
@@ -38,7 +39,8 @@ async function loadProject(id) {
 
 router.get('/', authRequired, async (_req, res) => {
   const [rows] = await pool.query(
-    `SELECT p.id, p.title, p.description, p.status, p.created_at,
+    `SELECT p.id, p.title, p.description, p.category, p.team_size, p.timeline,
+            p.status, p.created_at,
             u.id AS owner_id, u.full_name AS owner_name
        FROM projects p JOIN users u ON u.id = p.owner_id
       WHERE p.status = 'open'
@@ -49,7 +51,8 @@ router.get('/', authRequired, async (_req, res) => {
 
 router.get('/mine', authRequired, async (req, res) => {
   const [rows] = await pool.query(
-    `SELECT p.id, p.title, p.description, p.status, p.created_at,
+    `SELECT p.id, p.title, p.description, p.category, p.team_size, p.timeline,
+            p.status, p.created_at,
             u.id AS owner_id, u.full_name AS owner_name, pm.role AS my_role
        FROM project_members pm
        JOIN projects p ON p.id = pm.project_id
@@ -71,16 +74,20 @@ router.get('/mine', authRequired, async (req, res) => {
 });
 
 router.post('/', authRequired, async (req, res) => {
-  const { title, description, required_skills = [], interests = [] } = req.body || {};
+  const { title, description, required_skills = [], interests = [],
+          category = null, team_size = null, timeline = null } = req.body || {};
   if (!title || !description) {
     return res.status(400).json({ error: 'title and description are required' });
   }
+  const cat = category ? String(category).slice(0, 40) : null;
+  const size = team_size != null ? Math.max(1, Math.min(50, Number(team_size) || 0)) || null : null;
+  const tl = timeline ? String(timeline).slice(0, 20) : null;
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     const [r] = await conn.query(
-      'INSERT INTO projects (owner_id, title, description) VALUES (?, ?, ?)',
-      [req.user.id, title, description]
+      'INSERT INTO projects (owner_id, title, description, category, team_size, timeline) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.user.id, title, description, cat, size, tl]
     );
     const id = r.insertId;
     await conn.query(

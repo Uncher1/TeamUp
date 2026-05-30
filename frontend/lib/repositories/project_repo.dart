@@ -31,12 +31,18 @@ class ProjectRepository {
     required String description,
     List<Map<String, int>> requiredSkills = const [],
     List<int> interests = const [],
+    String? category,
+    int? teamSize,
+    String? timeline,
   }) async {
     final res = await api.dio.post('/projects', data: {
       'title': title,
       'description': description,
       'required_skills': requiredSkills,
       'interests': interests,
+      'category': category,
+      'team_size': teamSize,
+      'timeline': timeline,
     });
     return Project.fromJson(res.data as Map<String, dynamic>);
   }
