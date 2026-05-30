@@ -22,6 +22,7 @@ import 'repositories/project_repo.dart';
 import 'repositories/settings_repo.dart';
 import 'repositories/user_repo.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/common/splash_screen.dart';
 import 'screens/shell/app_shell.dart';
 
 void main() => runApp(const TeamUpApp());
@@ -116,9 +117,7 @@ class AuthGate extends StatelessWidget {
     final status = context.watch<AuthProvider>().status;
     switch (status) {
       case AuthStatus.unknown:
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+        return const SplashScreen();
       case AuthStatus.authenticated:
         return const AppShell();
       case AuthStatus.unauthenticated:
