@@ -7,6 +7,7 @@ class User {
   final String fullName;
   final String? bio;
   final String? avatarUrl;
+  final bool emailVerified;
   final List<UserSkill> skills;
   final List<Interest> interests;
 
@@ -31,6 +32,7 @@ class User {
     required this.fullName,
     this.bio,
     this.avatarUrl,
+    this.emailVerified = true,
     this.skills = const [],
     this.interests = const [],
     this.phone,
@@ -52,6 +54,10 @@ class User {
         fullName: json['full_name'] as String,
         bio: json['bio'] as String?,
         avatarUrl: json['avatar_url'] as String?,
+        // Absent (legacy payload) → treat as verified so nobody is locked out.
+        emailVerified: json['email_verified'] == null
+            ? true
+            : (json['email_verified'] == 1 || json['email_verified'] == true),
         skills: (json['skills'] as List?)
                 ?.map((e) => UserSkill.fromJson(e as Map<String, dynamic>))
                 .toList() ??
@@ -77,6 +83,7 @@ class User {
     String? fullName,
     String? bio,
     String? avatarUrl,
+    bool? emailVerified,
     List<UserSkill>? skills,
     List<Interest>? interests,
     String? phone,
@@ -95,6 +102,7 @@ class User {
       fullName: fullName ?? this.fullName,
       bio: bio ?? this.bio,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      emailVerified: emailVerified ?? this.emailVerified,
       skills: skills ?? this.skills,
       interests: interests ?? this.interests,
       phone: phone ?? this.phone,

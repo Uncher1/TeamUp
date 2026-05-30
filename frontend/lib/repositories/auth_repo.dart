@@ -4,7 +4,11 @@ import '../models/user.dart';
 class AuthResult {
   final String token;
   final User user;
-  const AuthResult(this.token, this.user);
+
+  /// Only meaningful for Google sign-in: true when the account was just
+  /// created (vs. an existing account that was logged into).
+  final bool isNew;
+  const AuthResult(this.token, this.user, {this.isNew = false});
 }
 
 class AuthRepository {
@@ -41,8 +45,19 @@ class AuthRepository {
     return User.fromJson(res.data as Map<String, dynamic>);
   }
 
+  /// Confirms the e-mail verification code (XXXX-XXXX).
+  Future<void> verifyEmail(String code) async {
+    await api.dio.post('/auth/verify', data: {'code': code});
+  }
+
+  /// Requests a fresh verification code by e-mail.
+  Future<void> resendCode() async {
+    await api.dio.post('/auth/resend');
+  }
+
   AuthResult _parse(Map<String, dynamic> data) => AuthResult(
         data['token'] as String,
         User.fromJson(data['user'] as Map<String, dynamic>),
+        isNew: data['isNew'] == true,
       );
 }

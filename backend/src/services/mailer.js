@@ -61,4 +61,34 @@ async function sendPasswordChanged({ to }) {
   });
 }
 
-module.exports = { sendMail, sendEmailChanged, sendPasswordChanged, brandedHtml };
+/// Sends the e-mail verification code (format XXXX-XXXX) to a new sign-up.
+async function sendVerificationCode({ to, code, name }) {
+  const codeBlock = `
+    <div style="margin:18px 0;text-align:center;">
+      <span style="display:inline-block;font-family:'Consolas','Courier New',monospace;
+        font-size:30px;font-weight:700;letter-spacing:6px;color:#4F46E5;
+        background:#EEF2FF;border:1px solid #C7D2FE;border-radius:12px;padding:14px 22px;">
+        ${code}
+      </span>
+    </div>`;
+  return sendMail({
+    to,
+    subject: `Ton code de vérification TeamUp : ${code}`,
+    html: brandedHtml({
+      title: 'Vérifie ton adresse e-mail',
+      intro:
+        `Bienvenue${name ? ' ' + name : ''} ! Saisis ce code dans l'application pour activer ton compte TeamUp :` +
+        codeBlock +
+        `<span style="font-size:13px;color:#94a3b8;">Ce code expire dans 30&nbsp;minutes.</span>`,
+      note: "Si tu n'es pas à l'origine de cette inscription, ignore simplement cet e-mail.",
+    }),
+  });
+}
+
+module.exports = {
+  sendMail,
+  sendEmailChanged,
+  sendPasswordChanged,
+  sendVerificationCode,
+  brandedHtml,
+};

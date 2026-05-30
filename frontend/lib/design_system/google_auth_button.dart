@@ -27,6 +27,16 @@ const String _googleGSvg = '''
 
 bool _gsiInitialized = false;
 
+/// Result of [handleGoogleSignIn] so callers (e.g. the register screen) can
+/// react to whether the account was newly created or already existed.
+class GoogleOutcome {
+  final bool signedIn;
+  final bool isNew;
+  const GoogleOutcome({required this.signedIn, required this.isNew});
+
+  static const failed = GoogleOutcome(signedIn: false, isNew: false);
+}
+
 /// Runs the Google Sign-In flow.
 ///
 /// On **Android/iOS** this opens the native Google account picker
@@ -36,7 +46,7 @@ bool _gsiInitialized = false;
 /// On **web** the platform does not support `authenticate()` (it requires the
 /// GIS `renderButton`, which is incompatible with this Flutter/dart2js build),
 /// so we surface a clear message instead.
-Future<void> handleGoogleSignIn(BuildContext context) async {
+Future<GoogleOutcome> handleGoogleSignIn(BuildContext context) async {
   final messenger = ScaffoldMessenger.of(context);
   final auth = context.read<AuthProvider>();
   final signIn = GoogleSignIn.instance;
@@ -45,7 +55,7 @@ Future<void> handleGoogleSignIn(BuildContext context) async {
     messenger.showSnackBar(const SnackBar(
       content: Text('La connexion Google est disponible sur l’app mobile.'),
     ));
-    return;
+    return GoogleOutcome.failed;
   }
 
   try {
@@ -59,22 +69,26 @@ Future<void> handleGoogleSignIn(BuildContext context) async {
       messenger.showSnackBar(const SnackBar(
         content: Text('Google : impossible de récupérer le token.'),
       ));
-      return;
+      return GoogleOutcome.failed;
     }
     final ok = await auth.loginWithGoogle(idToken);
     if (!ok) {
       messenger.showSnackBar(SnackBar(
         content: Text(auth.error ?? 'Échec de la connexion Google'),
       ));
+      return GoogleOutcome.failed;
     }
+    return GoogleOutcome(signedIn: true, isNew: auth.isNewAccount);
   } on GoogleSignInException catch (e) {
     // User dismissed the picker — not an error worth surfacing.
-    if (e.code == GoogleSignInExceptionCode.canceled) return;
+    if (e.code == GoogleSignInExceptionCode.canceled) return GoogleOutcome.failed;
     messenger.showSnackBar(SnackBar(content: Text('Google : ${e.code.name}')));
+    return GoogleOutcome.failed;
   } catch (e) {
     messenger.showSnackBar(
       SnackBar(content: Text(ApiClient.messageFromError(e))),
     );
+    return GoogleOutcome.failed;
   }
 }
 

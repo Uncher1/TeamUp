@@ -30,10 +30,77 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final ok = await authProvider.register(_name.text, _email.text, _password.text);
     if (!mounted) return;
     if (ok) {
+      // Reveal the AuthGate, which routes the new account to verification.
       Navigator.of(context).pop();
+      return;
+    }
+    // Duplicate e-mail → tell the user and offer to go to the login screen.
+    if (authProvider.errorCode == 409) {
+      await _showExistsDialog(
+        'Un compte TeamUp utilise déjà cette adresse e-mail.',
+      );
+      return;
+    }
+    final err = authProvider.error ?? "Échec de l'inscription";
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+  }
+
+  /// Shown when the account already exists (classic or Google). Offers to jump
+  /// to the login screen (popping this pushed route reveals it).
+  Future<void> _showExistsDialog(String message) async {
+    final goLogin = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Compte déjà existant'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Aller à la connexion'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (goLogin == true) Navigator.of(context).pop();
+  }
+
+  Future<void> _handleGoogle() async {
+    final outcome = await handleGoogleSignIn(context);
+    if (!mounted || !outcome.signedIn) return;
+    if (outcome.isNew) {
+      // New Google account → reveal AuthGate (verification screen).
+      Navigator.of(context).pop();
+      return;
+    }
+    // Existing account → let the user choose.
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Compte déjà existant'),
+        content: const Text(
+            'Un compte TeamUp est déjà associé à ce compte Google.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'back'),
+            child: const Text("Retour à l'inscription"),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, 'login'),
+            child: const Text('Me connecter'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (choice == 'login') {
+      Navigator.of(context).pop(); // reveal AuthGate (shell or verification)
     } else {
-      final err = context.read<AuthProvider>().error ?? "Échec de l'inscription";
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      await context.read<AuthProvider>().logout(); // discard, stay on register
     }
   }
 
@@ -86,8 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
                   const OrDivider(),
                   const SizedBox(height: 16),
-                  GoogleAuthButton(
-                      onPressed: busy ? () {} : () => handleGoogleSignIn(context)),
+                  GoogleAuthButton(onPressed: busy ? () {} : _handleGoogle),
                 ],
               ),
             ),

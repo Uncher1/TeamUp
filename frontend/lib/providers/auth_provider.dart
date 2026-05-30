@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../core/api_client.dart';
@@ -19,6 +20,12 @@ class AuthProvider extends ChangeNotifier {
   User? user;
   bool busy = false;
   String? error;
+
+  /// HTTP status code of the last failed auth call (e.g. 409 = duplicate).
+  int? errorCode;
+
+  /// True when the last Google sign-in created a brand-new account.
+  bool isNewAccount = false;
 
   /// First-launch onboarding seen? (device-local). Loaded in [bootstrap].
   bool onboarded = false;
@@ -72,9 +79,11 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> _run(Future<AuthResult> Function() action, {required bool markRegistered}) async {
     busy = true;
     error = null;
+    errorCode = null;
     notifyListeners();
     try {
       final result = await action();
+      isNewAccount = result.isNew;
       await storage.write(result.token);
       // Pull the full profile so skills/interests are available app-wide.
       try {
@@ -87,10 +96,46 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       error = ApiClient.messageFromError(e);
+      errorCode = e is DioException ? e.response?.statusCode : null;
       return false;
     } finally {
       busy = false;
       notifyListeners();
+    }
+  }
+
+  /// Confirms the e-mail verification code; on success refreshes [user] so the
+  /// gate (which keys off [User.emailVerified]) lets the user through.
+  Future<bool> verifyEmail(String code) async {
+    busy = true;
+    error = null;
+    notifyListeners();
+    try {
+      await repo.verifyEmail(code);
+      try {
+        user = await repo.me();
+      } catch (_) {
+        user = user?.copyWith(emailVerified: true);
+      }
+      return true;
+    } catch (e) {
+      error = ApiClient.messageFromError(e);
+      return false;
+    } finally {
+      busy = false;
+      notifyListeners();
+    }
+  }
+
+  /// Asks the backend to e-mail a fresh verification code.
+  Future<bool> resendCode() async {
+    try {
+      await repo.resendCode();
+      return true;
+    } catch (e) {
+      error = ApiClient.messageFromError(e);
+      notifyListeners();
+      return false;
     }
   }
 

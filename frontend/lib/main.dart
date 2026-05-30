@@ -22,6 +22,7 @@ import 'repositories/project_repo.dart';
 import 'repositories/settings_repo.dart';
 import 'repositories/user_repo.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/verification_screen.dart';
 import 'screens/common/splash_screen.dart';
 import 'screens/onboarding/complete_profile_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
@@ -122,6 +123,10 @@ class AuthGate extends StatelessWidget {
       case AuthStatus.unknown:
         return const SplashScreen();
       case AuthStatus.authenticated:
+        // Unverified e-mail → block everything behind the verification screen.
+        if (auth.user != null && !auth.user!.emailVerified) {
+          return const VerificationScreen();
+        }
         // Brand-new accounts are routed through profile completion first.
         if (auth.justRegistered) {
           return CompleteProfileScreen(
