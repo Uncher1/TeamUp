@@ -63,6 +63,27 @@ const Map<String, Map<String, String>> _strings = {
     'verify.resent': 'A new code has been sent.',
     'verify.resendFail': 'Could not send the code',
     'verify.changeAccount': 'Change account',
+
+    // Onboarding
+    'common.skip': 'Skip',
+    'onb.next': 'Next',
+    'onb.start': 'Get started',
+    'onb.s1.title': 'Welcome to TeamUp',
+    'onb.s1.sub': 'The network that connects students to build project teams.',
+    'onb.s2.title': 'Find the right teammates',
+    'onb.s2.sub': 'Skill- and interest-based matching suggests the most relevant profiles.',
+    'onb.s3.title': 'Collaborate in real time',
+    'onb.s3.sub': 'Chat, apply to projects and build your team, right inside the app.',
+
+    // Complete profile
+    'cp.title': 'Complete your profile',
+    'cp.subtitle': 'Add your skills and interests for better suggestions.',
+    'cp.bio': 'Bio',
+    'cp.school': 'School',
+    'cp.skills': 'Skills',
+    'cp.skillsHint': 'Tap to add; set your level (1–5).',
+    'cp.interests': 'Interests',
+    'cp.finish': 'Finish',
   },
   'fr': {
     // Common
@@ -114,6 +135,27 @@ const Map<String, Map<String, String>> _strings = {
     'verify.resent': 'Un nouveau code a été envoyé.',
     'verify.resendFail': "Échec de l'envoi du code",
     'verify.changeAccount': 'Changer de compte',
+
+    // Onboarding
+    'common.skip': 'Passer',
+    'onb.next': 'Suivant',
+    'onb.start': 'Commencer',
+    'onb.s1.title': 'Bienvenue sur TeamUp',
+    'onb.s1.sub': 'Le réseau qui connecte les étudiants pour monter des équipes de projet.',
+    'onb.s2.title': 'Trouve les bons coéquipiers',
+    'onb.s2.sub': "Un matching par compétences et centres d'intérêt te propose les profils les plus pertinents.",
+    'onb.s3.title': 'Collabore en temps réel',
+    'onb.s3.sub': "Discute, postule à des projets et construis ton équipe, directement dans l'app.",
+
+    // Complete profile
+    'cp.title': 'Complète ton profil',
+    'cp.subtitle': "Ajoute tes compétences et centres d'intérêt pour de meilleures suggestions.",
+    'cp.bio': 'Bio',
+    'cp.school': 'École',
+    'cp.skills': 'Compétences',
+    'cp.skillsHint': 'Touche pour ajouter ; règle ton niveau (1–5).',
+    'cp.interests': "Centres d'intérêt",
+    'cp.finish': 'Terminer',
   },
 };
 

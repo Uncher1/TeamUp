@@ -48,6 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const Align(
+                      alignment: Alignment.centerRight, child: LanguageToggle()),
+                  const SizedBox(height: 12),
                   const Center(child: BrandHeader(iconSize: 36, fontSize: 28)),
                   const SizedBox(height: 32),
                   Text(context.tr('login.title'), style: Theme.of(context).textTheme.headlineSmall),

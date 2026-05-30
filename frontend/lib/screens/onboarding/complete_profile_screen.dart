@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/skill.dart';
@@ -93,9 +94,17 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // ── Language switch (pre-app pages let the user pick) ──────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: const LanguageToggle(),
+              ),
+            ),
             // ── Header banner ─────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: GradientBanner(
                 padding: const EdgeInsets.fromLTRB(20, 18, 8, 18),
                 child: Row(
@@ -105,7 +114,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Complète ton profil',
+                            context.tr('cp.title'),
                             style: GoogleFonts.outfit(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -114,7 +123,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Ajoute tes compétences et centres d\'intérêt pour de meilleures suggestions.',
+                            context.tr('cp.subtitle'),
                             style: const TextStyle(
                               fontSize: 13,
                               color: Colors.white70,
@@ -129,7 +138,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white70,
                       ),
-                      child: const Text('Passer'),
+                      child: Text(context.tr('common.skip')),
                     ),
                   ],
                 ),
@@ -146,28 +155,28 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     controller: _bio,
                     minLines: 3,
                     maxLines: 5,
-                    decoration: const InputDecoration(
-                      labelText: 'Bio',
+                    decoration: InputDecoration(
+                      labelText: context.tr('cp.bio'),
                       alignLabelWithHint: true,
                     ),
                   ),
                   const SizedBox(height: 14),
 
-                  // École
+                  // School
                   TextField(
                     controller: _school,
-                    decoration: const InputDecoration(
-                      labelText: 'École',
-                      prefixIcon: Icon(Icons.school_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.tr('cp.school'),
+                      prefixIcon: const Icon(Icons.school_outlined),
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // ── Compétences ──────────────────────────────────────
-                  const SectionLabel('Compétences'),
+                  // ── Skills ───────────────────────────────────────────
+                  SectionLabel(context.tr('cp.skills')),
                   const SizedBox(height: 4),
                   Text(
-                    'Touche pour ajouter ; règle ton niveau (1–5).',
+                    context.tr('cp.skillsHint'),
                     style: TextStyle(fontSize: 12, color: p.textMuted),
                   ),
                   const SizedBox(height: 10),
@@ -189,7 +198,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   const SizedBox(height: 24),
 
                   // ── Centres d'intérêt ────────────────────────────────
-                  const SectionLabel("Centres d'intérêt"),
+                  SectionLabel(context.tr('cp.interests')),
                   const SizedBox(height: 10),
                   if (lookup.loading)
                     const SizedBox.shrink()
@@ -224,7 +233,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Terminer'),
+                        : Text(context.tr('cp.finish')),
                   ),
                 ],
               ),

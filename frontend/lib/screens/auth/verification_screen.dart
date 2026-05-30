@@ -83,6 +83,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const Align(
+                      alignment: Alignment.centerRight, child: LanguageToggle()),
+                  const SizedBox(height: 12),
                   const Center(child: BrandHeader(iconSize: 36, fontSize: 28)),
                   const SizedBox(height: 28),
                   Icon(Icons.mark_email_unread_outlined,

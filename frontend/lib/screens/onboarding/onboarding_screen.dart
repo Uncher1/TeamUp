@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 
@@ -18,22 +19,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const List<_SlideData> _slides = [
     _SlideData(
+      image: 'assets/onb_welcome.jpg',
       icon: Icons.groups_2_outlined,
-      title: 'Bienvenue sur TeamUp',
-      subtitle:
-          'Le réseau qui connecte les étudiants pour monter des équipes de projet.',
+      titleKey: 'onb.s1.title',
+      subtitleKey: 'onb.s1.sub',
     ),
     _SlideData(
+      image: 'assets/onb_teammates.jpg',
       icon: Icons.auto_awesome,
-      title: 'Trouve les bons coéquipiers',
-      subtitle:
-          'Un matching par compétences et centres d\'intérêt te propose les profils les plus pertinents.',
+      titleKey: 'onb.s2.title',
+      subtitleKey: 'onb.s2.sub',
     ),
     _SlideData(
+      image: 'assets/onb_collaborate.jpg',
       icon: Icons.chat_bubble_outline,
-      title: 'Collabore en temps réel',
-      subtitle:
-          'Discute, postule à des projets et construis ton équipe, directement dans l\'app.',
+      titleKey: 'onb.s3.title',
+      subtitleKey: 'onb.s3.sub',
     ),
   ];
 
@@ -66,19 +67,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Top bar ───────────────────────────────────────────────
+            // ── Top bar: brand · language switch · skip ───────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const BrandHeader(iconSize: 28, fontSize: 20),
-                  TextButton(
-                    onPressed: widget.onDone,
-                    child: Text(
-                      'Passer',
-                      style: TextStyle(color: p.textMuted),
-                    ),
+                  Row(
+                    children: [
+                      const LanguageToggle(),
+                      TextButton(
+                        onPressed: widget.onDone,
+                        child: Text(
+                          context.tr('common.skip'),
+                          style: TextStyle(color: p.textMuted),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -93,27 +99,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Icon in soft rounded square
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: p.itemHoverBg,
-                            borderRadius: BorderRadius.circular(28),
-                          ),
-                          child: Icon(
-                            slide.icon,
-                            size: 56,
-                            color: primary,
+                        // Real photo (rounded). Falls back to a themed icon
+                        // tile if the asset is unavailable.
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: Image.asset(
+                            slide.image,
+                            height: 280,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              height: 280,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: p.itemHoverBg,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Icon(slide.icon, size: 72, color: primary),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 32),
                         Text(
-                          slide.title,
+                          context.tr(slide.titleKey),
                           style: GoogleFonts.outfit(
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
@@ -123,7 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          slide.subtitle,
+                          context.tr(slide.subtitleKey),
                           style: TextStyle(
                             fontSize: 15,
                             color: p.textMuted,
@@ -164,7 +176,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: AppButton(
                 onPressed: _next,
-                child: Text(isLast ? 'Commencer' : 'Suivant'),
+                child: Text(isLast ? context.tr('onb.start') : context.tr('onb.next')),
               ),
             ),
           ],
@@ -175,12 +187,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _SlideData {
+  final String image;
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String titleKey;
+  final String subtitleKey;
   const _SlideData({
+    required this.image,
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.titleKey,
+    required this.subtitleKey,
   });
 }

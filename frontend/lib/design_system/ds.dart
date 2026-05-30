@@ -4,6 +4,7 @@ export 'code_input.dart';
 export 'feedback_widgets.dart';
 export 'google_auth_button.dart';
 export 'gradient_avatar.dart';
+export 'language_toggle.dart';
 export 'gradient_banner.dart';
 export 'screen_header.dart';
 export 'section_label.dart';
