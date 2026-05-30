@@ -29,22 +29,38 @@ class SettingsScaffold extends StatelessWidget {
 }
 
 /// Uppercase muted group label (mockup: text-xs slate-400 uppercase tracking-wider).
+/// Optional [subtitle] renders a normal-case descriptive line below (mockup
+/// SectionHeader subtitle).
 class SettingsSectionLabel extends StatelessWidget {
   final String text;
-  const SettingsSectionLabel(this.text, {super.key});
+  final String? subtitle;
+  const SettingsSectionLabel(this.text, {super.key, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
+    final muted = context.palette.textMuted;
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-      child: Text(
-        text.toUpperCase(),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.8,
-          color: context.palette.textMuted,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            text.toUpperCase(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+              color: muted,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle!,
+              style: TextStyle(fontSize: 12, color: muted),
+            ),
+          ],
+        ],
       ),
     );
   }

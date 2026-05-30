@@ -27,10 +27,12 @@ class NotificationsSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = context.watch<SettingsProvider>();
     final master = s.toggle('allNotifications');
-    Widget group(String label, List<(String, IconData, String, String)> items) => Column(
+    Widget group(String label, String subtitle,
+            List<(String, IconData, String, String)> items) =>
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SettingsSectionLabel(label),
+            SettingsSectionLabel(label, subtitle: subtitle),
             for (final (key, icon, title, desc) in items)
               SettingToggleTile(
                 icon: icon,
@@ -68,9 +70,9 @@ class NotificationsSettingsScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        group('Notifications push', _push),
-        group('Notifications e-mail', _email),
-        group('Son & vibration', _sound),
+        group('Notifications push', 'Alertes sur ton appareil', _push),
+        group('Notifications e-mail', 'Envoyées sur ton e-mail', _email),
+        group('Son & vibration', "Préférences d'alerte", _sound),
       ],
     );
   }
