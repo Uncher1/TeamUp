@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../design_system/ds.dart';
 import '../../providers/settings_provider.dart';
 
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
 
-  // (key, icon, label, desc)
+  // (settingKey, icon, labelKey, descKey)
   static const _visibility = [
-    ('profilePublic', Icons.visibility_outlined, 'Profil public', 'Tout le monde peut voir ton profil'),
-    ('showOnlineStatus', Icons.bolt_outlined, 'Statut en ligne', 'Les autres voient quand tu es en ligne'),
-    ('showLastSeen', Icons.schedule_outlined, 'Dernière connexion', 'Affiche ta dernière activité'),
+    ('profilePublic', Icons.visibility_outlined, 'priv.profilePublic', 'priv.profilePublicD'),
+    ('showOnlineStatus', Icons.bolt_outlined, 'priv.online', 'priv.onlineD'),
+    ('showLastSeen', Icons.schedule_outlined, 'priv.lastSeen', 'priv.lastSeenD'),
   ];
   static const _team = [
-    ('allowTeamInvites', Icons.group_add_outlined, 'Invitations d\'équipe', 'Recevoir des invitations à rejoindre des équipes'),
-    ('showProjects', Icons.work_outline, 'Afficher mes projets', 'Affiche tes projets sur ton profil'),
-    ('appearInSearch', Icons.search, 'Apparaître dans la recherche', 'Être trouvé par compétences'),
+    ('allowTeamInvites', Icons.group_add_outlined, 'priv.teamInvites', 'priv.teamInvitesD'),
+    ('showProjects', Icons.work_outline, 'priv.showProjects', 'priv.showProjectsD'),
+    ('appearInSearch', Icons.search, 'priv.appearSearch', 'priv.appearSearchD'),
   ];
   static const _comm = [
-    ('allowMessages', Icons.chat_bubble_outline, 'Autoriser les messages', 'Recevoir des messages de tout le monde'),
-    ('showEmail', Icons.mail_outline, 'Afficher l\'e-mail', 'Affiche ton e-mail sur ton profil'),
-    ('showPhone', Icons.phone_outlined, 'Afficher le téléphone', 'Affiche ton téléphone sur ton profil'),
+    ('allowMessages', Icons.chat_bubble_outline, 'priv.allowMessages', 'priv.allowMessagesD'),
+    ('showEmail', Icons.mail_outline, 'priv.showEmail', 'priv.showEmailD'),
+    ('showPhone', Icons.phone_outlined, 'priv.showPhone', 'priv.showPhoneD'),
   ];
 
   @override
@@ -31,11 +32,11 @@ class PrivacyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SettingsSectionLabel(label),
-            for (final (key, icon, title, desc) in items)
+            for (final (key, icon, titleKey, descKey) in items)
               SettingToggleTile(
                 icon: icon,
-                label: title,
-                desc: desc,
+                label: context.tr(titleKey),
+                desc: context.tr(descKey),
                 value: s.toggle(key),
                 onChanged: (v) => context.read<SettingsProvider>().setToggle(key, v),
               ),
@@ -43,11 +44,11 @@ class PrivacyScreen extends StatelessWidget {
           ],
         );
     return SettingsScaffold(
-      title: 'Confidentialité',
+      title: context.tr('set.privacy'),
       children: [
-        group('Visibilité du profil', _visibility),
-        group('Équipes & projets', _team),
-        group('Communication', _comm),
+        group(context.tr('priv.gVisibility'), _visibility),
+        group(context.tr('priv.gTeam'), _team),
+        group(context.tr('priv.gComm'), _comm),
       ],
     );
   }
