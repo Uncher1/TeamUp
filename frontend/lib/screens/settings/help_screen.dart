@@ -12,11 +12,80 @@ class HelpScreen extends StatefulWidget {
 
 class _HelpScreenState extends State<HelpScreen> {
   static const _faq = [
-    ('Comment créer un projet ?', 'Va dans « Create Project » et remplis les informations.'),
-    ('Comment trouver des coéquipiers ?', 'Utilise « Find Teammates » pour chercher par compétences.'),
-    ('Comment rejoindre une équipe ?', 'Accepte une invitation ou postule à un projet.'),
-    ('Comment modifier mon profil ?', 'Settings > la carte profil > Edit Profile.'),
-    ('Comment supprimer mon compte ?', 'Settings > Danger Zone > Delete Account.'),
+    (
+      'Comment créer un projet ?',
+      'Ouvre « Create Project » depuis le menu. Donne un titre et une description, '
+          'choisis un type, puis ajoute les compétences requises avec un poids de 1 à 5 '
+          '(plus le poids est élevé, plus la compétence pèse dans le matching) et des '
+          'centres d\'intérêt. Une fois publié, ton projet apparaît dans « My Teams » et '
+          'peut recevoir des candidatures.'
+    ),
+    (
+      'Comment fonctionne le matching de coéquipiers ?',
+      'Le score combine deux mesures : 70 % la correspondance de compétences (tes niveaux '
+          'pondérés par les poids demandés par le projet) et 30 % la correspondance d\'intérêts '
+          '(intérêts en commun). Chaque candidat reçoit un score en %, et la liste est classée '
+          'du plus pertinent au moins pertinent.'
+    ),
+    (
+      'Comment trouver des coéquipiers pour mon projet ?',
+      'Va dans « Find Teammates », choisis l\'un de tes projets, et la liste des profils les '
+          'mieux classés s\'affiche avec leur score de compatibilité. Tu peux filtrer par nom '
+          'avec la barre de recherche, puis contacter un profil via « Message ».'
+    ),
+    (
+      'Comment postuler à un projet / rejoindre une équipe ?',
+      'Ouvre un projet qui t\'intéresse et postule. Le porteur du projet voit ta candidature '
+          'dans la section « Candidatures » et peut l\'accepter ou la refuser. S\'il accepte, tu '
+          'rejoins l\'équipe et tu es notifié.'
+    ),
+    (
+      'Comment gérer les candidatures reçues ?',
+      'Sur la page de détail d\'un projet dont tu es le porteur, la section « Candidatures » '
+          'liste les profils ayant postulé, avec un bouton Accepter et Refuser. Le candidat est '
+          'notifié de ta décision.'
+    ),
+    (
+      'Comment fonctionne la messagerie ?',
+      'Le chat est en temps réel : les messages arrivent instantanément sans rafraîchir. Tu '
+          'peux discuter en direct avec un profil (depuis Find Teammates) ou dans la conversation '
+          'd\'un projet. Retrouve toutes tes discussions dans l\'onglet « Chat ».'
+    ),
+    (
+      'À quoi servent les notifications ?',
+      'Tu es notifié quand quelqu\'un postule à ton projet, quand ta candidature est acceptée, '
+          'et quand tu reçois un message. La cloche en haut affiche le nombre de notifications '
+          'non lues ; ouvre « Notifications » pour tout voir.'
+    ),
+    (
+      'Comment renseigner mes compétences et niveaux ?',
+      'Dans « Edit Profile », ajoute tes compétences et règle ton niveau de 1 (débutant) à 5 '
+          '(expert) pour chacune. Ces niveaux alimentent directement l\'algorithme de matching, '
+          'donc plus ton profil est précis, plus les suggestions sont pertinentes.'
+    ),
+    (
+      'Comment contrôler ma confidentialité ?',
+      'Dans Settings > Confidentialité, tu choisis qui peut voir ton profil, si tu apparais '
+          'dans la recherche, qui peut te contacter, et si ton statut en ligne est visible.'
+    ),
+    (
+      'Comment activer le mode sombre ou changer la couleur ?',
+      'Settings > Préférences : active « Mode sombre » pour basculer toute l\'app, et ouvre '
+          '« Thème » pour choisir une couleur d\'accent parmi 8. Le changement s\'applique '
+          'immédiatement et est mémorisé.'
+    ),
+    (
+      'Comment changer mon e-mail ou mon mot de passe ?',
+      'Settings > Compte : « Adresse e-mail » pour mettre à jour ton e-mail, « Mot de passe » '
+          'pour le changer (un nouveau mot de passe doit faire au moins 8 caractères et respecter '
+          'les recommandations affichées).'
+    ),
+    (
+      'Comment supprimer mon compte ?',
+      'Settings > Danger Zone > « Supprimer le compte ». Cette action est irréversible : ton '
+          'profil, tes projets, tes adhésions et tes messages sont définitivement effacés. Une '
+          'case de confirmation est requise avant de valider.'
+    ),
   ];
 
   // Quick action cards: (label, icon, bg, fg). Colors match the mockup's
