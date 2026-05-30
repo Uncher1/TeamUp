@@ -1,6 +1,7 @@
 const express = require('express');
 const { authRequired } = require('../middleware/auth');
 const matching = require('../services/matching');
+const { getSettings, enabled } = require('../services/settings');
 
 const router = express.Router();
 
@@ -10,7 +11,12 @@ router.get('/projects/:id/users', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ error: 'invalid project id' });
   const result = await matching.rankUsersForProject(id, clampLimit(req.query.limit));
-  res.json(result);
+  const filtered = [];
+  for (const u of result) {
+    const s = await getSettings(u.user_id);
+    if (enabled(s, 'appearInSearch')) filtered.push(u);
+  }
+  res.json(filtered);
 });
 
 router.get('/users/me/projects', authRequired, async (req, res) => {

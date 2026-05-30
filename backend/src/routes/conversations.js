@@ -3,6 +3,7 @@ const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { userInConversation, createMessage } = require('../services/chat');
 const { notifyNewMessage } = require('../services/notifications');
+const { getSettings, enabled } = require('../services/settings');
 
 const router = express.Router();
 
@@ -33,6 +34,11 @@ router.post('/direct/:userId', authRequired, async (req, res) => {
 
   const [users] = await pool.query('SELECT id FROM users WHERE id = ?', [other]);
   if (!users.length) return res.status(404).json({ error: 'user not found' });
+
+  const targetSettings = await getSettings(other);
+  if (!enabled(targetSettings, 'allowMessages')) {
+    return res.status(403).json({ error: "Cet utilisateur n'accepte pas les messages." });
+  }
 
   const [existing] = await pool.query(
     `SELECT c.id

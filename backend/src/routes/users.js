@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { hash, verify } = require('../utils/password');
+const { getSettings, enabled } = require('../services/settings');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const router = express.Router();
@@ -193,6 +194,11 @@ router.get('/:id', authRequired, async (req, res) => {
   if (!id) return res.status(400).json({ error: 'invalid id' });
   const profile = await loadProfile(id);
   if (!profile) return res.status(404).json({ error: 'user not found' });
+  if (id !== req.user.id) {
+    const s = await getSettings(id);
+    if (!enabled(s, 'showEmail')) profile.email = null;
+    if (!enabled(s, 'showPhone')) profile.phone = null;
+  }
   res.json(profile);
 });
 

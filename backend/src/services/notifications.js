@@ -1,10 +1,23 @@
 const pool = require('../config/db');
+const { getSettings, enabled } = require('./settings');
 
 /**
  * Persists a notification and pushes it in realtime to the recipient's
  * personal Socket.IO room (`user:<id>`). `io` may be null (e.g. from a script).
  */
 async function createNotification(io, { userId, type, title, body = null, linkType = null, linkId = null }) {
+  const s = await getSettings(userId);
+  if (!enabled(s, 'allNotifications')) return null;
+  const typeToggle = {
+    message: 'pushMessages',
+    team_join: 'pushTeamUpdates',
+    application: 'pushProjectUpdates',
+    project_update: 'pushProjectUpdates',
+    team_invite: 'pushTeamUpdates',
+    mention: 'pushMentions',
+  }[type];
+  if (typeToggle && !enabled(s, typeToggle)) return null;
+
   const [r] = await pool.query(
     `INSERT INTO notifications (user_id, type, title, body, link_type, link_id)
      VALUES (?, ?, ?, ?, ?, ?)`,
