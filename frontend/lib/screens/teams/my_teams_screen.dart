@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/project.dart';
@@ -35,7 +36,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
         const SizedBox(height: 12),
         Center(child: Text(provider.mineError!, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
-        Center(child: OutlinedButton(onPressed: () => context.read<ProjectsProvider>().loadMine(), child: const Text('Réessayer'))),
+        Center(child: OutlinedButton(onPressed: () => context.read<ProjectsProvider>().loadMine(), child: Text(context.tr('feed.retry')))),
       ]);
     }
     return RefreshIndicator(
@@ -51,10 +52,10 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Tu fais partie de',
-                        style: TextStyle(color: Color(0xFFC7D2FE), fontSize: 12)),
+                    Text(context.tr('mt.partOf'),
+                        style: const TextStyle(color: Color(0xFFC7D2FE), fontSize: 12)),
                     const SizedBox(height: 2),
-                    Text('${provider.myProjects.length} équipe${provider.myProjects.length > 1 ? 's' : ''}',
+                    Text('${provider.myProjects.length} ${context.tr(provider.myProjects.length > 1 ? 'mt.teamsP' : 'mt.team')}',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 22)),
                   ],
                 ),
@@ -64,10 +65,10 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
           ),
           const SizedBox(height: 16),
           if (provider.myProjects.isEmpty)
-            const EmptyState(
+            EmptyState(
               icon: Icons.groups_2_outlined,
-              title: 'Aucune équipe',
-              subtitle: 'Crée un projet ou rejoins une équipe pour commencer.',
+              title: context.tr('mt.emptyTitle'),
+              subtitle: context.tr('mt.emptySub'),
             )
           else
             for (final p in provider.myProjects) ...[
@@ -110,11 +111,11 @@ class _TeamCard extends StatelessWidget {
       if (project.teamSize != null)
         _MetaItem(
             icon: Icons.group_outlined,
-            label: '${project.teamSize} membre${project.teamSize! > 1 ? 's' : ''}'),
+            label: '${project.teamSize} ${context.tr(project.teamSize! > 1 ? 'mt.membersP' : 'mt.member')}'),
       if (project.timeline != null)
         _MetaItem(
             icon: Icons.schedule,
-            label: _timelineLabel(project.timeline!)),
+            label: context.tr('timeline.${project.timeline}')),
     ];
 
     return AppCard(
@@ -143,7 +144,7 @@ class _TeamCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              StatusPill(label: project.status, bg: bg, fg: fg),
+              StatusPill(label: context.tr('status.${project.status}'), bg: bg, fg: fg),
             ],
           ),
           if (metaItems.isNotEmpty) ...[
@@ -166,7 +167,7 @@ class _TeamCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          Text('${project.members.length} membre${project.members.length > 1 ? 's' : ''}',
+          Text('${project.members.length} ${context.tr(project.members.length > 1 ? 'mt.membersP' : 'mt.member')}',
               style: TextStyle(fontSize: 12, color: palette.textMuted)),
           const SizedBox(height: 8),
           SizedBox(
@@ -197,15 +198,3 @@ class _MetaItem {
   const _MetaItem({required this.icon, required this.label});
 }
 
-String _timelineLabel(String code) {
-  switch (code) {
-    case 'short':
-      return 'Court';
-    case 'medium':
-      return 'Moyen';
-    case 'long':
-      return 'Long';
-    default:
-      return code;
-  }
-}

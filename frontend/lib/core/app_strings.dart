@@ -283,6 +283,42 @@ const Map<String, Map<String, String>> _strings = {
     'help.a11': 'Settings > Account: "Email address" to update your email, "Password" to change it. A confirmation code is sent by email to validate the change.',
     'help.q12': 'How do I delete my account?',
     'help.a12': 'Settings > Danger Zone > "Delete account". This action is irreversible: your profile, projects, memberships and messages are permanently erased. A confirmation checkbox is required before you confirm.',
+
+    // Find teammates
+    'ft.intro': 'Pick one of your projects to see the best-ranked profiles.',
+    'ft.noProjects': 'Create a project first to find teammates.',
+    'ft.myProject': 'My project',
+    'ft.searchHint': 'Search a profile...',
+    'ft.convErr': "Couldn't open the conversation",
+    'ft.emptyTitle': 'No teammate found',
+    'ft.emptySub': "No profile matches this project's skills yet.",
+    'ft.noResultTitle': 'No result',
+    'ft.noResultSub': 'No profile matches « {q} ».',
+    'ft.skills': 'Skills',
+    'ft.interests': 'Interests',
+    'ft.invitesSoon': 'Invitations coming soon',
+    'ft.invite': 'Invite',
+    'ft.message': 'Message',
+
+    // My teams
+    'mt.partOf': 'You are part of',
+    'mt.team': 'team',
+    'mt.teamsP': 'teams',
+    'mt.member': 'member',
+    'mt.membersP': 'members',
+    'mt.emptyTitle': 'No team',
+    'mt.emptySub': 'Create a project or join a team to get started.',
+
+    // Timeline + status
+    'timeline.short': 'Short',
+    'timeline.medium': 'Medium',
+    'timeline.long': 'Long',
+    'status.open': 'Open',
+    'status.active': 'Active',
+    'status.in_progress': 'In progress',
+    'status.completed': 'Completed',
+    'status.paused': 'Paused',
+    'status.closed': 'Closed',
   },
   'fr': {
     // Common
@@ -554,6 +590,42 @@ const Map<String, Map<String, String>> _strings = {
     'help.a11': "Réglages > Compte : « Adresse e-mail » pour mettre à jour ton e-mail, « Mot de passe » pour le changer. Un code de confirmation est envoyé par e-mail pour valider le changement.",
     'help.q12': 'Comment supprimer mon compte ?',
     'help.a12': "Réglages > Danger Zone > « Supprimer le compte ». Cette action est irréversible : ton profil, tes projets, tes adhésions et tes messages sont définitivement effacés. Une case de confirmation est requise avant de valider.",
+
+    // Find teammates
+    'ft.intro': 'Choisis un de tes projets pour voir les profils les mieux classés.',
+    'ft.noProjects': "Crée d'abord un projet pour trouver des coéquipiers.",
+    'ft.myProject': 'Mon projet',
+    'ft.searchHint': 'Rechercher un profil...',
+    'ft.convErr': "Impossible d'ouvrir la conversation",
+    'ft.emptyTitle': 'Aucun coéquipier trouvé',
+    'ft.emptySub': 'Aucun profil ne correspond encore aux compétences de ce projet.',
+    'ft.noResultTitle': 'Aucun résultat',
+    'ft.noResultSub': 'Aucun profil ne correspond à « {q} ».',
+    'ft.skills': 'Compétences',
+    'ft.interests': 'Intérêts',
+    'ft.invitesSoon': 'Invitations à venir',
+    'ft.invite': 'Inviter',
+    'ft.message': 'Message',
+
+    // My teams
+    'mt.partOf': 'Tu fais partie de',
+    'mt.team': 'équipe',
+    'mt.teamsP': 'équipes',
+    'mt.member': 'membre',
+    'mt.membersP': 'membres',
+    'mt.emptyTitle': 'Aucune équipe',
+    'mt.emptySub': 'Crée un projet ou rejoins une équipe pour commencer.',
+
+    // Timeline + status
+    'timeline.short': 'Court',
+    'timeline.medium': 'Moyen',
+    'timeline.long': 'Long',
+    'status.open': 'Ouvert',
+    'status.active': 'Actif',
+    'status.in_progress': 'En cours',
+    'status.completed': 'Terminé',
+    'status.paused': 'En pause',
+    'status.closed': 'Fermé',
   },
 };
 

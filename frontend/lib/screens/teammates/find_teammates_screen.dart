@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/match.dart';
@@ -33,12 +34,13 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
     final repo = context.read<ChatRepository>();
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final errMsg = context.tr('ft.convErr');
     try {
       final conv = await repo.getOrCreateDirect(u.id);
       if (!mounted) return;
       navigator.push(MaterialPageRoute(builder: (_) => ChatThreadScreen(conversation: conv)));
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text("Impossible d'ouvrir la conversation")));
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
     }
   }
 
@@ -49,7 +51,7 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
-        Text('Choisis un de tes projets pour voir les profils les mieux classés.',
+        Text(context.tr('ft.intro'),
             style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
         const SizedBox(height: 12),
         if (projects.loadingMine && projects.myProjects.isEmpty)
@@ -63,20 +65,20 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
                 const SizedBox(height: 8),
                 OutlinedButton(
                   onPressed: () => context.read<ProjectsProvider>().loadMine(),
-                  child: const Text('Réessayer'),
+                  child: Text(context.tr('feed.retry')),
                 ),
               ],
             ),
           )
         else if (projects.myProjects.isEmpty)
           AppCard(
-            child: Text('Crée d\'abord un projet pour trouver des coéquipiers.',
+            child: Text(context.tr('ft.noProjects'),
                 style: TextStyle(color: context.palette.textMuted)),
           )
         else
           DropdownButtonFormField<int>(
             initialValue: matching.selectedProjectId,
-            decoration: const InputDecoration(labelText: 'Mon projet'),
+            decoration: InputDecoration(labelText: context.tr('ft.myProject')),
             items: [
               for (final p in projects.myProjects)
                 DropdownMenuItem(value: p.id, child: Text(p.title, overflow: TextOverflow.ellipsis)),
@@ -91,9 +93,9 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
           const SizedBox(height: 16),
           TextField(
             onChanged: (v) => setState(() => _query = v),
-            decoration: const InputDecoration(
-              hintText: 'Rechercher un profil...',
-              prefixIcon: Icon(Icons.search),
+            decoration: InputDecoration(
+              hintText: context.tr('ft.searchHint'),
+              prefixIcon: const Icon(Icons.search),
             ),
           ),
         ],
@@ -112,11 +114,11 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
       return [Center(child: Text(matching.candidatesError!, style: TextStyle(color: context.palette.textMuted)))];
     }
     if (matching.candidates.isEmpty) {
-      return const [
+      return [
         EmptyState(
           icon: Icons.person_search_outlined,
-          title: 'Aucun coéquipier trouvé',
-          subtitle: 'Aucun profil ne correspond encore aux compétences de ce projet.',
+          title: context.tr('ft.emptyTitle'),
+          subtitle: context.tr('ft.emptySub'),
         ),
       ];
     }
@@ -132,8 +134,8 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
       return [
         EmptyState(
           icon: Icons.search_off,
-          title: 'Aucun résultat',
-          subtitle: 'Aucun profil ne correspond à « $_query ».',
+          title: context.tr('ft.noResultTitle'),
+          subtitle: context.tr('ft.noResultSub', {'q': _query}),
         ),
       ];
     }
@@ -186,9 +188,9 @@ class _CandidateCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _matchChip(context, 'Compétences', user.skillMatch),
+              _matchChip(context, context.tr('ft.skills'), user.skillMatch),
               const SizedBox(width: 8),
-              _matchChip(context, 'Intérêts', user.interestMatch),
+              _matchChip(context, context.tr('ft.interests'), user.interestMatch),
             ],
           ),
           const SizedBox(height: 12),
@@ -200,10 +202,10 @@ class _CandidateCard extends StatelessWidget {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(40)),
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invitations à venir')),
+                    SnackBar(content: Text(context.tr('ft.invitesSoon'))),
                   ),
                   icon: const Icon(Icons.group_add_outlined, size: 18),
-                  label: const Text('Inviter'),
+                  label: Text(context.tr('ft.invite')),
                 ),
               ),
               const SizedBox(width: 10),
@@ -212,7 +214,7 @@ class _CandidateCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(40)),
                   onPressed: onMessage,
                   icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                  label: const Text('Message'),
+                  label: Text(context.tr('ft.message')),
                 ),
               ),
             ],
