@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
@@ -36,12 +37,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     // Duplicate e-mail → tell the user and offer to go to the login screen.
     if (authProvider.errorCode == 409) {
-      await _showExistsDialog(
-        'Un compte TeamUp utilise déjà cette adresse e-mail.',
-      );
+      await _showExistsDialog(context.tr('register.existsEmail'));
       return;
     }
-    final err = authProvider.error ?? "Échec de l'inscription";
+    final err = authProvider.error ?? context.tr('register.fail');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
   }
 
@@ -51,16 +50,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final goLogin = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Compte déjà existant'),
+        title: Text(context.tr('register.existsTitle')),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
+            child: Text(context.tr('common.cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Aller à la connexion'),
+            child: Text(context.tr('register.goLogin')),
           ),
         ],
       ),
@@ -81,17 +80,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Compte déjà existant'),
-        content: const Text(
-            'Un compte TeamUp est déjà associé à ce compte Google.'),
+        title: Text(context.tr('register.existsTitle')),
+        content: Text(context.tr('register.existsGoogle')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, 'back'),
-            child: const Text("Retour à l'inscription"),
+            child: Text(context.tr('register.backToSignup')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, 'login'),
-            child: const Text('Me connecter'),
+            child: Text(context.tr('register.signMeIn')),
           ),
         ],
       ),
@@ -110,11 +108,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final p = context.palette;
     final pwd = _password.text;
     final rules = <(String, bool)>[
-      ('Au moins 8 caractères', pwd.length >= 8),
-      ('Une lettre majuscule', pwd.contains(RegExp(r'[A-Z]'))),
-      ('Une lettre minuscule', pwd.contains(RegExp(r'[a-z]'))),
-      ('Un chiffre', pwd.contains(RegExp(r'[0-9]'))),
-      ('Un caractère spécial', pwd.contains(RegExp(r'[^A-Za-z0-9]'))),
+      (context.tr('pwd.min8'), pwd.length >= 8),
+      (context.tr('pwd.upper'), pwd.contains(RegExp(r'[A-Z]'))),
+      (context.tr('pwd.lower'), pwd.contains(RegExp(r'[a-z]'))),
+      (context.tr('pwd.digit'), pwd.contains(RegExp(r'[0-9]'))),
+      (context.tr('pwd.special'), pwd.contains(RegExp(r'[^A-Za-z0-9]'))),
     ];
     return [
       for (final (label, met) in rules)
@@ -163,23 +161,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const Center(child: BrandHeader(iconSize: 36, fontSize: 28)),
                   const SizedBox(height: 24),
-                  Text('Créer un compte', style: Theme.of(context).textTheme.headlineSmall),
+                  Text(context.tr('register.title'), style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 4),
-                  Text('Rejoins TeamUp.', style: TextStyle(color: context.palette.textMuted)),
+                  Text(context.tr('register.subtitle'), style: TextStyle(color: context.palette.textMuted)),
                   const SizedBox(height: 24),
-                  TextField(controller: _name, decoration: const InputDecoration(labelText: 'Nom complet')),
+                  TextField(controller: _name, decoration: InputDecoration(labelText: context.tr('register.fullName'))),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(labelText: context.tr('common.email')),
                   ),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _password,
                     obscureText: true,
                     onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(labelText: 'Mot de passe (min. 8 caractères)'),
+                    decoration: InputDecoration(labelText: context.tr('register.passwordHint')),
                   ),
                   // Smoothly expand/collapse the strength checklist.
                   AnimatedSize(
@@ -206,7 +204,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: busy ? null : _submit,
                     child: busy
                         ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text("S'inscrire"),
+                        : Text(context.tr('register.cta')),
                   ),
                   const SizedBox(height: 16),
                   const OrDivider(),

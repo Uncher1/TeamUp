@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/api_client.dart';
@@ -97,6 +98,13 @@ class _Root extends StatelessWidget {
       theme: AppTheme.build(brightness: Brightness.light, seed: seed),
       darkTheme: AppTheme.build(brightness: Brightness.dark, seed: seed),
       themeMode: mode,
+      locale: Locale(settings.language),
+      supportedLocales: const [Locale('en'), Locale('fr')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       builder: (context, child) => ColoredBox(
         color: Theme.of(context).scaffoldBackgroundColor,
         child: Center(

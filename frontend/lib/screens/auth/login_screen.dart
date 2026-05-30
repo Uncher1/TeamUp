@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
@@ -28,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = context.read<AuthProvider>();
     final ok = await authProvider.login(_email.text, _password.text);
     if (!ok && mounted) {
-      final err = context.read<AuthProvider>().error ?? 'Échec de la connexion';
+      final err = context.read<AuthProvider>().error ?? context.tr('login.fail');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
     }
   }
@@ -49,20 +50,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const Center(child: BrandHeader(iconSize: 36, fontSize: 28)),
                   const SizedBox(height: 32),
-                  Text('Connexion', style: Theme.of(context).textTheme.headlineSmall),
+                  Text(context.tr('login.title'), style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 4),
-                  Text('Retrouve ton équipe.', style: TextStyle(color: context.palette.textMuted)),
+                  Text(context.tr('login.subtitle'), style: TextStyle(color: context.palette.textMuted)),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(labelText: context.tr('common.email')),
                   ),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _password,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Mot de passe'),
+                    decoration: InputDecoration(labelText: context.tr('common.password')),
                     onSubmitted: (_) => busy ? null : _submit(),
                   ),
                   const SizedBox(height: 24),
@@ -70,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: busy ? null : _submit,
                     child: busy
                         ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Se connecter'),
+                        : Text(context.tr('login.cta')),
                   ),
                   const SizedBox(height: 16),
                   const OrDivider(),
@@ -84,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? null
                           : () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                      child: const Text("Pas de compte ? S'inscrire"),
+                      child: Text(context.tr('login.noAccount')),
                     ),
                   ),
                 ],

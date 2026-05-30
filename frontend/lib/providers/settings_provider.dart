@@ -17,7 +17,7 @@ class SettingsProvider extends ChangeNotifier {
   ThemeMode get themeMode => darkMode ? ThemeMode.dark : ThemeMode.light;
   String get themeColor => _raw['themeColor'] ?? 'Indigo';
   Color get seedColor => AppTheme.themeColors[themeColor] ?? AppTheme.primary;
-  String get language => _raw['language'] ?? 'fr';
+  String get language => _raw['language'] ?? 'en';
 
   /// Toggle value; defaults to ON unless the user explicitly turned it off.
   bool toggle(String key, {bool def = true}) =>

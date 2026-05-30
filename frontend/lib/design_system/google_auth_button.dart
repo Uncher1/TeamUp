@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
 import '../core/api_client.dart';
+import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../providers/auth_provider.dart';
 import 'pressable.dart';
@@ -50,10 +51,13 @@ Future<GoogleOutcome> handleGoogleSignIn(BuildContext context) async {
   final messenger = ScaffoldMessenger.of(context);
   final auth = context.read<AuthProvider>();
   final signIn = GoogleSignIn.instance;
+  // Captured before any await so we don't touch context across async gaps.
+  final noTokenMsg = context.tr('common.googleNoToken');
+  final failedMsg = context.tr('common.googleFailed');
 
   if (!signIn.supportsAuthenticate()) {
-    messenger.showSnackBar(const SnackBar(
-      content: Text('La connexion Google est disponible sur l’app mobile.'),
+    messenger.showSnackBar(SnackBar(
+      content: Text(context.tr('common.googleMobileOnly')),
     ));
     return GoogleOutcome.failed;
   }
@@ -66,16 +70,12 @@ Future<GoogleOutcome> handleGoogleSignIn(BuildContext context) async {
     final account = await signIn.authenticate();
     final idToken = account.authentication.idToken;
     if (idToken == null) {
-      messenger.showSnackBar(const SnackBar(
-        content: Text('Google : impossible de récupérer le token.'),
-      ));
+      messenger.showSnackBar(SnackBar(content: Text(noTokenMsg)));
       return GoogleOutcome.failed;
     }
     final ok = await auth.loginWithGoogle(idToken);
     if (!ok) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(auth.error ?? 'Échec de la connexion Google'),
-      ));
+      messenger.showSnackBar(SnackBar(content: Text(auth.error ?? failedMsg)));
       return GoogleOutcome.failed;
     }
     return GoogleOutcome(signedIn: true, isNew: auth.isNewAccount);
@@ -117,7 +117,7 @@ class GoogleAuthButton extends StatelessWidget {
             SvgPicture.string(_googleGSvg, height: 20, width: 20),
             const SizedBox(width: 10),
             Text(
-              'Continuer avec Google',
+              context.tr('common.google'),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -142,7 +142,7 @@ class OrDivider extends StatelessWidget {
         Expanded(child: Divider(color: p.slate200)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text('ou', style: TextStyle(fontSize: 12, color: p.textMuted)),
+          child: Text(context.tr('common.or'), style: TextStyle(fontSize: 12, color: p.textMuted)),
         ),
         Expanded(child: Divider(color: p.slate200)),
       ],

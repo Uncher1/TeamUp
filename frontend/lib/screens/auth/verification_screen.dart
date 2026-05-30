@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
@@ -48,7 +49,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     setState(() => _busy = false);
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error ?? 'Code invalide')),
+        SnackBar(content: Text(auth.error ?? context.tr('verify.invalid'))),
       );
     }
     // On success the AuthGate rebuilds automatically (emailVerified == true).
@@ -58,13 +59,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
     if (_cooldown > 0) return;
     final auth = context.read<AuthProvider>();
     final messenger = ScaffoldMessenger.of(context);
+    final resentMsg = context.tr('verify.resent');
+    final failMsg = context.tr('verify.resendFail');
     _startCooldown();
     final ok = await auth.resendCode();
     if (!mounted) return;
     messenger.showSnackBar(SnackBar(
-      content: Text(ok
-          ? 'Un nouveau code a été envoyé.'
-          : (auth.error ?? "Échec de l'envoi du code")),
+      content: Text(ok ? resentMsg : (auth.error ?? failMsg)),
     ));
   }
 
@@ -87,14 +88,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   Icon(Icons.mark_email_unread_outlined,
                       size: 48, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 16),
-                  Text('Vérifie ton adresse e-mail',
+                  Text(context.tr('verify.title'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 8),
                   Text.rich(
                     TextSpan(children: [
                       TextSpan(
-                          text: 'Nous avons envoyé un code à 8 caractères à\n',
+                          text: context.tr('verify.sentTo'),
                           style: TextStyle(color: p.textMuted)),
                       TextSpan(
                           text: email,
@@ -133,21 +134,21 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             width: 22,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
-                        : const Text('Vérifier'),
+                        : Text(context.tr('verify.cta')),
                   ),
                   const SizedBox(height: 12),
                   Center(
                     child: TextButton(
                       onPressed: _cooldown > 0 ? null : _resend,
                       child: Text(_cooldown > 0
-                          ? 'Renvoyer le code ($_cooldown s)'
-                          : 'Renvoyer le code'),
+                          ? context.tr('verify.resendIn', {'s': '$_cooldown'})
+                          : context.tr('verify.resend')),
                     ),
                   ),
                   Center(
                     child: TextButton(
                       onPressed: () => context.read<AuthProvider>().logout(),
-                      child: Text('Changer de compte',
+                      child: Text(context.tr('verify.changeAccount'),
                           style: TextStyle(color: p.textMuted)),
                     ),
                   ),
