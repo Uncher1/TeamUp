@@ -37,7 +37,7 @@ async function createMessage(conversationId, senderId, rawContent) {
   );
   const [rows] = await pool.query(
     `SELECT m.id, m.conversation_id, m.sender_id, u.full_name AS sender_name,
-            m.content, m.created_at
+            u.role AS sender_role, m.content, m.created_at
        FROM messages m JOIN users u ON u.id = m.sender_id
       WHERE m.id = ?`,
     [r.insertId]

@@ -48,7 +48,7 @@ async function rankUsersForProject(projectId, limit = 10) {
   // Pre-filter: only users who declare at least one of the required skills.
   // Avoids loading the full user_skills table into memory.
   const [candidates] = await pool.query(
-    `SELECT DISTINCT u.id, u.full_name, u.bio, u.avatar_url
+    `SELECT DISTINCT u.id, u.full_name, u.role, u.bio, u.avatar_url
        FROM users u
        JOIN user_skills us ON us.user_id = u.id
       WHERE us.skill_id IN (?)
@@ -100,6 +100,7 @@ async function rankUsersForProject(projectId, limit = 10) {
       return {
         user_id: u.id,
         full_name: u.full_name,
+        role: u.role,
         bio: u.bio,
         avatar_url: u.avatar_url,
         skill_match: round(skill_match),

@@ -5,9 +5,15 @@ const { authRequired } = require('../middleware/auth');
 const router = express.Router();
 const POST_TYPES = ['project_launch', 'team_update', 'looking_for', 'milestone', 'general'];
 
+// True if the user is a moderator or admin (may moderate others' content).
+async function isPrivileged(userId) {
+  const [r] = await pool.query('SELECT role FROM users WHERE id = ?', [userId]);
+  return ['moderator', 'admin'].includes(r[0]?.role);
+}
+
 const FEED_SELECT = `
   SELECT p.id, p.type, p.content, p.comment_count, p.created_at,
-         p.author_id, u.full_name AS author_name, u.avatar_url AS author_avatar,
+         p.author_id, u.full_name AS author_name, u.avatar_url AS author_avatar, u.role AS author_role,
          p.project_id, pr.title AS project_title,
          (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
          EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.id AND user_id = ?) AS liked_by_me
@@ -72,7 +78,8 @@ router.get('/:id/comments', authRequired, async (req, res) => {
   if (!postId) return res.status(400).json({ error: 'invalid id' });
   const [rows] = await pool.query(
     `SELECT c.id, c.content, c.created_at,
-            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar
+            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar,
+            u.role AS author_role
        FROM post_comments c JOIN users u ON u.id = c.author_id
       WHERE c.post_id = ?
       ORDER BY c.created_at ASC`,
@@ -110,7 +117,8 @@ router.post('/:id/comments', authRequired, async (req, res) => {
   }
   const [rows] = await pool.query(
     `SELECT c.id, c.content, c.created_at,
-            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar
+            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar,
+            u.role AS author_role
        FROM post_comments c JOIN users u ON u.id = c.author_id
       WHERE c.id = ?`,
     [insertId]
@@ -132,7 +140,8 @@ router.patch('/:id/comments/:cid', authRequired, async (req, res) => {
   await pool.query('UPDATE post_comments SET content = ? WHERE id = ?', [content, cid]);
   const [updated] = await pool.query(
     `SELECT c.id, c.content, c.created_at,
-            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar
+            u.id AS author_id, u.full_name AS author_name, u.avatar_url AS author_avatar,
+            u.role AS author_role
        FROM post_comments c JOIN users u ON u.id = c.author_id
       WHERE c.id = ?`,
     [cid]
@@ -147,7 +156,9 @@ router.delete('/:id/comments/:cid', authRequired, async (req, res) => {
 
   const [rows] = await pool.query('SELECT author_id FROM post_comments WHERE id = ? AND post_id = ?', [cid, postId]);
   if (!rows.length) return res.status(404).json({ error: 'comment not found' });
-  if (rows[0].author_id !== req.user.id) return res.status(403).json({ error: 'not your comment' });
+  if (rows[0].author_id !== req.user.id && !(await isPrivileged(req.user.id))) {
+    return res.status(403).json({ error: 'not your comment' });
+  }
 
   const conn = await pool.getConnection();
   try {
@@ -169,7 +180,9 @@ router.delete('/:id', authRequired, async (req, res) => {
   if (!postId) return res.status(400).json({ error: 'invalid id' });
   const [posts] = await pool.query('SELECT author_id FROM posts WHERE id = ?', [postId]);
   if (!posts.length) return res.status(404).json({ error: 'post not found' });
-  if (posts[0].author_id !== req.user.id) return res.status(403).json({ error: 'not your post' });
+  if (posts[0].author_id !== req.user.id && !(await isPrivileged(req.user.id))) {
+    return res.status(403).json({ error: 'not your post' });
+  }
   await pool.query('DELETE FROM posts WHERE id = ?', [postId]);
   res.json({ deleted: true });
 });

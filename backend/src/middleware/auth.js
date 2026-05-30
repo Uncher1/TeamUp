@@ -15,4 +15,24 @@ function authRequired(req, res, next) {
   }
 }
 
-module.exports = { authRequired };
+// Guards a route so only the given roles may pass. Loads the CURRENT role
+// from the DB (roles can change after a token was issued). Use after
+// authRequired, e.g. router.delete('/x', authRequired, requireRole('admin'), ...).
+const pool = require('../config/db');
+function requireRole(...allowed) {
+  return async (req, res, next) => {
+    try {
+      const [rows] = await pool.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+      const role = rows[0]?.role ?? 'user';
+      if (!allowed.includes(role)) {
+        return res.status(403).json({ error: 'insufficient permissions' });
+      }
+      req.user.role = role;
+      next();
+    } catch (e) {
+      next(e);
+    }
+  };
+}
+
+module.exports = { authRequired, requireRole };

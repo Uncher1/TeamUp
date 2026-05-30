@@ -3,6 +3,12 @@ const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { createNotification } = require('../services/notifications');
 
+// True if the user may moderate others' content (moderator or admin).
+async function isPrivileged(userId) {
+  const [r] = await pool.query('SELECT role FROM users WHERE id = ?', [userId]);
+  return ['moderator', 'admin'].includes(r[0]?.role);
+}
+
 const router = express.Router();
 
 async function loadProject(id) {
@@ -274,6 +280,19 @@ router.post('/:id/conversation', authRequired, async (req, res) => {
   } finally {
     conn.release();
   }
+});
+
+// Delete a project — its owner, or a moderator/admin (content moderation).
+router.delete('/:id', authRequired, async (req, res) => {
+  const projectId = Number(req.params.id);
+  if (!projectId) return res.status(400).json({ error: 'invalid id' });
+  const [projects] = await pool.query('SELECT owner_id FROM projects WHERE id = ?', [projectId]);
+  if (!projects.length) return res.status(404).json({ error: 'project not found' });
+  if (projects[0].owner_id !== req.user.id && !(await isPrivileged(req.user.id))) {
+    return res.status(403).json({ error: 'not allowed' });
+  }
+  await pool.query('DELETE FROM projects WHERE id = ?', [projectId]);
+  res.json({ deleted: true });
 });
 
 module.exports = router;

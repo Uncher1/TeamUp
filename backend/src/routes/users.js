@@ -15,7 +15,7 @@ const router = express.Router();
 
 async function loadProfile(userId) {
   const [users] = await pool.query(
-    `SELECT id, email, full_name, bio, avatar_url, created_at, email_verified,
+    `SELECT id, email, full_name, role, bio, avatar_url, created_at, email_verified,
             phone, school, department, study_year, location,
             github, linkedin, twitter, website
        FROM users WHERE id = ?`,
