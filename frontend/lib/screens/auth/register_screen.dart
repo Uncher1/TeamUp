@@ -5,6 +5,7 @@ import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,7 +29,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _submit() async {
     final authProvider = context.read<AuthProvider>();
-    final ok = await authProvider.register(_name.text, _email.text, _password.text);
+    final ok = await authProvider.register(_name.text, _email.text, _password.text,
+        language: context.read<SettingsProvider>().language);
     if (!mounted) return;
     if (ok) {
       // Reveal the AuthGate, which routes the new account to verification.

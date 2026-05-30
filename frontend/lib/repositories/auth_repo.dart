@@ -24,18 +24,21 @@ class AuthRepository {
   }
 
   Future<AuthResult> register(
-      String fullName, String email, String password) async {
+      String fullName, String email, String password,
+      {String language = 'en'}) async {
     final res = await api.dio.post('/auth/register', data: {
       'full_name': fullName,
       'email': email,
       'password': password,
+      'language': language,
     });
     return _parse(res.data as Map<String, dynamic>);
   }
 
   /// Authenticates via Google, exchanging the GIS [idToken] for our JWT.
-  Future<AuthResult> google(String idToken) async {
-    final res = await api.dio.post('/auth/google', data: {'id_token': idToken});
+  Future<AuthResult> google(String idToken, {String language = 'en'}) async {
+    final res = await api.dio
+        .post('/auth/google', data: {'id_token': idToken, 'language': language});
     return _parse(res.data as Map<String, dynamic>);
   }
 

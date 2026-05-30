@@ -56,14 +56,16 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> login(String email, String password) =>
       _run(() => repo.login(email.trim(), password), markRegistered: false);
 
-  Future<bool> register(String fullName, String email, String password) =>
-      _run(() => repo.register(fullName.trim(), email.trim(), password), markRegistered: true);
+  Future<bool> register(String fullName, String email, String password,
+          {String language = 'en'}) =>
+      _run(() => repo.register(fullName.trim(), email.trim(), password, language: language),
+          markRegistered: true);
 
   /// Authenticates with Google using a GIS ID token. A brand-new Google
   /// account is routed through profile completion (the next step), just like a
   /// classic sign-up; an existing account logs straight in.
-  Future<bool> loginWithGoogle(String idToken) async {
-    final ok = await _run(() => repo.google(idToken), markRegistered: false);
+  Future<bool> loginWithGoogle(String idToken, {String language = 'en'}) async {
+    final ok = await _run(() => repo.google(idToken, language: language), markRegistered: false);
     if (ok && isNewAccount) {
       justRegistered = true;
       notifyListeners();

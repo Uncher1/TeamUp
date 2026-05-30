@@ -2,7 +2,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { hash, verify } = require('../utils/password');
-const { getSettings, enabled } = require('../services/settings');
+const { getSettings, enabled, getUserLanguage } = require('../services/settings');
 const {
   sendEmailChangeRequest, sendPasswordChangeRequest,
   sendEmailChanged, sendPasswordChanged,
@@ -137,7 +137,8 @@ router.put('/me/password', authRequired, async (req, res) => {
        WHERE id = ?`,
     [await hash(next), code, expires, req.user.id]
   );
-  sendPasswordChangeRequest({ to: rows[0].email, code, name: rows[0].full_name })
+  const lang = await getUserLanguage(req.user.id);
+  sendPasswordChangeRequest({ to: rows[0].email, code, name: rows[0].full_name, lang })
     .catch((e) => console.error('[mail] password-change-request failed:', e.message));
   res.json({ sent: true });
 });
@@ -162,7 +163,8 @@ router.post('/me/email/request', authRequired, async (req, res) => {
     [email, code, expires, req.user.id]
   );
   // Code goes to the CURRENT address so the old e-mail owner approves the switch.
-  sendEmailChangeRequest({ to: rows[0].email, newEmail: email, code, name: rows[0].full_name })
+  const lang = await getUserLanguage(req.user.id);
+  sendEmailChangeRequest({ to: rows[0].email, newEmail: email, code, name: rows[0].full_name, lang })
     .catch((e) => console.error('[mail] email-change-request failed:', e.message));
   res.json({ sent: true });
 });
@@ -199,11 +201,13 @@ router.post('/me/change/confirm', authRequired, async (req, res) => {
       return res.status(409).json({ error: 'email already in use' });
     }
     await pool.query(`UPDATE users SET email = ?, ${clear} WHERE id = ?`, [u.pending_email, req.user.id]);
-    sendEmailChanged({ to: u.email, newEmail: u.pending_email })
+    const lang = await getUserLanguage(req.user.id);
+    sendEmailChanged({ to: u.email, newEmail: u.pending_email, lang })
       .catch((e) => console.error('[mail] email-changed failed:', e.message));
   } else if (u.pending_change_type === 'password') {
     await pool.query(`UPDATE users SET password_hash = ?, ${clear} WHERE id = ?`, [u.pending_password_hash, req.user.id]);
-    sendPasswordChanged({ to: u.email })
+    const lang = await getUserLanguage(req.user.id);
+    sendPasswordChanged({ to: u.email, lang })
       .catch((e) => console.error('[mail] password-changed failed:', e.message));
   }
   res.json({ confirmed: true, type: u.pending_change_type, user: await loadProfile(req.user.id) });
@@ -224,11 +228,12 @@ router.post('/me/change/resend', authRequired, async (req, res) => {
     'UPDATE users SET pending_change_code = ?, pending_change_expires = ? WHERE id = ?',
     [code, expires, req.user.id]
   );
+  const lang = await getUserLanguage(req.user.id);
   if (u.pending_change_type === 'email') {
-    sendEmailChangeRequest({ to: u.email, newEmail: u.pending_email, code, name: u.full_name })
+    sendEmailChangeRequest({ to: u.email, newEmail: u.pending_email, code, name: u.full_name, lang })
       .catch((e) => console.error('[mail] resend email-change failed:', e.message));
   } else {
-    sendPasswordChangeRequest({ to: u.email, code, name: u.full_name })
+    sendPasswordChangeRequest({ to: u.email, code, name: u.full_name, lang })
       .catch((e) => console.error('[mail] resend password-change failed:', e.message));
   }
   res.json({ sent: true });

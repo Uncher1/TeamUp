@@ -7,6 +7,9 @@ const { sign } = require('../utils/jwt');
 const { authRequired } = require('../middleware/auth');
 const { sendVerificationCode } = require('../services/mailer');
 
+// Normalizes a requested UI language to a supported one ('en' default).
+const normLang = (l) => (l === 'fr' ? 'fr' : 'en');
+
 const router = express.Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -21,8 +24,8 @@ function generateCode() {
   return `${raw.slice(0, 4)}-${raw.slice(4)}`;
 }
 
-// Stores a freshly generated code on the user and e-mails it. Returns the code.
-async function issueVerification(userId, email, name) {
+// Stores a freshly generated code on the user and e-mails it (in [lang]).
+async function issueVerification(userId, email, name, lang = 'en') {
   const code = generateCode();
   const expires = new Date(Date.now() + CODE_TTL_MS);
   await pool.query(
@@ -30,10 +33,19 @@ async function issueVerification(userId, email, name) {
     [code, expires, userId]
   );
   // Send asynchronously; failure to e-mail must not break the API response.
-  sendVerificationCode({ to: email, code, name }).catch((e) =>
+  sendVerificationCode({ to: email, code, name, lang }).catch((e) =>
     console.error('[auth] verification e-mail failed:', e.message)
   );
   return code;
+}
+
+// Persists the user's initial UI language so later e-mails match it.
+async function seedLanguage(userId, lang) {
+  await pool.query(
+    `INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES (?, 'language', ?)
+       ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+    [userId, lang]
+  );
 }
 
 router.post('/register', async (req, res) => {
@@ -65,7 +77,9 @@ router.post('/register', async (req, res) => {
     [email, password_hash, full_name]
   );
   const id = result.insertId;
-  await issueVerification(id, email, full_name);
+  const lang = normLang(req.body?.language);
+  await seedLanguage(id, lang);
+  await issueVerification(id, email, full_name, lang);
   const token = sign({ sub: id, email });
   res.status(201).json({ token, user: { id, email, full_name, email_verified: false } });
 });
@@ -139,6 +153,7 @@ router.post('/google', async (req, res) => {
       [email, password_hash, fullName]
     );
     user = { id: result.insertId, email, full_name: fullName, email_verified: 1 };
+    await seedLanguage(user.id, normLang(req.body?.language));
   }
 
   const token = sign({ sub: user.id, email: user.email });

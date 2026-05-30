@@ -7,6 +7,7 @@ import '../core/api_client.dart';
 import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/settings_provider.dart';
 import 'pressable.dart';
 
 /// The **web** OAuth client id, used as `serverClientId` so the id_token's
@@ -54,6 +55,7 @@ Future<GoogleOutcome> handleGoogleSignIn(BuildContext context) async {
   // Captured before any await so we don't touch context across async gaps.
   final noTokenMsg = context.tr('common.googleNoToken');
   final failedMsg = context.tr('common.googleFailed');
+  final lang = context.read<SettingsProvider>().language;
 
   if (!signIn.supportsAuthenticate()) {
     messenger.showSnackBar(SnackBar(
@@ -73,7 +75,7 @@ Future<GoogleOutcome> handleGoogleSignIn(BuildContext context) async {
       messenger.showSnackBar(SnackBar(content: Text(noTokenMsg)));
       return GoogleOutcome.failed;
     }
-    final ok = await auth.loginWithGoogle(idToken);
+    final ok = await auth.loginWithGoogle(idToken, language: lang);
     if (!ok) {
       messenger.showSnackBar(SnackBar(content: Text(auth.error ?? failedMsg)));
       return GoogleOutcome.failed;
