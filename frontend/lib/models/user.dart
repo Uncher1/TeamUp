@@ -10,6 +10,21 @@ class User {
   final List<UserSkill> skills;
   final List<Interest> interests;
 
+  // Personal / contact
+  final String? phone;
+  final String? location;
+
+  // Academic
+  final String? school;
+  final String? department;
+  final String? studyYear;
+
+  // Social / links
+  final String? github;
+  final String? linkedin;
+  final String? twitter;
+  final String? website;
+
   const User({
     required this.id,
     required this.email,
@@ -18,6 +33,15 @@ class User {
     this.avatarUrl,
     this.skills = const [],
     this.interests = const [],
+    this.phone,
+    this.location,
+    this.school,
+    this.department,
+    this.studyYear,
+    this.github,
+    this.linkedin,
+    this.twitter,
+    this.website,
   });
 
   /// Handles both the auth payload (`{id, email, full_name}`) and the full
@@ -36,7 +60,54 @@ class User {
                 ?.map((e) => Interest.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             const [],
+        phone: json['phone'] as String?,
+        location: json['location'] as String?,
+        school: json['school'] as String?,
+        department: json['department'] as String?,
+        studyYear: json['study_year'] as String?,
+        github: json['github'] as String?,
+        linkedin: json['linkedin'] as String?,
+        twitter: json['twitter'] as String?,
+        website: json['website'] as String?,
       );
+
+  User copyWith({
+    int? id,
+    String? email,
+    String? fullName,
+    String? bio,
+    String? avatarUrl,
+    List<UserSkill>? skills,
+    List<Interest>? interests,
+    String? phone,
+    String? location,
+    String? school,
+    String? department,
+    String? studyYear,
+    String? github,
+    String? linkedin,
+    String? twitter,
+    String? website,
+  }) {
+    return User(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      fullName: fullName ?? this.fullName,
+      bio: bio ?? this.bio,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      skills: skills ?? this.skills,
+      interests: interests ?? this.interests,
+      phone: phone ?? this.phone,
+      location: location ?? this.location,
+      school: school ?? this.school,
+      department: department ?? this.department,
+      studyYear: studyYear ?? this.studyYear,
+      github: github ?? this.github,
+      linkedin: linkedin ?? this.linkedin,
+      twitter: twitter ?? this.twitter,
+      website: website ?? this.website,
+    );
+  }
 
   String get initials {
     final parts = fullName.trim().split(RegExp(r'\s+'));

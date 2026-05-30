@@ -20,6 +20,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _name;
   late final TextEditingController _bio;
 
+  // Coordonnées
+  late final TextEditingController _phone;
+  late final TextEditingController _location;
+
+  // Académique
+  late final TextEditingController _school;
+  late final TextEditingController _department;
+  late final TextEditingController _studyYear;
+
+  // Liens
+  late final TextEditingController _github;
+  late final TextEditingController _linkedin;
+  late final TextEditingController _twitter;
+  late final TextEditingController _website;
+
   /// skillId -> level (1..5)
   final Map<int, int> _skills = {};
   final Set<int> _interests = {};
@@ -31,6 +46,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthProvider>().user;
     _name = TextEditingController(text: user?.fullName ?? '');
     _bio = TextEditingController(text: user?.bio ?? '');
+    _phone = TextEditingController(text: user?.phone ?? '');
+    _location = TextEditingController(text: user?.location ?? '');
+    _school = TextEditingController(text: user?.school ?? '');
+    _department = TextEditingController(text: user?.department ?? '');
+    _studyYear = TextEditingController(text: user?.studyYear ?? '');
+    _github = TextEditingController(text: user?.github ?? '');
+    _linkedin = TextEditingController(text: user?.linkedin ?? '');
+    _twitter = TextEditingController(text: user?.twitter ?? '');
+    _website = TextEditingController(text: user?.website ?? '');
     for (final s in user?.skills ?? const []) {
       _skills[s.id] = s.level;
     }
@@ -46,7 +70,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _name.dispose();
     _bio.dispose();
+    _phone.dispose();
+    _location.dispose();
+    _school.dispose();
+    _department.dispose();
+    _studyYear.dispose();
+    _github.dispose();
+    _linkedin.dispose();
+    _twitter.dispose();
+    _website.dispose();
     super.dispose();
+  }
+
+  String? _val(TextEditingController c) {
+    final t = c.text.trim();
+    return t.isEmpty ? null : t;
   }
 
   Future<void> _save() async {
@@ -56,7 +94,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
-      await repo.updateProfile(fullName: _name.text.trim(), bio: _bio.text.trim());
+      await repo.updateProfile(
+        fullName: _name.text.trim(),
+        bio: _val(_bio),
+        phone: _val(_phone),
+        location: _val(_location),
+        school: _val(_school),
+        department: _val(_department),
+        studyYear: _val(_studyYear),
+        github: _val(_github),
+        linkedin: _val(_linkedin),
+        twitter: _val(_twitter),
+        website: _val(_website),
+      );
       await repo.setSkills(
         _skills.entries.map((e) => {'skill_id': e.key, 'level': e.value}).toList(),
       );
@@ -105,6 +155,94 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: const InputDecoration(labelText: 'Bio', alignLabelWithHint: true),
                   ),
                   const SizedBox(height: 20),
+
+                  // ── Coordonnées ──────────────────────────────────────────
+                  const SectionLabel('Coordonnées'),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _phone,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Téléphone',
+                      prefixIcon: Icon(Icons.phone_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _location,
+                    decoration: const InputDecoration(
+                      labelText: 'Localisation',
+                      prefixIcon: Icon(Icons.location_on_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Académique ───────────────────────────────────────────
+                  const SectionLabel('Académique'),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _school,
+                    decoration: const InputDecoration(
+                      labelText: 'École',
+                      prefixIcon: Icon(Icons.school_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _department,
+                    decoration: const InputDecoration(
+                      labelText: 'Filière',
+                      prefixIcon: Icon(Icons.account_tree_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _studyYear,
+                    decoration: const InputDecoration(
+                      labelText: 'Année',
+                      prefixIcon: Icon(Icons.calendar_today_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Liens ────────────────────────────────────────────────
+                  const SectionLabel('Liens'),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _github,
+                    decoration: const InputDecoration(
+                      labelText: 'GitHub',
+                      prefixIcon: Icon(Icons.code),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _linkedin,
+                    decoration: const InputDecoration(
+                      labelText: 'LinkedIn',
+                      prefixIcon: Icon(Icons.business_center_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _twitter,
+                    decoration: const InputDecoration(
+                      labelText: 'Twitter / X',
+                      prefixIcon: Icon(Icons.alternate_email),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _website,
+                    keyboardType: TextInputType.url,
+                    decoration: const InputDecoration(
+                      labelText: 'Site web',
+                      prefixIcon: Icon(Icons.link),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Compétences ──────────────────────────────────────────
                   const SectionLabel('Compétences'),
                   const SizedBox(height: 4),
                   Text('Touche pour ajouter ; règle ton niveau (1–5).',

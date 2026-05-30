@@ -15,6 +15,15 @@ CREATE TABLE IF NOT EXISTS users (
   full_name     VARCHAR(120) NOT NULL,
   bio           TEXT,
   avatar_url    VARCHAR(500),
+  phone         VARCHAR(40),
+  school        VARCHAR(120),
+  department    VARCHAR(120),
+  study_year    VARCHAR(40),
+  location      VARCHAR(120),
+  github        VARCHAR(120),
+  linkedin      VARCHAR(120),
+  twitter       VARCHAR(120),
+  website       VARCHAR(200),
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

@@ -8,7 +8,10 @@ const router = express.Router();
 
 async function loadProfile(userId) {
   const [users] = await pool.query(
-    'SELECT id, email, full_name, bio, avatar_url, created_at FROM users WHERE id = ?',
+    `SELECT id, email, full_name, bio, avatar_url, created_at,
+            phone, school, department, study_year, location,
+            github, linkedin, twitter, website
+       FROM users WHERE id = ?`,
     [userId]
   );
   if (!users.length) return null;
@@ -34,7 +37,9 @@ router.get('/me', authRequired, async (req, res) => {
 });
 
 router.patch('/me', authRequired, async (req, res) => {
-  const { full_name, bio, avatar_url, email } = req.body || {};
+  const { full_name, bio, avatar_url, email,
+          phone, school, department, study_year, location,
+          github, linkedin, twitter, website } = req.body || {};
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -55,9 +60,20 @@ router.patch('/me', authRequired, async (req, res) => {
       `UPDATE users SET
           full_name  = COALESCE(?, full_name),
           bio        = COALESCE(?, bio),
-          avatar_url = COALESCE(?, avatar_url)
+          avatar_url = COALESCE(?, avatar_url),
+          phone      = COALESCE(?, phone),
+          school     = COALESCE(?, school),
+          department = COALESCE(?, department),
+          study_year = COALESCE(?, study_year),
+          location   = COALESCE(?, location),
+          github     = COALESCE(?, github),
+          linkedin   = COALESCE(?, linkedin),
+          twitter    = COALESCE(?, twitter),
+          website    = COALESCE(?, website)
         WHERE id = ?`,
-      [full_name ?? null, bio ?? null, avatar_url ?? null, req.user.id]
+      [full_name ?? null, bio ?? null, avatar_url ?? null,
+       phone ?? null, school ?? null, department ?? null, study_year ?? null, location ?? null,
+       github ?? null, linkedin ?? null, twitter ?? null, website ?? null, req.user.id]
     );
     await conn.commit();
   } catch (e) {
