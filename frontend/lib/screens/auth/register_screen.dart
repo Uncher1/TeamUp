@@ -26,9 +26,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _submit() async {
-    final ok = await context
-        .read<AuthProvider>()
-        .register(_name.text, _email.text, _password.text);
+    final authProvider = context.read<AuthProvider>();
+    final ok = await authProvider.register(_name.text, _email.text, _password.text);
     if (!mounted) return;
     if (ok) {
       Navigator.of(context).pop();

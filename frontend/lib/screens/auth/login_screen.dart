@@ -25,7 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    final ok = await context.read<AuthProvider>().login(_email.text, _password.text);
+    final authProvider = context.read<AuthProvider>();
+    final ok = await authProvider.login(_email.text, _password.text);
     if (!ok && mounted) {
       final err = context.read<AuthProvider>().error ?? 'Échec de la connexion';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));

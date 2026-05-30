@@ -29,6 +29,12 @@ class AuthRepository {
     return _parse(res.data as Map<String, dynamic>);
   }
 
+  /// Authenticates via Google, exchanging the GIS [idToken] for our JWT.
+  Future<AuthResult> google(String idToken) async {
+    final res = await api.dio.post('/auth/google', data: {'id_token': idToken});
+    return _parse(res.data as Map<String, dynamic>);
+  }
+
   /// Fetches the full profile of the authenticated user.
   Future<User> me() async {
     final res = await api.dio.get('/users/me');

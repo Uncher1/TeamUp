@@ -52,6 +52,10 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> register(String fullName, String email, String password) =>
       _run(() => repo.register(fullName.trim(), email.trim(), password), markRegistered: true);
 
+  /// Authenticates with Google using a GIS ID token.
+  Future<bool> loginWithGoogle(String idToken) =>
+      _run(() => repo.google(idToken), markRegistered: false);
+
   /// Marks first-launch onboarding as completed (persisted).
   Future<void> setOnboarded() async {
     onboarded = true;
