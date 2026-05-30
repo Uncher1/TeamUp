@@ -84,6 +84,13 @@ const Map<String, Map<String, String>> _strings = {
     'cp.skillsHint': 'Tap to add; set your level (1–5).',
     'cp.interests': 'Interests',
     'cp.finish': 'Finish',
+
+    // Language screen
+    'lang.title': 'Language',
+    'lang.choose': 'Choose a language',
+    'lang.en': 'English',
+    'lang.fr': 'French',
+    'lang.note': 'Your choice is saved and applies across the whole app.',
   },
   'fr': {
     // Common
@@ -156,6 +163,13 @@ const Map<String, Map<String, String>> _strings = {
     'cp.skillsHint': 'Touche pour ajouter ; règle ton niveau (1–5).',
     'cp.interests': "Centres d'intérêt",
     'cp.finish': 'Terminer',
+
+    // Language screen
+    'lang.title': 'Langue',
+    'lang.choose': 'Choisir une langue',
+    'lang.en': 'Anglais',
+    'lang.fr': 'Français',
+    'lang.note': "Ton choix est enregistré et s'applique à toute l'app.",
   },
 };
 

@@ -16,23 +16,26 @@ class LanguageToggle extends StatelessWidget {
     final p = context.palette;
     final primary = Theme.of(context).colorScheme.primary;
 
-    Widget seg(String code, String label) {
+    Widget seg(String code, String asset) {
       final active = settings.language == code;
       return GestureDetector(
         onTap: () => context.read<SettingsProvider>().setLanguage(code),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: active ? primary : Colors.transparent,
+            color: active ? p.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: active ? primary : Colors.transparent,
+              width: 1.5,
+            ),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: active ? Colors.white : p.textMuted,
+          child: Opacity(
+            opacity: active ? 1.0 : 0.45,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: Image.asset(asset, width: 26, height: 18, fit: BoxFit.cover),
             ),
           ),
         ),
@@ -47,7 +50,11 @@ class LanguageToggle extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [seg('en', 'EN'), seg('fr', 'FR')],
+        children: [
+          seg('en', 'assets/flag_en.png'),
+          const SizedBox(width: 4),
+          seg('fr', 'assets/flag_fr.png'),
+        ],
       ),
     );
   }
