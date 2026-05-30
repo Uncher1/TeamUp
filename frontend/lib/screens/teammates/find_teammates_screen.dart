@@ -17,6 +17,8 @@ class FindTeammatesScreen extends StatefulWidget {
 }
 
 class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
@@ -83,6 +85,18 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
               if (id != null) context.read<MatchingProvider>().loadCandidates(id);
             },
           ),
+        if (matching.selectedProjectId != null &&
+            !matching.loadingCandidates &&
+            matching.candidates.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          TextField(
+            onChanged: (v) => setState(() => _query = v),
+            decoration: const InputDecoration(
+              hintText: 'Rechercher un profil...',
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         ..._results(context, matching),
       ],
@@ -106,8 +120,25 @@ class _FindTeammatesScreenState extends State<FindTeammatesScreen> {
         ),
       ];
     }
+    final q = _query.trim().toLowerCase();
+    final filtered = q.isEmpty
+        ? matching.candidates
+        : matching.candidates
+            .where((u) =>
+                u.fullName.toLowerCase().contains(q) ||
+                (u.email?.toLowerCase().contains(q) ?? false))
+            .toList();
+    if (filtered.isEmpty) {
+      return [
+        EmptyState(
+          icon: Icons.search_off,
+          title: 'Aucun résultat',
+          subtitle: 'Aucun profil ne correspond à « $_query ».',
+        ),
+      ];
+    }
     final widgets = <Widget>[];
-    for (final u in matching.candidates) {
+    for (final u in filtered) {
       widgets.add(_CandidateCard(user: u, onMessage: () => _message(u)));
       widgets.add(const SizedBox(height: 12));
     }
