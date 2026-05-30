@@ -40,7 +40,7 @@ class ProfileScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       child: Row(
                         children: [
-                          GradientAvatar(name: user.fullName, size: 64),
+                          GradientAvatar(name: user.fullName, size: 64, imageUrl: user.avatarUrl),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(

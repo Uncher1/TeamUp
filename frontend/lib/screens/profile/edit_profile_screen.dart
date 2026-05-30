@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
@@ -39,6 +42,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final Map<int, int> _skills = {};
   final Set<int> _interests = {};
   bool _busy = false;
+
+  /// null = unchanged, '' = remove, 'data:...' = new image
+  String? _avatarDataUrl;
 
   @override
   void initState() {
@@ -87,6 +93,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return t.isEmpty ? null : t;
   }
 
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final x = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 70,
+    );
+    if (x == null) return;
+    final bytes = await x.readAsBytes();
+    final b64 = base64Encode(bytes);
+    final mime = x.mimeType ?? 'image/jpeg';
+    if (!mounted) return;
+    setState(() => _avatarDataUrl = 'data:$mime;base64,$b64');
+  }
+
   Future<void> _save() async {
     setState(() => _busy = true);
     final repo = context.read<UserRepository>();
@@ -106,6 +128,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         linkedin: _val(_linkedin),
         twitter: _val(_twitter),
         website: _val(_website),
+        // Only send avatarUrl when it was explicitly changed (null = untouched)
+        avatarUrl: _avatarDataUrl,
       );
       await repo.setSkills(
         _skills.entries.map((e) => {'skill_id': e.key, 'level': e.value}).toList(),
@@ -125,6 +149,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final lookup = context.watch<LookupProvider>();
+    final user = context.read<AuthProvider>().user;
+    // Effective avatar: new pick > current saved
+    final effectiveAvatar = _avatarDataUrl ?? user?.avatarUrl;
+    final hasPhoto = effectiveAvatar != null && effectiveAvatar.isNotEmpty;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -144,6 +173,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                 children: [
+                  // ── Avatar picker ─────────────────────────────────────────
+                  Center(
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: _pickAvatar,
+                          child: GradientAvatar(
+                            name: _name.text.trim().isEmpty ? (user?.fullName ?? '') : _name.text.trim(),
+                            size: 96,
+                            imageUrl: effectiveAvatar,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _pickAvatar,
+                          child: const Text('Changer la photo'),
+                        ),
+                        if (hasPhoto)
+                          TextButton(
+                            onPressed: () => setState(() => _avatarDataUrl = ''),
+                            style: TextButton.styleFrom(
+                              foregroundColor: context.palette.textMuted,
+                              textStyle: const TextStyle(fontSize: 12),
+                            ),
+                            child: const Text('Retirer'),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   const SectionLabel('Informations'),
                   const SizedBox(height: 10),
                   TextField(controller: _name, decoration: const InputDecoration(labelText: 'Nom complet')),

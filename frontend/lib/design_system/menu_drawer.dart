@@ -57,7 +57,7 @@ class MenuDrawer extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
                   child: Row(
                     children: [
-                      GradientAvatar(name: user.fullName, size: 40),
+                      GradientAvatar(name: user.fullName, size: 40, imageUrl: user.avatarUrl),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

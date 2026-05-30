@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   full_name     VARCHAR(120) NOT NULL,
   bio           TEXT,
-  avatar_url    VARCHAR(500),
+  avatar_url    MEDIUMTEXT,
   phone         VARCHAR(40),
   school        VARCHAR(120),
   department    VARCHAR(120),
