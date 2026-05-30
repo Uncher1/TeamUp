@@ -62,6 +62,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
       ]);
     }
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _QuickPostBar(onTap: _openComposer),

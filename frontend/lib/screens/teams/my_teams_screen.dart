@@ -41,6 +41,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
     return RefreshIndicator(
       onRefresh: () => context.read<ProjectsProvider>().loadMine(),
       child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           GradientBanner(

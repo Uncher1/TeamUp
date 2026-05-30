@@ -55,6 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return RefreshIndicator(
       onRefresh: () => context.read<ChatProvider>().loadConversations(),
       child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: provider.conversations.length,
         separatorBuilder: (context, _) => Divider(color: context.palette.slate100, height: 1, indent: 76),

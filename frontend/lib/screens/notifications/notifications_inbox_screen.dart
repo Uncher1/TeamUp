@@ -70,6 +70,7 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
     return RefreshIndicator(
       onRefresh: () => context.read<NotificationsProvider>().load(),
       child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
         itemCount: provider.items.length,
         separatorBuilder: (context2, index) => const SizedBox(height: 8),
