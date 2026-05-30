@@ -3,6 +3,7 @@ const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { hash, verify } = require('../utils/password');
 const { getSettings, enabled } = require('../services/settings');
+const { sendEmailChanged, sendPasswordChanged } = require('../services/mailer');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const router = express.Router();
@@ -41,6 +42,8 @@ router.patch('/me', authRequired, async (req, res) => {
   const { full_name, bio, avatar_url, email,
           phone, school, department, study_year, location,
           github, linkedin, twitter, website } = req.body || {};
+  let oldEmail = null;
+  let changedEmail = null;
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -50,12 +53,17 @@ router.patch('/me', authRequired, async (req, res) => {
         await conn.rollback();
         return res.status(400).json({ error: 'invalid email format' });
       }
-      const [dup] = await conn.query('SELECT id FROM users WHERE email = ? AND id != ?', [normalized, req.user.id]);
-      if (dup.length) {
-        await conn.rollback();
-        return res.status(409).json({ error: 'email already in use' });
+      const [cur] = await conn.query('SELECT email FROM users WHERE id = ?', [req.user.id]);
+      if (cur.length && cur[0].email !== normalized) {
+        const [dup] = await conn.query('SELECT id FROM users WHERE email = ? AND id != ?', [normalized, req.user.id]);
+        if (dup.length) {
+          await conn.rollback();
+          return res.status(409).json({ error: 'email already in use' });
+        }
+        await conn.query('UPDATE users SET email = ? WHERE id = ?', [normalized, req.user.id]);
+        oldEmail = cur[0].email;
+        changedEmail = normalized;
       }
-      await conn.query('UPDATE users SET email = ? WHERE id = ?', [normalized, req.user.id]);
     }
     await conn.query(
       `UPDATE users SET
@@ -82,6 +90,14 @@ router.patch('/me', authRequired, async (req, res) => {
     throw e;
   } finally {
     conn.release();
+  }
+  if (oldEmail && changedEmail) {
+    // Notify the OLD address that the email changed (best-effort, non-blocking).
+    try {
+      await sendEmailChanged({ to: oldEmail, newEmail: changedEmail });
+    } catch (e) {
+      console.error('[mail] email-changed send failed:', e.message);
+    }
   }
   res.json(await loadProfile(req.user.id));
 });
@@ -137,12 +153,18 @@ router.put('/me/password', authRequired, async (req, res) => {
   const current = req.body?.current_password ?? '';
   const next = req.body?.new_password ?? '';
   if (next.length < 8) return res.status(400).json({ error: 'new password must be at least 8 characters' });
-  const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+  const [rows] = await pool.query('SELECT password_hash, email FROM users WHERE id = ?', [req.user.id]);
   if (!rows.length) return res.status(404).json({ error: 'user not found' });
   if (!(await verify(current, rows[0].password_hash))) {
     return res.status(401).json({ error: 'current password is incorrect' });
   }
   await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [await hash(next), req.user.id]);
+  // Security confirmation email (best-effort, non-blocking).
+  try {
+    await sendPasswordChanged({ to: rows[0].email });
+  } catch (e) {
+    console.error('[mail] password-changed send failed:', e.message);
+  }
   res.json({ ok: true });
 });
 
