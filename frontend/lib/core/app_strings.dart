@@ -123,6 +123,43 @@ const Map<String, Map<String, String>> _strings = {
     'popup.markAll': 'Mark all read',
     'popup.empty': 'No notification',
     'popup.seeAll': 'See all notifications',
+
+    // Feed
+    'feed.retry': 'Retry',
+    'feed.emptyTitle': 'No posts yet',
+    'feed.emptySub': 'Be the first to share something with your community.',
+    'feed.composeHint': 'Share something...',
+    'feed.share': 'Share',
+    'feed.shareTitle': 'Share this post',
+    'feed.copy': 'Copy text',
+    'feed.copied': 'Text copied — ready to share',
+    'feed.newPost': 'New post',
+    'feed.publish': 'Publish',
+    'feed.publishFail': 'Failed to publish',
+    'feed.commentsTitle': 'Comments',
+    'feed.commentHint': 'Add a comment...',
+    'feed.noCommentsTitle': 'No comments',
+    'feed.noCommentsSub': 'Be the first to comment.',
+    'feed.editComment': 'Edit comment',
+    'feed.commentContent': 'Comment content',
+    'feed.deleteCommentTitle': 'Delete comment',
+    'feed.irreversible': 'This action cannot be undone.',
+    'common.save': 'Save',
+    'common.edit': 'Edit',
+    'common.delete': 'Delete',
+
+    // Post types
+    'posttype.general': 'General',
+    'posttype.project_launch': 'Project launch',
+    'posttype.team_update': 'Team update',
+    'posttype.looking_for': 'Looking for',
+    'posttype.milestone': 'Milestone',
+
+    // Relative time
+    'time.now': 'just now',
+    'time.min': '{n} min ago',
+    'time.hour': '{n} h ago',
+    'time.day': '{n} d ago',
   },
   'fr': {
     // Common
@@ -234,6 +271,43 @@ const Map<String, Map<String, String>> _strings = {
     'popup.markAll': 'Tout lire',
     'popup.empty': 'Aucune notification',
     'popup.seeAll': 'Voir toutes les notifications',
+
+    // Feed
+    'feed.retry': 'Réessayer',
+    'feed.emptyTitle': "Aucun post pour l'instant",
+    'feed.emptySub': 'Sois le premier à partager quelque chose avec ta communauté.',
+    'feed.composeHint': 'Partage quelque chose...',
+    'feed.share': 'Partager',
+    'feed.shareTitle': 'Partager cette publication',
+    'feed.copy': 'Copier le texte',
+    'feed.copied': 'Texte copié — prêt à partager',
+    'feed.newPost': 'Nouveau post',
+    'feed.publish': 'Publier',
+    'feed.publishFail': 'Échec de la publication',
+    'feed.commentsTitle': 'Commentaires',
+    'feed.commentHint': 'Ajoute un commentaire...',
+    'feed.noCommentsTitle': 'Aucun commentaire',
+    'feed.noCommentsSub': 'Sois le premier à commenter.',
+    'feed.editComment': 'Modifier le commentaire',
+    'feed.commentContent': 'Contenu du commentaire',
+    'feed.deleteCommentTitle': 'Supprimer le commentaire',
+    'feed.irreversible': 'Cette action est irréversible.',
+    'common.save': 'Enregistrer',
+    'common.edit': 'Modifier',
+    'common.delete': 'Supprimer',
+
+    // Post types
+    'posttype.general': 'Général',
+    'posttype.project_launch': 'Lancement',
+    'posttype.team_update': 'Mise à jour',
+    'posttype.looking_for': 'Recherche',
+    'posttype.milestone': 'Jalon',
+
+    // Relative time
+    'time.now': "à l'instant",
+    'time.min': 'il y a {n} min',
+    'time.hour': 'il y a {n} h',
+    'time.day': 'il y a {n} j',
   },
 };
 
@@ -243,6 +317,16 @@ String translate(String code, String key, [Map<String, String>? args]) {
     args.forEach((k, v) => value = value.replaceAll('{$k}', v));
   }
   return value;
+}
+
+/// Localized relative time ("just now" / "il y a 3 h"), shared by the feed,
+/// comments and anywhere a timestamp is shown.
+String timeAgo(BuildContext context, DateTime t) {
+  final d = DateTime.now().difference(t);
+  if (d.inMinutes < 1) return context.tr('time.now');
+  if (d.inMinutes < 60) return context.tr('time.min', {'n': '${d.inMinutes}'});
+  if (d.inHours < 24) return context.tr('time.hour', {'n': '${d.inHours}'});
+  return context.tr('time.day', {'n': '${d.inDays}'});
 }
 
 extension AppStringsX on BuildContext {

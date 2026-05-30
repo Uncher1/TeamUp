@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/comment.dart';
@@ -92,21 +93,21 @@ class _CommentsSheetState extends State<CommentsSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Modifier le commentaire'),
+        title: Text(context.tr('feed.editComment')),
         content: TextField(
           controller: controller,
           autofocus: true,
           maxLines: null,
-          decoration: const InputDecoration(hintText: 'Contenu du commentaire'),
+          decoration: InputDecoration(hintText: context.tr('feed.commentContent')),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
+            child: Text(context.tr('common.cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Enregistrer'),
+            child: Text(context.tr('common.save')),
           ),
         ],
       ),
@@ -138,17 +139,17 @@ class _CommentsSheetState extends State<CommentsSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer le commentaire'),
-        content: const Text('Cette action est irréversible.'),
+        title: Text(context.tr('feed.deleteCommentTitle')),
+        content: Text(context.tr('feed.irreversible')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
+            child: Text(context.tr('common.cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Supprimer'),
+            child: Text(context.tr('common.delete')),
           ),
         ],
       ),
@@ -193,7 +194,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Commentaires',
+              context.tr('feed.commentsTitle'),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
@@ -230,8 +231,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
     if (_comments.isEmpty) {
       return EmptyState(
         icon: Icons.mode_comment_outlined,
-        title: 'Aucun commentaire',
-        subtitle: 'Sois le premier à commenter.',
+        title: context.tr('feed.noCommentsTitle'),
+        subtitle: context.tr('feed.noCommentsSub'),
       );
     }
     final myId = context.read<AuthProvider>().user?.id;
@@ -262,7 +263,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
               controller: _textController,
               focusNode: _focusNode,
               decoration: InputDecoration(
-                hintText: 'Ajoute un commentaire...',
+                hintText: context.tr('feed.commentHint'),
                 hintStyle: TextStyle(color: context.palette.textMuted),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -350,7 +351,7 @@ class _CommentRow extends StatelessWidget {
               Text(comment.content, style: const TextStyle(fontSize: 14, height: 1.4)),
               const SizedBox(height: 2),
               Text(
-                _ago(comment.createdAt),
+                timeAgo(context, comment.createdAt),
                 style: TextStyle(fontSize: 11, color: context.palette.textMuted),
               ),
             ],
@@ -367,14 +368,15 @@ class _CommentRow extends StatelessWidget {
                 onDelete();
               }
             },
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(
                 value: _CommentAction.edit,
-                child: Text('Modifier'),
+                child: Text(context.tr('common.edit')),
               ),
               PopupMenuItem(
                 value: _CommentAction.delete,
-                child: Text('Supprimer', style: TextStyle(color: Colors.red)),
+                child: Text(context.tr('common.delete'),
+                    style: const TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -382,11 +384,4 @@ class _CommentRow extends StatelessWidget {
     );
   }
 
-  static String _ago(DateTime t) {
-    final d = DateTime.now().difference(t);
-    if (d.inMinutes < 1) return "à l'instant";
-    if (d.inMinutes < 60) return 'il y a ${d.inMinutes} min';
-    if (d.inHours < 24) return 'il y a ${d.inHours} h';
-    return 'il y a ${d.inDays} j';
-  }
 }

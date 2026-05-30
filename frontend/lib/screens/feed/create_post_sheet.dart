@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/app_strings.dart';
 import '../../design_system/ds.dart';
 import '../../providers/feed_provider.dart';
 
@@ -16,13 +17,13 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   String _type = 'general';
   bool _busy = false;
 
-  static const _types = {
-    'general': 'Général',
-    'project_launch': 'Lancement',
-    'team_update': 'Update équipe',
-    'looking_for': 'Recherche',
-    'milestone': 'Milestone',
-  };
+  static const _typeCodes = [
+    'general',
+    'project_launch',
+    'team_update',
+    'looking_for',
+    'milestone',
+  ];
 
   @override
   void dispose() {
@@ -41,7 +42,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Échec de la publication")),
+        SnackBar(content: Text(context.tr('feed.publishFail'))),
       );
     }
   }
@@ -57,16 +58,16 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Nouveau post', style: Theme.of(context).textTheme.titleLarge),
+          Text(context.tr('feed.newPost'), style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             children: [
-              for (final entry in _types.entries)
+              for (final code in _typeCodes)
                 ChoiceChip(
-                  label: Text(entry.value),
-                  selected: _type == entry.key,
-                  onSelected: (_) => setState(() => _type = entry.key),
+                  label: Text(context.tr('posttype.$code')),
+                  selected: _type == code,
+                  onSelected: (_) => setState(() => _type = code),
                 ),
             ],
           ),
@@ -75,14 +76,14 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
             controller: _ctrl,
             minLines: 3,
             maxLines: 6,
-            decoration: const InputDecoration(hintText: 'Partage quelque chose...'),
+            decoration: InputDecoration(hintText: context.tr('feed.composeHint')),
           ),
           const SizedBox(height: 16),
           AppButton(
             onPressed: _busy ? null : _submit,
             child: _busy
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Publier'),
+                : Text(context.tr('feed.publish')),
           ),
         ],
       ),

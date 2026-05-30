@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/post.dart';
@@ -118,7 +119,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         const SizedBox(height: 12),
         Center(child: Text(provider.error!, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
-        Center(child: OutlinedButton(onPressed: () => context.read<FeedProvider>().load(), child: const Text('Réessayer'))),
+        Center(child: OutlinedButton(onPressed: () => context.read<FeedProvider>().load(), child: Text(context.tr('feed.retry')))),
       ]);
     }
 
@@ -145,8 +146,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           if (!hasPosts) {
             return EmptyState(
               icon: Icons.dynamic_feed_outlined,
-              title: 'Aucun post pour l\'instant',
-              subtitle: 'Sois le premier à partager quelque chose avec ta communauté.',
+              title: context.tr('feed.emptyTitle'),
+              subtitle: context.tr('feed.emptySub'),
             );
           }
           return const SizedBox(height: 12);
@@ -195,7 +196,7 @@ class _QuickPostBar extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
-              child: Text('Partage quelque chose...', style: TextStyle(color: context.palette.textMuted)),
+              child: Text(context.tr('feed.composeHint'), style: TextStyle(color: context.palette.textMuted)),
             ),
           ),
         ),
@@ -213,12 +214,12 @@ class _QuickPostBar extends StatelessWidget {
   }
 }
 
-const _typeMeta = {
-  'project_launch': (Icons.bolt, 'project launch'),
-  'team_update': (Icons.groups_outlined, 'team update'),
-  'looking_for': (Icons.search, 'looking for'),
-  'milestone': (Icons.flag_outlined, 'milestone'),
-  'general': (Icons.notes, 'general'),
+const _typeIcons = {
+  'project_launch': Icons.bolt,
+  'team_update': Icons.groups_outlined,
+  'looking_for': Icons.search,
+  'milestone': Icons.flag_outlined,
+  'general': Icons.notes,
 };
 
 class _PostCard extends StatelessWidget {
@@ -235,7 +236,8 @@ class _PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (icon, label) = _typeMeta[post.type] ?? (Icons.notes, post.type);
+    final icon = _typeIcons[post.type] ?? Icons.notes;
+    final label = context.tr('posttype.${post.type}');
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,7 +258,7 @@ class _PostCard extends StatelessWidget {
                         TypeBadge(type: post.type, label: label, icon: icon),
                       ],
                     ),
-                    Text(_ago(post.createdAt), style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+                    Text(timeAgo(context, post.createdAt), style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
                   ],
                 ),
               ),
@@ -291,7 +293,7 @@ class _PostCard extends StatelessWidget {
                 onTap: onLike,
               ),
               _action(icon: Icons.mode_comment_outlined, label: '${post.commentCount}', color: context.palette.textMuted, onTap: onComment),
-              _action(icon: Icons.share_outlined, label: 'Partager', color: context.palette.textMuted, onTap: onShare),
+              _action(icon: Icons.share_outlined, label: context.tr('feed.share'), color: context.palette.textMuted, onTap: onShare),
             ],
           ),
         ],
@@ -318,13 +320,6 @@ class _PostCard extends StatelessWidget {
     );
   }
 
-  static String _ago(DateTime t) {
-    final d = DateTime.now().difference(t);
-    if (d.inMinutes < 1) return "à l'instant";
-    if (d.inMinutes < 60) return 'il y a ${d.inMinutes} min';
-    if (d.inHours < 24) return 'il y a ${d.inHours} h';
-    return 'il y a ${d.inDays} j';
-  }
 }
 
 /// Web share sheet: shows the post text + a copy action (desktop browsers
@@ -352,7 +347,7 @@ class _ShareSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Partager cette publication',
+            Text(context.tr('feed.shareTitle'),
                 style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w700, color: p.textPrimary)),
             const SizedBox(height: 12),
@@ -367,20 +362,21 @@ class _ShareSheet extends StatelessWidget {
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
                 final navigator = Navigator.of(context);
+                final copiedMsg = context.tr('feed.copied');
                 try {
                   await Clipboard.setData(ClipboardData(text: text));
                 } catch (_) {}
                 navigator.pop();
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Texte copié — prêt à partager')),
+                  SnackBar(content: Text(copiedMsg)),
                 );
               },
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.copy, size: 18, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Copier le texte'),
+                  const Icon(Icons.copy, size: 18, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(context.tr('feed.copy')),
                 ],
               ),
             ),
