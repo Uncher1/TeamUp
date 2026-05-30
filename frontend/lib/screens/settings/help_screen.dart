@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
@@ -88,8 +89,7 @@ class _HelpScreenState extends State<HelpScreen> {
     ),
   ];
 
-  // Quick action cards: (label, icon, bg, fg). Colors match the mockup's
-  // tailwind 100/600 pairs (indigo / emerald / amber / rose).
+  // Quick action cards: (label, icon, bg, fg).
   static const _actions = [
     ('Nous contacter', Icons.chat_bubble_outline, Color(0xFFE0E7FF), Color(0xFF4F46E5)),
     ("Guide d'utilisation", Icons.description_outlined, Color(0xFFD1FAE5), Color(0xFF059669)),
@@ -98,10 +98,150 @@ class _HelpScreenState extends State<HelpScreen> {
   ];
 
   String _query = '';
+  int? _openFaq;
 
-  void _stub(String label) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('« $label » — bientôt disponible.')),
+  // ── Quick action handlers ──────────────────────────────────────────────────
+
+  Future<void> _openContact() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final uri = Uri.parse(
+        'mailto:teamup.team28@gmail.com?subject=Support%20TeamUp');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Impossible d'ouvrir l'app mail")),
       );
+    }
+  }
+
+  Future<void> _openWebsite() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final uri = Uri.parse('https://github.com/Uncher1/TeamUp');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Impossible d'ouvrir le navigateur")),
+      );
+    }
+  }
+
+  Future<void> _showRatingDialog() async {
+    int selected = 0;
+    final messenger = ScaffoldMessenger.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Noter l\'app'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Ta note nous aide à améliorer TeamUp.'),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  return GestureDetector(
+                    onTap: () => setLocal(() => selected = i + 1),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(
+                        i < selected ? Icons.star : Icons.star_border,
+                        size: 36,
+                        color: const Color(0xFFD97706),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: selected == 0
+                  ? null
+                  : () {
+                      Navigator.pop(ctx);
+                    },
+              child: const Text('Merci !'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (selected > 0) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Merci pour ta note !')),
+      );
+    }
+  }
+
+  void _showGuide() {
+    final p = context.palette;
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        const steps = [
+          ('1.', 'Complète ton profil avec tes compétences et centres d\'intérêt.'),
+          ('2.', 'Crée ou rejoins un projet depuis l\'onglet principal.'),
+          ('3.', 'Trouve des coéquipiers via « Find Teammates » — le score t\'aide à choisir.'),
+          ('4.', 'Accepte ou refuse les candidatures reçues sur ton projet.'),
+          ('5.', 'Discute en temps réel avec ton équipe dans l\'onglet « Chat ».'),
+        ];
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Guide rapide',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: p.textPrimary)),
+              const SizedBox(height: 4),
+              Text('Les étapes essentielles pour bien démarrer.',
+                  style: TextStyle(fontSize: 13, color: p.textMuted)),
+              const SizedBox(height: 20),
+              for (final (num, text) in steps) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(num,
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(ctx).colorScheme.primary)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(text,
+                          style:
+                              TextStyle(fontSize: 14, color: p.textPrimary)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -110,11 +250,24 @@ class _HelpScreenState extends State<HelpScreen> {
     final faq = q.isEmpty
         ? _faq
         : _faq
-            .where((f) => f.$1.toLowerCase().contains(q) || f.$2.toLowerCase().contains(q))
+            .where((f) =>
+                f.$1.toLowerCase().contains(q) || f.$2.toLowerCase().contains(q))
+            .toList();
+
+    // Map filtered index → original index for _openFaq tracking.
+    final faqWithIndex = q.isEmpty
+        ? List.generate(_faq.length, (i) => (i, _faq[i]))
+        : _faq
+            .asMap()
+            .entries
+            .where((e) =>
+                e.value.$1.toLowerCase().contains(q) ||
+                e.value.$2.toLowerCase().contains(q))
+            .map((e) => (e.key, e.value))
             .toList();
 
     return SettingsScaffold(
-      title: 'Help Center',
+      title: 'Centre d\'aide',
       children: [
         TextField(
           onChanged: (v) => setState(() => _query = v),
@@ -126,15 +279,23 @@ class _HelpScreenState extends State<HelpScreen> {
         const SizedBox(height: 16),
         const SettingsSectionLabel('Actions rapides'),
         Row(children: [
-          Expanded(child: _ActionCard(data: _actions[0], onTap: () => _stub(_actions[0].$1))),
+          Expanded(
+              child: _ActionCard(
+                  data: _actions[0], onTap: _openContact)),
           const SizedBox(width: 12),
-          Expanded(child: _ActionCard(data: _actions[1], onTap: () => _stub(_actions[1].$1))),
+          Expanded(
+              child: _ActionCard(
+                  data: _actions[1], onTap: _showGuide)),
         ]),
         const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: _ActionCard(data: _actions[2], onTap: () => _stub(_actions[2].$1))),
+          Expanded(
+              child: _ActionCard(
+                  data: _actions[2], onTap: _showRatingDialog)),
           const SizedBox(width: 12),
-          Expanded(child: _ActionCard(data: _actions[3], onTap: () => _stub(_actions[3].$1))),
+          Expanded(
+              child: _ActionCard(
+                  data: _actions[3], onTap: _openWebsite)),
         ]),
         const SizedBox(height: 20),
         const SettingsSectionLabel('Questions fréquentes'),
@@ -144,36 +305,101 @@ class _HelpScreenState extends State<HelpScreen> {
             child: Text('Aucun résultat pour « $_query ».',
                 style: TextStyle(fontSize: 13, color: p.textMuted)),
           ),
-        for (final (question, answer) in faq)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: p.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: p.slate200),
-              ),
-              child: Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  title: Text(question,
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w500, color: p.textPrimary)),
-                  childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  expandedAlignment: Alignment.topLeft,
-                  expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(answer, style: TextStyle(fontSize: 13, color: p.textMuted)),
-                  ],
-                ),
-              ),
-            ),
+        for (final (origIdx, (question, answer)) in faqWithIndex)
+          _FaqItem(
+            question: question,
+            answer: answer,
+            isOpen: _openFaq == origIdx,
+            onTap: () => setState(
+                () => _openFaq = (_openFaq == origIdx) ? null : origIdx),
           ),
       ],
     );
   }
 }
+
+// ── FAQ Item ─────────────────────────────────────────────────────────────────
+
+class _FaqItem extends StatelessWidget {
+  final String question;
+  final String answer;
+  final bool isOpen;
+  final VoidCallback onTap;
+
+  const _FaqItem({
+    required this.question,
+    required this.answer,
+    required this.isOpen,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: p.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: p.slate200),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          question,
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: p.textPrimary),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      AnimatedRotation(
+                        turns: isOpen ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(Icons.expand_more,
+                            size: 20, color: p.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                AnimatedCrossFade(
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: Padding(
+                    padding:
+                        const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Text(answer,
+                        style:
+                            TextStyle(fontSize: 13, color: p.textMuted)),
+                  ),
+                  crossFadeState: isOpen
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  duration: const Duration(milliseconds: 200),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Action Card ───────────────────────────────────────────────────────────────
 
 class _ActionCard extends StatelessWidget {
   final (String, IconData, Color, Color) data;
@@ -208,7 +434,9 @@ class _ActionCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(label,
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w500, color: p.textPrimary)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: p.textPrimary)),
             ],
           ),
         ),
