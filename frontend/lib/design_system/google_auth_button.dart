@@ -1,119 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
 
 import '../core/api_client.dart';
 import '../core/theme.dart';
 import '../providers/auth_provider.dart';
 import 'pressable.dart';
 
-// Conditional import: on web uses GIS renderButton; elsewhere a no-op stub.
-import 'google_sign_in_web_stub.dart'
-    if (dart.library.html) 'google_sign_in_web_impl.dart';
-
-const _kClientId =
+/// The **web** OAuth client id, used as `serverClientId` so the id_token's
+/// audience matches what the backend (`/auth/google`) verifies against.
+/// On Android the native client is matched automatically via the app's
+/// package name + signing SHA-1 registered in Google Cloud Console.
+const _kServerClientId =
     '785441494453-nf5sfmd6osimkub3j4edrdrg6563568k.apps.googleusercontent.com';
 
-/// Initialises Google Sign-In (v7 singleton) and starts listening for
-/// authentication events.  Call once — typically in the widget that owns
-/// the Google button.
+/// The official Google "G" logo (Google brand asset — 4 official colours).
+const String _googleGSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+</svg>
+''';
+
+bool _gsiInitialized = false;
+
+/// Runs the Google Sign-In flow.
 ///
-/// Returns the stream subscription so the caller can cancel it on dispose.
-Stream<GoogleSignInAuthenticationEvent> googleSignInEvents() {
-  // Initialise GIS with our web client id. (We don't call
-  // attemptLightweightAuthentication here — the user clicks the button.)
-  GoogleSignIn.instance.initialize(clientId: _kClientId).ignore();
-  return GoogleSignIn.instance.authenticationEvents;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Web Google Button
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// On **web**: renders the official GIS button (real Google logo/branding,
-/// via `google_sign_in_web`'s `renderButton()`).
+/// On **Android/iOS** this opens the native Google account picker
+/// (`authenticate()`), retrieves the id_token, and authenticates against the
+/// TeamUp backend via `AuthProvider.loginWithGoogle`.
 ///
-/// The authentication result is delivered through
-/// [GoogleSignIn.instance.authenticationEvents]; the hosting screen should
-/// listen to that stream and call
-/// `context.read<AuthProvider>().loginWithGoogle(idToken)`.
-class WebGoogleSignInButton extends StatefulWidget {
-  const WebGoogleSignInButton({super.key});
+/// On **web** the platform does not support `authenticate()` (it requires the
+/// GIS `renderButton`, which is incompatible with this Flutter/dart2js build),
+/// so we surface a clear message instead.
+Future<void> handleGoogleSignIn(BuildContext context) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final auth = context.read<AuthProvider>();
+  final signIn = GoogleSignIn.instance;
 
-  @override
-  State<WebGoogleSignInButton> createState() => _WebGoogleSignInButtonState();
-}
-
-class _WebGoogleSignInButtonState extends State<WebGoogleSignInButton> {
-  late final Stream<GoogleSignInAuthenticationEvent> _events;
-
-  @override
-  void initState() {
-    super.initState();
-    _events = googleSignInEvents();
-    _events.listen(_onAuthEvent, onError: _onAuthError);
+  if (!signIn.supportsAuthenticate()) {
+    messenger.showSnackBar(const SnackBar(
+      content: Text('La connexion Google est disponible sur l’app mobile.'),
+    ));
+    return;
   }
 
-  Future<void> _onAuthEvent(GoogleSignInAuthenticationEvent event) async {
-    if (!mounted) return;
-    if (event is GoogleSignInAuthenticationEventSignIn) {
-      // authentication is not a Future in v7 — access it synchronously.
-      final auth = event.user.authentication;
-      final idToken = auth.idToken;
-      if (idToken == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Google Sign-In: impossible de récupérer le token.')),
-          );
-        }
-        return;
-      }
-      // Hoist both provider read and context use before the async gap.
-      final authProvider = context.read<AuthProvider>();
-      final messenger = ScaffoldMessenger.of(context);
-      final ok = await authProvider.loginWithGoogle(idToken);
-      if (!mounted) return;
-      if (!ok) {
-        final err = authProvider.error ?? 'Échec de la connexion Google';
-        messenger.showSnackBar(SnackBar(content: Text(err)));
-      }
+  try {
+    if (!_gsiInitialized) {
+      await signIn.initialize(serverClientId: _kServerClientId);
+      _gsiInitialized = true;
     }
-  }
-
-  void _onAuthError(Object error) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ApiClient.messageFromError(error))),
+    final account = await signIn.authenticate();
+    final idToken = account.authentication.idToken;
+    if (idToken == null) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text('Google : impossible de récupérer le token.'),
+      ));
+      return;
+    }
+    final ok = await auth.loginWithGoogle(idToken);
+    if (!ok) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(auth.error ?? 'Échec de la connexion Google'),
+      ));
+    }
+  } on GoogleSignInException catch (e) {
+    // User dismissed the picker — not an error worth surfacing.
+    if (e.code == GoogleSignInExceptionCode.canceled) return;
+    messenger.showSnackBar(SnackBar(content: Text('Google : ${e.code.name}')));
+  } catch (e) {
+    messenger.showSnackBar(
+      SnackBar(content: Text(ApiClient.messageFromError(e))),
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    // renderGoogleButton() is provided by the conditional import:
-    //   web → google_sign_in_web_impl.dart (calls gsi_web.renderButton())
-    //   other → google_sign_in_web_stub.dart (returns null)
-    final gisButton = renderGoogleButton();
-    if (gisButton != null) {
-      // The GIS button is an HtmlElementView; bound its height so it doesn't
-      // expand to fill the column (which showed a large grey placeholder).
-      return SizedBox(height: 44, child: Center(child: gisButton));
-    }
-    // Fallback if somehow called on non-web.
-    return GoogleAuthButton(onPressed: () {});
-  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Non-web / fallback Google Button (unchanged from original design)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// "Continuer avec Google" button (Google-styled white/outlined).
-///
-/// On **web** the screens should use [WebGoogleSignInButton] instead so
-/// Google's SDK renders its official branded button.
-///
-/// On non-web platforms this widget is used as-is (native flows TBD).
+/// Official-style "Continuer avec Google" button: white surface, hairline
+/// border, the real Google "G" logo. Tapping runs [handleGoogleSignIn].
 class GoogleAuthButton extends StatelessWidget {
   final VoidCallback onPressed;
   const GoogleAuthButton({super.key, required this.onPressed});
@@ -121,25 +87,6 @@ class GoogleAuthButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final labelStyle = TextStyle(
-        fontSize: 15, fontWeight: FontWeight.w600, color: p.textPrimary);
-
-    // Official "G" logo if present, else a neutral fallback mark.
-    final logo = Image.asset(
-      'assets/google_logo.png',
-      height: 20,
-      width: 20,
-      errorBuilder: (_, _, _) =>
-          const Icon(Icons.g_mobiledata, size: 28, color: Color(0xFF4285F4)),
-    );
-
-    // Official "Google" wordmark if present, else plain text.
-    final wordmark = Image.asset(
-      'assets/google_wordmark.png',
-      height: 16,
-      errorBuilder: (_, _, _) => Text('Google', style: labelStyle),
-    );
-
     return PressableScale(
       onPressed: onPressed,
       child: Container(
@@ -153,10 +100,16 @@ class GoogleAuthButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            logo,
-            const SizedBox(width: 8),
-            Text('Continuer avec ', style: labelStyle),
-            wordmark,
+            SvgPicture.string(_googleGSvg, height: 20, width: 20),
+            const SizedBox(width: 10),
+            Text(
+              'Continuer avec Google',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: p.textPrimary,
+              ),
+            ),
           ],
         ),
       ),
