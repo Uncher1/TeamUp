@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/interest.dart';
@@ -12,24 +13,25 @@ import '../../providers/projects_provider.dart';
 // ---------------------------------------------------------------------------
 // Category options
 // ---------------------------------------------------------------------------
+// (code stored in DB, labelKey, icon)
 const _kCategories = [
-  ('Mobile App', Icons.phone_iphone),
-  ('Web App', Icons.language),
-  ('IA / ML', Icons.psychology_outlined),
-  ('Jeu vidéo', Icons.sports_esports_outlined),
-  ('Hardware / IoT', Icons.memory),
-  ('Data', Icons.bar_chart),
-  ('Design', Icons.brush_outlined),
-  ('Autre', Icons.category_outlined),
+  ('mobile', 'category.mobile', Icons.phone_iphone),
+  ('web', 'category.web', Icons.language),
+  ('ai', 'category.ai', Icons.psychology_outlined),
+  ('game', 'category.game', Icons.sports_esports_outlined),
+  ('hardware', 'category.hardware', Icons.memory),
+  ('data', 'category.data', Icons.bar_chart),
+  ('design', 'category.design', Icons.brush_outlined),
+  ('other', 'category.other', Icons.category_outlined),
 ];
 
 // ---------------------------------------------------------------------------
-// Timeline options  (code, label, range)
+// Timeline options  (code, labelKey, rangeKey)
 // ---------------------------------------------------------------------------
 const _kTimelines = [
-  ('short', 'Court', '1-2 semaines'),
-  ('medium', 'Moyen', '1-2 mois'),
-  ('long', 'Long', '3+ mois'),
+  ('short', 'timeline.short', 'timeline.shortR'),
+  ('medium', 'timeline.medium', 'timeline.mediumR'),
+  ('long', 'timeline.long', 'timeline.longR'),
 ];
 
 class CreateProjectScreen extends StatefulWidget {
@@ -73,7 +75,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     final description = _description.text.trim();
     if (title.isEmpty || description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Titre et description sont requis')),
+        SnackBar(content: Text(context.tr('proj.required'))),
       );
       return;
     }
@@ -101,7 +103,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         _busy = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Projet créé')),
+        SnackBar(content: Text(context.tr('proj.created'))),
       );
     } catch (e) {
       if (!mounted) return;
@@ -136,16 +138,16 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 child: const Icon(Icons.add_circle_outline, color: Colors.white),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Nouveau projet',
-                        style: TextStyle(
+                    Text(context.tr('proj.bannerTitle'),
+                        style: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
-                    SizedBox(height: 2),
-                    Text('Construis quelque chose avec ton équipe',
-                        style: TextStyle(color: Color(0xFFC7D2FE), fontSize: 12)),
+                    const SizedBox(height: 2),
+                    Text(context.tr('proj.bannerSub'),
+                        style: const TextStyle(color: Color(0xFFC7D2FE), fontSize: 12)),
                   ],
                 ),
               ),
@@ -155,26 +157,26 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Informations ────────────────────────────────────────────────────
-        const SectionLabel('Informations'),
+        SectionLabel(context.tr('proj.info')),
         const SizedBox(height: 10),
         TextField(
           controller: _title,
-          decoration: const InputDecoration(labelText: 'Titre du projet'),
+          decoration: InputDecoration(labelText: context.tr('proj.titleLabel')),
         ),
         const SizedBox(height: 14),
         TextField(
           controller: _description,
           minLines: 3,
           maxLines: 6,
-          decoration: const InputDecoration(
-            labelText: 'Description',
+          decoration: InputDecoration(
+            labelText: context.tr('proj.description'),
             alignLabelWithHint: true,
           ),
         ),
         const SizedBox(height: 20),
 
-        // ── Catégorie ────────────────────────────────────────────────────────
-        const SectionLabel('Catégorie'),
+        // ── Category ─────────────────────────────────────────────────────────
+        SectionLabel(context.tr('proj.category')),
         const SizedBox(height: 10),
         GridView.count(
           crossAxisCount: 2,
@@ -184,19 +186,19 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           mainAxisSpacing: 10,
           childAspectRatio: 2.4,
           children: [
-            for (final (value, icon) in _kCategories)
+            for (final (code, labelKey, icon) in _kCategories)
               _CategoryCard(
-                label: value,
+                label: context.tr(labelKey),
                 icon: icon,
-                selected: _category == value,
-                onTap: () => setState(() => _category = value),
+                selected: _category == code,
+                onTap: () => setState(() => _category = code),
               ),
           ],
         ),
         const SizedBox(height: 20),
 
         // ── Taille de l'équipe ───────────────────────────────────────────────
-        const SectionLabel('Taille de l\'équipe'),
+        SectionLabel(context.tr('proj.teamSize')),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -227,7 +229,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                     ),
                   ),
                   Text(
-                    'membres',
+                    context.tr('mt.membersP'),
                     style: TextStyle(fontSize: 12, color: palette.textMuted),
                   ),
                 ],
@@ -246,7 +248,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Durée estimée ────────────────────────────────────────────────────
-        const SectionLabel('Durée estimée'),
+        SectionLabel(context.tr('proj.duration')),
         const SizedBox(height: 10),
         GridView.count(
           crossAxisCount: 3,
@@ -256,10 +258,10 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           mainAxisSpacing: 10,
           childAspectRatio: 1.6,
           children: [
-            for (final (code, label, range) in _kTimelines)
+            for (final (code, labelKey, rangeKey) in _kTimelines)
               _TimelineCard(
-                label: label,
-                range: range,
+                label: context.tr(labelKey),
+                range: context.tr(rangeKey),
                 selected: _timeline == code,
                 onTap: () => setState(() => _timeline = code),
               ),
@@ -268,9 +270,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Compétences requises ─────────────────────────────────────────────
-        const SectionLabel('Compétences requises'),
+        SectionLabel(context.tr('proj.skillsRequired')),
         const SizedBox(height: 4),
-        Text('Touche pour ajouter ; règle le poids (1–5).',
+        Text(context.tr('proj.skillsHint'),
             style: TextStyle(fontSize: 12, color: palette.textMuted)),
         const SizedBox(height: 10),
         if (lookup.loading)
@@ -287,7 +289,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Thématiques ──────────────────────────────────────────────────────
-        const SectionLabel('Thématiques'),
+        SectionLabel(context.tr('proj.themes')),
         const SizedBox(height: 10),
         _InterestPicker(
           interests: lookup.interests,
@@ -312,7 +314,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.add_circle_outline),
               const SizedBox(width: 8),
-              const Text('Créer le projet'),
+              Text(context.tr('proj.create')),
             ],
           ),
         ),

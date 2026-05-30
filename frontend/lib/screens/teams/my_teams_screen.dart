@@ -107,7 +107,12 @@ class _TeamCard extends StatelessWidget {
     // Build meta items (only when non-null)
     final metaItems = <_MetaItem>[
       if (project.category != null)
-        _MetaItem(icon: Icons.category_outlined, label: project.category!),
+        _MetaItem(
+            icon: Icons.category_outlined,
+            label: () {
+              final l = context.tr('category.${project.category}');
+              return l.startsWith('category.') ? project.category! : l;
+            }()),
       if (project.teamSize != null)
         _MetaItem(
             icon: Icons.group_outlined,
