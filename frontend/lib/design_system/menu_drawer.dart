@@ -16,13 +16,13 @@ class _MenuEntry {
 }
 
 const _entries = <_MenuEntry>[
-  _MenuEntry(AppSection.home, Icons.home_outlined, 'Home Feed'),
-  _MenuEntry(AppSection.createProject, Icons.add_circle_outline, 'Create Project'),
-  _MenuEntry(AppSection.findTeammates, Icons.search, 'Find Teammates'),
-  _MenuEntry(AppSection.myTeams, Icons.groups_outlined, 'My Teams'),
-  _MenuEntry(AppSection.chat, Icons.chat_bubble_outline, 'Chat'),
+  _MenuEntry(AppSection.home, Icons.home_outlined, 'Accueil'),
+  _MenuEntry(AppSection.createProject, Icons.add_circle_outline, 'Créer un projet'),
+  _MenuEntry(AppSection.findTeammates, Icons.search, 'Trouver des coéquipiers'),
+  _MenuEntry(AppSection.myTeams, Icons.groups_outlined, 'Mes équipes'),
+  _MenuEntry(AppSection.chat, Icons.chat_bubble_outline, 'Messages'),
   _MenuEntry(AppSection.notifications, Icons.notifications_outlined, 'Notifications'),
-  _MenuEntry(AppSection.settings, Icons.settings_outlined, 'Settings'),
+  _MenuEntry(AppSection.settings, Icons.settings_outlined, 'Réglages'),
 ];
 
 /// Hamburger drawer faithful to the mockup: brand header, profile row, 7 items.

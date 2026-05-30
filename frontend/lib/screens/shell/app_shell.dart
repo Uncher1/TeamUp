@@ -39,13 +39,13 @@ class _AppShellState extends State<AppShell> {
 
   String get _title {
     switch (_section) {
-      case AppSection.home: return 'Home Feed';
-      case AppSection.createProject: return 'Create Project';
-      case AppSection.findTeammates: return 'Find Teammates';
-      case AppSection.myTeams: return 'My Teams';
-      case AppSection.chat: return 'Chat';
+      case AppSection.home: return 'Accueil';
+      case AppSection.createProject: return 'Créer un projet';
+      case AppSection.findTeammates: return 'Trouver des coéquipiers';
+      case AppSection.myTeams: return 'Mes équipes';
+      case AppSection.chat: return 'Messages';
       case AppSection.notifications: return 'Notifications';
-      case AppSection.settings: return 'Settings';
+      case AppSection.settings: return 'Réglages';
     }
   }
 

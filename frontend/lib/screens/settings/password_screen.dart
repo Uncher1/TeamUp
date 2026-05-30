@@ -64,7 +64,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
       ('Un caractère spécial', pwd.contains(RegExp(r'[^A-Za-z0-9]'))),
     ];
     return SettingsScaffold(
-      title: 'Change Password',
+      title: 'Mot de passe',
       children: [
         const SettingsSectionLabel('Mettre à jour le mot de passe'),
         TextField(

@@ -12,7 +12,7 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return SettingsScaffold(
-      title: 'About TeamUp',
+      title: 'À propos',
       children: [
         Center(
           child: Column(children: [
@@ -22,9 +22,9 @@ class AboutScreen extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft, end: Alignment.bottomRight,
-                  colors: [Color(0xFF6366F1), Color(0xFF9333EA)],
+                  colors: AppTheme.gradientFor(Theme.of(context).colorScheme.primary),
                 ),
               ),
               child: const Icon(Icons.hexagon_outlined, color: Colors.white, size: 40),

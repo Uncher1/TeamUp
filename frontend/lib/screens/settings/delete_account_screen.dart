@@ -67,7 +67,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   Widget build(BuildContext context) {
     final p = context.palette;
     return SettingsScaffold(
-      title: 'Delete Account',
+      title: 'Supprimer le compte',
       children: [
         Container(
           padding: const EdgeInsets.all(16),

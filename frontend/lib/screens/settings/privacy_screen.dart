@@ -43,7 +43,7 @@ class PrivacyScreen extends StatelessWidget {
           ],
         );
     return SettingsScaffold(
-      title: 'Privacy',
+      title: 'Confidentialité',
       children: [
         group('Visibilité du profil', _visibility),
         group('Équipes & projets', _team),

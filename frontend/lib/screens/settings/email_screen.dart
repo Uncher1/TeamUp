@@ -58,7 +58,7 @@ class _EmailScreenState extends State<EmailScreen> {
     final p = context.palette;
     final current = context.watch<AuthProvider>().user?.email ?? '';
     return SettingsScaffold(
-      title: 'Email Address',
+      title: 'Adresse e-mail',
       children: [
         Container(
           padding: const EdgeInsets.all(16),
@@ -116,7 +116,8 @@ class _EmailScreenState extends State<EmailScreen> {
             Icon(Icons.info_outline, size: 16, color: Color(0xFFD97706)),
             SizedBox(width: 8),
             Expanded(
-                child: Text('Ton adresse sera mise à jour immédiatement.',
+                child: Text(
+                    "Un e-mail de confirmation sera envoyé à ton ancienne adresse pour valider le changement.",
                     style: TextStyle(fontSize: 12, color: Color(0xFF92400E)))),
           ]),
         ),

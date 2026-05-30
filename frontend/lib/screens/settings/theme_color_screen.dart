@@ -14,7 +14,7 @@ class ThemeColorScreen extends StatelessWidget {
     final s = context.watch<SettingsProvider>();
     final entries = AppTheme.themeColors.entries.toList();
     return SettingsScaffold(
-      title: 'Theme Color',
+      title: 'Thème',
       children: [
         const SettingsSectionLabel('Choisir une couleur'),
         GridView.count(

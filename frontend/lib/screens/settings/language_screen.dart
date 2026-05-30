@@ -25,7 +25,7 @@ class LanguageScreen extends StatelessWidget {
     final p = context.palette;
     final s = context.watch<SettingsProvider>();
     return SettingsScaffold(
-      title: 'Language',
+      title: 'Langue',
       children: [
         const SettingsSectionLabel('Choisir une langue'),
         for (final (code, name, flag) in _languages)
