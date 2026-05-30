@@ -47,8 +47,16 @@ class ProfileScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(user.fullName,
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(user.fullName,
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18),
+                                          overflow: TextOverflow.ellipsis),
+                                    ),
+                                    RoleBadge(role: user.role, size: 18),
+                                  ],
+                                ),
                                 const SizedBox(height: 2),
                                 Text(user.email,
                                     style: const TextStyle(color: Color(0xFFC7D2FE), fontSize: 13),

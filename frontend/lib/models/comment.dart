@@ -5,6 +5,7 @@ class Comment {
   final int authorId;
   final String authorName;
   final String? authorAvatar;
+  final String authorRole;
 
   Comment({
     required this.id,
@@ -13,6 +14,7 @@ class Comment {
     required this.authorId,
     required this.authorName,
     this.authorAvatar,
+    this.authorRole = 'user',
   });
 
   factory Comment.fromJson(Map<String, dynamic> j) => Comment(
@@ -22,5 +24,6 @@ class Comment {
         authorId: j['author_id'] as int,
         authorName: j['author_name'] as String? ?? '',
         authorAvatar: j['author_avatar'] as String?,
+        authorRole: j['author_role'] as String? ?? 'user',
       );
 }

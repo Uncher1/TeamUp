@@ -42,9 +42,15 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(width: 14),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(user?.fullName ?? '',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
+                  Row(children: [
+                    Flexible(
+                      child: Text(user?.fullName ?? '',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    RoleBadge(role: user?.role ?? 'user', size: 17),
+                  ]),
                   const SizedBox(height: 2),
                   Text(context.tr('nav.profileRow'),
                       style: const TextStyle(color: Color(0xFFC7D2FE), fontSize: 12)),

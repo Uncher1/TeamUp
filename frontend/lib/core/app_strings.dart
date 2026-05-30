@@ -358,6 +358,10 @@ const Map<String, Map<String, String>> _strings = {
     'ninbox.markAll': 'Mark all as read',
     'ninbox.emptySub': 'Your notifications will appear here.',
 
+    // Roles
+    'role.admin': 'Admin',
+    'role.moderator': 'Moderator',
+
     // Profile
     'prof.title': 'Profile',
     'prof.about': 'About',
@@ -722,6 +726,10 @@ const Map<String, Map<String, String>> _strings = {
     // Notifications inbox
     'ninbox.markAll': 'Tout marquer lu',
     'ninbox.emptySub': 'Tes notifications apparaîtront ici.',
+
+    // Roles
+    'role.admin': 'Admin',
+    'role.moderator': 'Modérateur',
 
     // Profile
     'prof.title': 'Profil',

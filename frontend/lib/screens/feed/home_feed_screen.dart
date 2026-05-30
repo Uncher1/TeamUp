@@ -254,6 +254,7 @@ class _PostCard extends StatelessWidget {
                     Row(
                       children: [
                         Flexible(child: Text(post.authorName, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                        RoleBadge(role: post.authorRole),
                         const SizedBox(width: 8),
                         TypeBadge(type: post.type, label: label, icon: icon),
                       ],

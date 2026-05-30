@@ -12,3 +12,4 @@ export 'status_pill.dart';
 export 'type_badge.dart';
 export 'settings_widgets.dart';
 export 'pressable.dart';
+export 'role_badge.dart';

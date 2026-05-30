@@ -169,9 +169,16 @@ class _CandidateCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user.fullName,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(user.fullName,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                        RoleBadge(role: user.role, size: 14),
+                      ],
+                    ),
                     if (user.email != null) ...[
                       const SizedBox(height: 2),
                       Text(user.email!,

@@ -7,6 +7,7 @@ class User {
   final String fullName;
   final String? bio;
   final String? avatarUrl;
+  final String role; // 'user' | 'moderator' | 'admin'
   final bool emailVerified;
   final List<UserSkill> skills;
   final List<Interest> interests;
@@ -32,6 +33,7 @@ class User {
     required this.fullName,
     this.bio,
     this.avatarUrl,
+    this.role = 'user',
     this.emailVerified = true,
     this.skills = const [],
     this.interests = const [],
@@ -54,6 +56,7 @@ class User {
         fullName: json['full_name'] as String,
         bio: json['bio'] as String?,
         avatarUrl: json['avatar_url'] as String?,
+        role: json['role'] as String? ?? 'user',
         // Absent (legacy payload) → treat as verified so nobody is locked out.
         emailVerified: json['email_verified'] == null
             ? true
@@ -83,6 +86,7 @@ class User {
     String? fullName,
     String? bio,
     String? avatarUrl,
+    String? role,
     bool? emailVerified,
     List<UserSkill>? skills,
     List<Interest>? interests,
@@ -102,6 +106,7 @@ class User {
       fullName: fullName ?? this.fullName,
       bio: bio ?? this.bio,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      role: role ?? this.role,
       emailVerified: emailVerified ?? this.emailVerified,
       skills: skills ?? this.skills,
       interests: interests ?? this.interests,

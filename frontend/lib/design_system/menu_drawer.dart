@@ -5,6 +5,7 @@ import '../core/theme.dart';
 import '../providers/auth_provider.dart';
 import 'brand_header.dart';
 import 'gradient_avatar.dart';
+import 'role_badge.dart';
 
 /// A drawer destination the shell can switch to.
 enum AppSection { home, createProject, findTeammates, myTeams, chat, notifications, settings }
@@ -64,8 +65,16 @@ class MenuDrawer extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(user.fullName,
-                                style: const TextStyle(fontWeight: FontWeight.w600)),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(user.fullName,
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                      overflow: TextOverflow.ellipsis),
+                                ),
+                                RoleBadge(role: user.role, size: 14),
+                              ],
+                            ),
                             Text(user.email,
                                 style: TextStyle(fontSize: 12, color: context.palette.textMuted),
                                 overflow: TextOverflow.ellipsis),

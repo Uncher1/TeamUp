@@ -7,6 +7,7 @@ class Post {
   final int authorId;
   final String authorName;
   final String? authorAvatar;
+  final String authorRole;
   final int? projectId;
   final String? projectTitle;
   int likeCount;
@@ -21,6 +22,7 @@ class Post {
     required this.authorId,
     required this.authorName,
     this.authorAvatar,
+    this.authorRole = 'user',
     this.projectId,
     this.projectTitle,
     required this.likeCount,
@@ -36,6 +38,7 @@ class Post {
         authorId: j['author_id'] as int,
         authorName: j['author_name'] as String? ?? '',
         authorAvatar: j['author_avatar'] as String?,
+        authorRole: j['author_role'] as String? ?? 'user',
         projectId: j['project_id'] as int?,
         projectTitle: j['project_title'] as String?,
         likeCount: (j['like_count'] as num?)?.toInt() ?? 0,

@@ -343,9 +343,17 @@ class _CommentRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                comment.authorName,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      comment.authorName,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  RoleBadge(role: comment.authorRole, size: 13),
+                ],
               ),
               const SizedBox(height: 2),
               Text(comment.content, style: const TextStyle(fontSize: 14, height: 1.4)),

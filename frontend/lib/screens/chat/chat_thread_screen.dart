@@ -109,8 +109,14 @@ class _Bubble extends StatelessWidget {
             if (!mine)
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child: Text(message.senderName,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.palette.primaryHover)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(message.senderName,
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.palette.primaryHover)),
+                    RoleBadge(role: message.senderRole, size: 12),
+                  ],
+                ),
               ),
             Text(message.content,
                 style: TextStyle(color: mine ? Colors.white : context.palette.textPrimary, height: 1.3)),

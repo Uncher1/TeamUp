@@ -3,6 +3,7 @@ class Message {
   final int conversationId;
   final int senderId;
   final String senderName;
+  final String senderRole;
   final String content;
   final DateTime createdAt;
 
@@ -11,6 +12,7 @@ class Message {
     required this.conversationId,
     required this.senderId,
     required this.senderName,
+    this.senderRole = 'user',
     required this.content,
     required this.createdAt,
   });
@@ -20,6 +22,7 @@ class Message {
         conversationId: (j['conversation_id'] as int?) ?? fallbackConvId,
         senderId: j['sender_id'] as int,
         senderName: j['sender_name'] as String? ?? '',
+        senderRole: j['sender_role'] as String? ?? 'user',
         content: j['content'] as String? ?? '',
         createdAt: DateTime.parse(j['created_at'] as String),
       );
