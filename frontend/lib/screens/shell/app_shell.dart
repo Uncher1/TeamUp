@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../design_system/menu_drawer.dart';
@@ -117,19 +118,19 @@ class _AppShellState extends State<AppShell> {
   String get _title {
     switch (_section) {
       case AppSection.home:
-        return 'Accueil';
+        return context.tr('nav.home');
       case AppSection.createProject:
-        return 'Créer un projet';
+        return context.tr('nav.createProject');
       case AppSection.findTeammates:
-        return 'Trouver des coéquipiers';
+        return context.tr('nav.findTeammates');
       case AppSection.myTeams:
-        return 'Mes équipes';
+        return context.tr('nav.myTeams');
       case AppSection.chat:
-        return 'Messages';
+        return context.tr('nav.chat');
       case AppSection.notifications:
-        return 'Notifications';
+        return context.tr('nav.notifications');
       case AppSection.settings:
-        return 'Réglages';
+        return context.tr('nav.settings');
     }
   }
 
@@ -311,7 +312,7 @@ class _NotificationPopupContent extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  'Notifications',
+                  context.tr('nav.notifications'),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -330,7 +331,7 @@ class _NotificationPopupContent extends StatelessWidget {
                       context.read<NotificationsProvider>().markAllRead();
                     },
                     child: Text(
-                      'Tout lire',
+                      context.tr('popup.markAll'),
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.primary,
@@ -348,7 +349,7 @@ class _NotificationPopupContent extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               child: Text(
-                'Aucune notification',
+                context.tr('popup.empty'),
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, color: palette.textMuted),
               ),
@@ -376,7 +377,7 @@ class _NotificationPopupContent extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               child: Text(
-                'Voir toutes les notifications',
+                context.tr('popup.seeAll'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,

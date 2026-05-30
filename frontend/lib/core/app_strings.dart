@@ -91,6 +91,38 @@ const Map<String, Map<String, String>> _strings = {
     'lang.en': 'English',
     'lang.fr': 'French',
     'lang.note': 'Your choice is saved and applies across the whole app.',
+
+    // Navigation (drawer + headers)
+    'nav.home': 'Home',
+    'nav.createProject': 'Create a project',
+    'nav.findTeammates': 'Find teammates',
+    'nav.myTeams': 'My teams',
+    'nav.chat': 'Messages',
+    'nav.notifications': 'Notifications',
+    'nav.settings': 'Settings',
+    'nav.logout': 'Sign out',
+    'nav.profileRow': 'View / edit profile',
+
+    // Settings hub
+    'set.account': 'Account',
+    'set.email': 'Email address',
+    'set.password': 'Password',
+    'set.privacy': 'Privacy',
+    'set.privacySub': 'Visibility, search',
+    'set.notifSub': 'Push, email, sound',
+    'set.preferences': 'Preferences',
+    'set.darkMode': 'Dark mode',
+    'set.theme': 'Theme',
+    'set.support': 'Support',
+    'set.help': 'Help center',
+    'set.about': 'About',
+    'set.danger': 'Danger Zone',
+    'set.delete': 'Delete account',
+
+    // Notification popup
+    'popup.markAll': 'Mark all read',
+    'popup.empty': 'No notification',
+    'popup.seeAll': 'See all notifications',
   },
   'fr': {
     // Common
@@ -170,6 +202,38 @@ const Map<String, Map<String, String>> _strings = {
     'lang.en': 'Anglais',
     'lang.fr': 'Français',
     'lang.note': "Ton choix est enregistré et s'applique à toute l'app.",
+
+    // Navigation (drawer + headers)
+    'nav.home': 'Accueil',
+    'nav.createProject': 'Créer un projet',
+    'nav.findTeammates': 'Trouver des coéquipiers',
+    'nav.myTeams': 'Mes équipes',
+    'nav.chat': 'Messages',
+    'nav.notifications': 'Notifications',
+    'nav.settings': 'Réglages',
+    'nav.logout': 'Se déconnecter',
+    'nav.profileRow': 'Voir / modifier le profil',
+
+    // Settings hub
+    'set.account': 'Compte',
+    'set.email': 'Adresse e-mail',
+    'set.password': 'Mot de passe',
+    'set.privacy': 'Confidentialité',
+    'set.privacySub': 'Visibilité, recherche',
+    'set.notifSub': 'Push, e-mail, son',
+    'set.preferences': 'Préférences',
+    'set.darkMode': 'Mode sombre',
+    'set.theme': 'Thème',
+    'set.support': 'Support',
+    'set.help': "Centre d'aide",
+    'set.about': 'À propos',
+    'set.danger': 'Danger Zone',
+    'set.delete': 'Supprimer le compte',
+
+    // Notification popup
+    'popup.markAll': 'Tout lire',
+    'popup.empty': 'Aucune notification',
+    'popup.seeAll': 'Voir toutes les notifications',
   },
 };
 

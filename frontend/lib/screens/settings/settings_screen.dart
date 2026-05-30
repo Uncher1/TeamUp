@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
@@ -45,8 +46,8 @@ class SettingsScreen extends StatelessWidget {
                       style: const TextStyle(
                           color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 2),
-                  const Text('Voir / modifier le profil',
-                      style: TextStyle(color: Color(0xFFC7D2FE), fontSize: 12)),
+                  Text(context.tr('nav.profileRow'),
+                      style: const TextStyle(color: Color(0xFFC7D2FE), fontSize: 12)),
                 ]),
               ),
               const Icon(Icons.chevron_right, color: Colors.white70),
@@ -55,76 +56,76 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        const SettingsSectionLabel('Compte'),
+        SettingsSectionLabel(context.tr('set.account')),
         SettingsTile(
           icon: Icons.mail_outline,
-          label: 'Adresse e-mail',
+          label: context.tr('set.email'),
           subtitle: user?.email,
           onTap: () => _push(context, const EmailScreen()),
         ),
         SettingsTile(
           icon: Icons.lock_outline,
-          label: 'Mot de passe',
+          label: context.tr('set.password'),
           onTap: () => _push(context, const PasswordScreen()),
         ),
         SettingsTile(
           icon: Icons.shield_outlined,
-          label: 'Confidentialité',
-          subtitle: 'Visibilité, recherche',
+          label: context.tr('set.privacy'),
+          subtitle: context.tr('set.privacySub'),
           onTap: () => _push(context, const PrivacyScreen()),
         ),
 
-        const SettingsSectionLabel('Notifications'),
+        SettingsSectionLabel(context.tr('nav.notifications')),
         SettingsTile(
           icon: Icons.notifications_active_outlined,
-          label: 'Notifications',
-          subtitle: 'Push, e-mail, son',
+          label: context.tr('nav.notifications'),
+          subtitle: context.tr('set.notifSub'),
           onTap: () => _push(context, const NotificationsSettingsScreen()),
         ),
 
-        const SettingsSectionLabel('Préférences'),
+        SettingsSectionLabel(context.tr('set.preferences')),
         SettingToggleTile(
           icon: Icons.dark_mode_outlined,
-          label: 'Mode sombre',
+          label: context.tr('set.darkMode'),
           value: settings.darkMode,
           onChanged: (v) => context.read<SettingsProvider>().setDarkMode(v),
         ),
         SettingsTile(
           icon: Icons.palette_outlined,
-          label: 'Thème',
+          label: context.tr('set.theme'),
           subtitle: settings.themeColor,
           onTap: () => _push(context, const ThemeColorScreen()),
         ),
         SettingsTile(
           icon: Icons.language,
-          label: 'Langue',
-          subtitle: _languageName(settings.language),
+          label: context.tr('lang.title'),
+          subtitle: context.tr(settings.language == 'fr' ? 'lang.fr' : 'lang.en'),
           onTap: () => _push(context, const LanguageScreen()),
         ),
 
-        const SettingsSectionLabel('Support'),
+        SettingsSectionLabel(context.tr('set.support')),
         SettingsTile(
           icon: Icons.help_outline,
-          label: 'Centre d\'aide',
+          label: context.tr('set.help'),
           onTap: () => _push(context, const HelpScreen()),
         ),
         SettingsTile(
           icon: Icons.info_outline,
-          label: 'À propos',
+          label: context.tr('set.about'),
           subtitle: 'v1.0.0',
           onTap: () => _push(context, const AboutScreen()),
         ),
 
-        const SettingsSectionLabel('Danger Zone'),
+        SettingsSectionLabel(context.tr('set.danger')),
         SettingsTile(
           icon: Icons.delete_outline,
-          label: 'Supprimer le compte',
+          label: context.tr('set.delete'),
           danger: true,
           onTap: () => _push(context, const DeleteAccountScreen()),
         ),
         SettingsTile(
           icon: Icons.logout,
-          label: 'Se déconnecter',
+          label: context.tr('nav.logout'),
           danger: true,
           onTap: () => context.read<AuthProvider>().logout(),
         ),
@@ -135,13 +136,5 @@ class SettingsScreen extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  static String _languageName(String code) {
-    const map = {
-      'fr': 'Français', 'en': 'English', 'es': 'Español', 'de': 'Deutsch',
-      'it': 'Italiano', 'pt': 'Português', 'zh': '中文', 'ja': '日本語',
-    };
-    return map[code] ?? 'Français';
   }
 }

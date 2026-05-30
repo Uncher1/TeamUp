@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../core/app_strings.dart';
 import '../core/theme.dart';
 import '../providers/auth_provider.dart';
 import 'brand_header.dart';
@@ -11,18 +12,18 @@ enum AppSection { home, createProject, findTeammates, myTeams, chat, notificatio
 class _MenuEntry {
   final AppSection section;
   final IconData icon;
-  final String label;
-  const _MenuEntry(this.section, this.icon, this.label);
+  final String labelKey;
+  const _MenuEntry(this.section, this.icon, this.labelKey);
 }
 
 const _entries = <_MenuEntry>[
-  _MenuEntry(AppSection.home, Icons.home_outlined, 'Accueil'),
-  _MenuEntry(AppSection.createProject, Icons.add_circle_outline, 'Créer un projet'),
-  _MenuEntry(AppSection.findTeammates, Icons.search, 'Trouver des coéquipiers'),
-  _MenuEntry(AppSection.myTeams, Icons.groups_outlined, 'Mes équipes'),
-  _MenuEntry(AppSection.chat, Icons.chat_bubble_outline, 'Messages'),
-  _MenuEntry(AppSection.notifications, Icons.notifications_outlined, 'Notifications'),
-  _MenuEntry(AppSection.settings, Icons.settings_outlined, 'Réglages'),
+  _MenuEntry(AppSection.home, Icons.home_outlined, 'nav.home'),
+  _MenuEntry(AppSection.createProject, Icons.add_circle_outline, 'nav.createProject'),
+  _MenuEntry(AppSection.findTeammates, Icons.search, 'nav.findTeammates'),
+  _MenuEntry(AppSection.myTeams, Icons.groups_outlined, 'nav.myTeams'),
+  _MenuEntry(AppSection.chat, Icons.chat_bubble_outline, 'nav.chat'),
+  _MenuEntry(AppSection.notifications, Icons.notifications_outlined, 'nav.notifications'),
+  _MenuEntry(AppSection.settings, Icons.settings_outlined, 'nav.settings'),
 ];
 
 /// Hamburger drawer faithful to the mockup: brand header, profile row, 7 items.
@@ -87,7 +88,7 @@ class MenuDrawer extends StatelessWidget {
             Divider(color: context.palette.slate100, height: 1),
             ListTile(
               leading: Icon(Icons.logout, color: context.palette.textMuted),
-              title: const Text('Se déconnecter'),
+              title: Text(context.tr('nav.logout')),
               onTap: () {
                 Navigator.of(context).pop();
                 context.read<AuthProvider>().logout();
@@ -128,7 +129,7 @@ class MenuDrawer extends StatelessWidget {
                       size: 20, color: selected ? context.palette.primaryHover : context.palette.textMuted),
                 ),
                 const SizedBox(width: 16),
-                Text(e.label,
+                Text(context.tr(e.labelKey),
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
