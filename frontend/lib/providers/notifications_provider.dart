@@ -34,6 +34,23 @@ class NotificationsProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<void> markRead(int id) async {
+    var changed = false;
+    for (final n in items) {
+      if (n.id == id && !n.isRead) {
+        n.isRead = true;
+        changed = true;
+      }
+    }
+    if (changed) {
+      unread = items.where((n) => !n.isRead).length;
+      notifyListeners();
+      try {
+        await _repo.markRead(id);
+      } catch (_) {}
+    }
+  }
+
   Future<void> markAllRead() async {
     for (final n in items) {
       n.isRead = true;

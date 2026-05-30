@@ -62,7 +62,9 @@ class _AppShellState extends State<AppShell> {
       case AppSection.chat:
         return const ChatScreen();
       case AppSection.notifications:
-        return const NotificationsInboxScreen();
+        return NotificationsInboxScreen(
+          onNavigate: (s) => setState(() => _section = s),
+        );
       case AppSection.settings:
         return const SettingsScreen();
     }

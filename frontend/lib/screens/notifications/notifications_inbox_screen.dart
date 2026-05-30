@@ -3,11 +3,30 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
+import '../../design_system/menu_drawer.dart';
 import '../../models/app_notification.dart';
 import '../../providers/notifications_provider.dart';
 
+/// Maps a notification type to the shell section to open when it's tapped.
+AppSection _sectionFor(String type) {
+  switch (type) {
+    case 'message':
+      return AppSection.chat;
+    case 'application':
+    case 'team_join':
+    case 'team_invite':
+    case 'project_update':
+    case 'project_complete':
+      return AppSection.myTeams;
+    default:
+      return AppSection.home;
+  }
+}
+
 class NotificationsInboxScreen extends StatefulWidget {
-  const NotificationsInboxScreen({super.key});
+  /// Called when a notification is tapped, to switch the shell to its section.
+  final void Function(AppSection section)? onNavigate;
+  const NotificationsInboxScreen({super.key, this.onNavigate});
 
   @override
   State<NotificationsInboxScreen> createState() => _NotificationsInboxScreenState();
@@ -74,7 +93,14 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
         itemCount: provider.items.length,
         separatorBuilder: (context2, index) => const SizedBox(height: 8),
-        itemBuilder: (_, i) => _NotificationTile(n: provider.items[i]),
+        itemBuilder: (_, i) => _NotificationTile(
+          n: provider.items[i],
+          onTap: () {
+            final n = provider.items[i];
+            context.read<NotificationsProvider>().markRead(n.id);
+            widget.onNavigate?.call(_sectionFor(n.type));
+          },
+        ),
       ),
     );
   }
@@ -95,12 +121,15 @@ IconData _iconFor(String type) {
 
 class _NotificationTile extends StatelessWidget {
   final AppNotification n;
-  const _NotificationTile({required this.n});
+  final VoidCallback onTap;
+  const _NotificationTile({required this.n, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = AppTheme.typeColors(n.type);
-    return Container(
+    return PressableScale(
+      onPressed: onTap,
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: n.isRead ? context.palette.surface : context.palette.itemHoverBg,
@@ -139,6 +168,7 @@ class _NotificationTile extends StatelessWidget {
               decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle),
             ),
         ],
+      ),
       ),
     );
   }
