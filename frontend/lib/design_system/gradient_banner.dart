@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Indigo→purple rounded banner used for hero headers (Create Project, My Teams, Profile).
+import '../core/theme.dart';
+
+/// Theme-coordinated rounded banner used for hero headers (Create Project, My Teams, Profile).
+/// The gradient derives from the active seed color so it stays on-theme when the
+/// user picks a different Theme Color.
 class GradientBanner extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -12,10 +16,10 @@ class GradientBanner extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF6366F1), Color(0xFF9333EA)],
+          colors: AppTheme.gradientFor(Theme.of(context).colorScheme.primary),
         ),
       ),
       child: child,

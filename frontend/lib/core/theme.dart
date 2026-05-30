@@ -148,7 +148,21 @@ class AppTheme {
   };
 
   // Gradient used by avatars (indigo-400 -> purple-500) — brand, fixed in both modes.
+  // Keep for back-compat; prefer gradientFor(context.colorScheme.primary) in widgets.
   static const List<Color> avatarGradient = [Color(0xFF818CF8), Color(0xFFA855F7)];
+
+  /// A tasteful 2-stop brand gradient derived from [seed] (seed -> hue-shifted,
+  /// slightly deeper). For the default indigo this reproduces the indigo->purple
+  /// look; for any other seed it stays on-theme.
+  static List<Color> gradientFor(Color seed) {
+    final h = HSLColor.fromColor(seed);
+    final c2 = h
+        .withHue((h.hue + 25) % 360)
+        .withSaturation((h.saturation + 0.05).clamp(0.0, 1.0))
+        .withLightness((h.lightness - 0.06).clamp(0.0, 1.0))
+        .toColor();
+    return [seed, c2];
+  }
 
   /// Returns (background, foreground) colors for a post/notification type badge.
   static (Color, Color) typeColors(String type) {

@@ -63,12 +63,12 @@ class _GradientInitial extends StatelessWidget {
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: AppTheme.avatarGradient,
+          colors: AppTheme.gradientFor(Theme.of(context).colorScheme.primary),
         ),
       ),
       child: Text(
