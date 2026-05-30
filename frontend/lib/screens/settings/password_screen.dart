@@ -55,12 +55,13 @@ class _PasswordScreenState extends State<PasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    const reqs = [
-      'Au moins 8 caractères',
-      'Une lettre majuscule',
-      'Une lettre minuscule',
-      'Un chiffre',
-      'Un caractère spécial',
+    final pwd = _new.text;
+    final rules = <(String, bool)>[
+      ('Au moins 8 caractères', pwd.length >= 8),
+      ('Une lettre majuscule', pwd.contains(RegExp(r'[A-Z]'))),
+      ('Une lettre minuscule', pwd.contains(RegExp(r'[a-z]'))),
+      ('Un chiffre', pwd.contains(RegExp(r'[0-9]'))),
+      ('Un caractère spécial', pwd.contains(RegExp(r'[^A-Za-z0-9]'))),
     ];
     return SettingsScaffold(
       title: 'Change Password',
@@ -76,6 +77,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
         TextField(
           controller: _new,
           obscureText: true,
+          onChanged: (_) => setState(() {}),
           decoration: const InputDecoration(
               labelText: 'Nouveau mot de passe', prefixIcon: Icon(Icons.lock_outline)),
         ),
@@ -87,23 +89,32 @@ class _PasswordScreenState extends State<PasswordScreen> {
               labelText: 'Confirmer le mot de passe', prefixIcon: Icon(Icons.lock_outline)),
         ),
         const SizedBox(height: 16),
-        Text('Recommandations :',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.textMuted)),
-        const SizedBox(height: 8),
-        for (final r in reqs)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(children: [
-              Container(
-                width: 16, height: 16, alignment: Alignment.center,
-                decoration: const BoxDecoration(color: Color(0xFFD1FAE5), shape: BoxShape.circle),
-                child: const Icon(Icons.check, size: 10, color: Color(0xFF059669)),
-              ),
-              const SizedBox(width: 8),
-              Text(r, style: TextStyle(fontSize: 12, color: p.textMuted)),
-            ]),
-          ),
-        const SizedBox(height: 16),
+        if (pwd.isNotEmpty) ...[
+          Text('Recommandations :',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.textMuted)),
+          const SizedBox(height: 8),
+          for (final (label, met) in rules)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 16,
+                  height: 16,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: met ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(met ? Icons.check : Icons.close,
+                      size: 10, color: met ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+                ),
+                const SizedBox(width: 8),
+                Text(label, style: TextStyle(fontSize: 12, color: p.textMuted)),
+              ]),
+            ),
+          const SizedBox(height: 16),
+        ],
         ElevatedButton(
           onPressed: _busy ? null : _save,
           child: _busy
