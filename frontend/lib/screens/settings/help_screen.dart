@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 
@@ -12,89 +13,28 @@ class HelpScreen extends StatefulWidget {
 }
 
 class _HelpScreenState extends State<HelpScreen> {
-  static const _faq = [
-    (
-      'Comment créer un projet ?',
-      'Ouvre « Create Project » depuis le menu. Donne un titre et une description, '
-          'choisis un type, puis ajoute les compétences requises avec un poids de 1 à 5 '
-          '(plus le poids est élevé, plus la compétence pèse dans le matching) et des '
-          'centres d\'intérêt. Une fois publié, ton projet apparaît dans « My Teams » et '
-          'peut recevoir des candidatures.'
-    ),
-    (
-      'Comment fonctionne le matching de coéquipiers ?',
-      'Le score combine deux mesures : 70 % la correspondance de compétences (tes niveaux '
-          'pondérés par les poids demandés par le projet) et 30 % la correspondance d\'intérêts '
-          '(intérêts en commun). Chaque candidat reçoit un score en %, et la liste est classée '
-          'du plus pertinent au moins pertinent.'
-    ),
-    (
-      'Comment trouver des coéquipiers pour mon projet ?',
-      'Va dans « Find Teammates », choisis l\'un de tes projets, et la liste des profils les '
-          'mieux classés s\'affiche avec leur score de compatibilité. Tu peux filtrer par nom '
-          'avec la barre de recherche, puis contacter un profil via « Message ».'
-    ),
-    (
-      'Comment postuler à un projet / rejoindre une équipe ?',
-      'Ouvre un projet qui t\'intéresse et postule. Le porteur du projet voit ta candidature '
-          'dans la section « Candidatures » et peut l\'accepter ou la refuser. S\'il accepte, tu '
-          'rejoins l\'équipe et tu es notifié.'
-    ),
-    (
-      'Comment gérer les candidatures reçues ?',
-      'Sur la page de détail d\'un projet dont tu es le porteur, la section « Candidatures » '
-          'liste les profils ayant postulé, avec un bouton Accepter et Refuser. Le candidat est '
-          'notifié de ta décision.'
-    ),
-    (
-      'Comment fonctionne la messagerie ?',
-      'Le chat est en temps réel : les messages arrivent instantanément sans rafraîchir. Tu '
-          'peux discuter en direct avec un profil (depuis Find Teammates) ou dans la conversation '
-          'd\'un projet. Retrouve toutes tes discussions dans l\'onglet « Chat ».'
-    ),
-    (
-      'À quoi servent les notifications ?',
-      'Tu es notifié quand quelqu\'un postule à ton projet, quand ta candidature est acceptée, '
-          'et quand tu reçois un message. La cloche en haut affiche le nombre de notifications '
-          'non lues ; ouvre « Notifications » pour tout voir.'
-    ),
-    (
-      'Comment renseigner mes compétences et niveaux ?',
-      'Dans « Edit Profile », ajoute tes compétences et règle ton niveau de 1 (débutant) à 5 '
-          '(expert) pour chacune. Ces niveaux alimentent directement l\'algorithme de matching, '
-          'donc plus ton profil est précis, plus les suggestions sont pertinentes.'
-    ),
-    (
-      'Comment contrôler ma confidentialité ?',
-      'Dans Settings > Confidentialité, tu choisis qui peut voir ton profil, si tu apparais '
-          'dans la recherche, qui peut te contacter, et si ton statut en ligne est visible.'
-    ),
-    (
-      'Comment activer le mode sombre ou changer la couleur ?',
-      'Settings > Préférences : active « Mode sombre » pour basculer toute l\'app, et ouvre '
-          '« Thème » pour choisir une couleur d\'accent parmi 8. Le changement s\'applique '
-          'immédiatement et est mémorisé.'
-    ),
-    (
-      'Comment changer mon e-mail ou mon mot de passe ?',
-      'Settings > Compte : « Adresse e-mail » pour mettre à jour ton e-mail, « Mot de passe » '
-          'pour le changer (un nouveau mot de passe doit faire au moins 8 caractères et respecter '
-          'les recommandations affichées).'
-    ),
-    (
-      'Comment supprimer mon compte ?',
-      'Settings > Danger Zone > « Supprimer le compte ». Cette action est irréversible : ton '
-          'profil, tes projets, tes adhésions et tes messages sont définitivement effacés. Une '
-          'case de confirmation est requise avant de valider.'
-    ),
+  // (questionKey, answerKey) — resolved via context.tr at build time.
+  static const _faqKeys = [
+    ('help.q1', 'help.a1'),
+    ('help.q2', 'help.a2'),
+    ('help.q3', 'help.a3'),
+    ('help.q4', 'help.a4'),
+    ('help.q5', 'help.a5'),
+    ('help.q6', 'help.a6'),
+    ('help.q7', 'help.a7'),
+    ('help.q8', 'help.a8'),
+    ('help.q9', 'help.a9'),
+    ('help.q10', 'help.a10'),
+    ('help.q11', 'help.a11'),
+    ('help.q12', 'help.a12'),
   ];
 
-  // Quick action cards: (label, icon, bg, fg).
+  // Quick action cards: (labelKey, icon, bg, fg).
   static const _actions = [
-    ('Nous contacter', Icons.chat_bubble_outline, Color(0xFFE0E7FF), Color(0xFF4F46E5)),
-    ("Guide d'utilisation", Icons.description_outlined, Color(0xFFD1FAE5), Color(0xFF059669)),
-    ("Noter l'app", Icons.star_outline, Color(0xFFFEF3C7), Color(0xFFD97706)),
-    ('Site web', Icons.open_in_new, Color(0xFFFFE4E6), Color(0xFFE11D48)),
+    ('help.contact', Icons.chat_bubble_outline, Color(0xFFE0E7FF), Color(0xFF4F46E5)),
+    ('help.guide', Icons.description_outlined, Color(0xFFD1FAE5), Color(0xFF059669)),
+    ('help.rate', Icons.star_outline, Color(0xFFFEF3C7), Color(0xFFD97706)),
+    ('help.website', Icons.open_in_new, Color(0xFFFFE4E6), Color(0xFFE11D48)),
   ];
 
   String _query = '';
@@ -104,43 +44,42 @@ class _HelpScreenState extends State<HelpScreen> {
 
   Future<void> _openContact() async {
     final messenger = ScaffoldMessenger.of(context);
+    final errMsg = context.tr('help.mailErr');
     final uri = Uri.parse(
         'mailto:teamup.team28@gmail.com?subject=Support%20TeamUp');
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(content: Text("Impossible d'ouvrir l'app mail")),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
     }
   }
 
   Future<void> _openWebsite() async {
     final messenger = ScaffoldMessenger.of(context);
+    final errMsg = context.tr('help.webErr');
     final uri = Uri.parse('https://github.com/Uncher1/TeamUp');
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(content: Text("Impossible d'ouvrir le navigateur")),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
     }
   }
 
   Future<void> _showRatingDialog() async {
     int selected = 0;
     final messenger = ScaffoldMessenger.of(context);
+    final thanksSnack = context.tr('help.rateThanksSnack');
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('Noter l\'app'),
+          title: Text(context.tr('help.rate')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Ta note nous aide à améliorer TeamUp.'),
+              Text(context.tr('help.rateBody')),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -163,7 +102,7 @@ class _HelpScreenState extends State<HelpScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler'),
+              child: Text(context.tr('common.cancel')),
             ),
             FilledButton(
               onPressed: selected == 0
@@ -171,7 +110,7 @@ class _HelpScreenState extends State<HelpScreen> {
                   : () {
                       Navigator.pop(ctx);
                     },
-              child: const Text('Merci !'),
+              child: Text(context.tr('help.rateThanks')),
             ),
           ],
         ),
@@ -179,9 +118,7 @@ class _HelpScreenState extends State<HelpScreen> {
     );
     if (!mounted) return;
     if (selected > 0) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Merci pour ta note !')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(thanksSnack)));
     }
   }
 
@@ -193,12 +130,12 @@ class _HelpScreenState extends State<HelpScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        const steps = [
-          ('1.', 'Complète ton profil avec tes compétences et centres d\'intérêt.'),
-          ('2.', 'Crée ou rejoins un projet depuis l\'onglet principal.'),
-          ('3.', 'Trouve des coéquipiers via « Find Teammates » — le score t\'aide à choisir.'),
-          ('4.', 'Accepte ou refuse les candidatures reçues sur ton projet.'),
-          ('5.', 'Discute en temps réel avec ton équipe dans l\'onglet « Chat ».'),
+        final steps = [
+          ('1.', context.tr('help.step1')),
+          ('2.', context.tr('help.step2')),
+          ('3.', context.tr('help.step3')),
+          ('4.', context.tr('help.step4')),
+          ('5.', context.tr('help.step5')),
         ];
         return Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -206,13 +143,13 @@ class _HelpScreenState extends State<HelpScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Guide rapide',
+              Text(context.tr('help.guideTitle'),
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: p.textPrimary)),
               const SizedBox(height: 4),
-              Text('Les étapes essentielles pour bien démarrer.',
+              Text(context.tr('help.guideSub'),
                   style: TextStyle(fontSize: 13, color: p.textMuted)),
               const SizedBox(height: 20),
               for (final (num, text) in steps) ...[
@@ -247,37 +184,30 @@ class _HelpScreenState extends State<HelpScreen> {
   Widget build(BuildContext context) {
     final p = context.palette;
     final q = _query.trim().toLowerCase();
-    final faq = q.isEmpty
-        ? _faq
-        : _faq
-            .where((f) =>
-                f.$1.toLowerCase().contains(q) || f.$2.toLowerCase().contains(q))
-            .toList();
-
-    // Map filtered index → original index for _openFaq tracking.
+    // Resolve every FAQ to the active language, keeping the original index.
+    final all = [
+      for (var i = 0; i < _faqKeys.length; i++)
+        (i, context.tr(_faqKeys[i].$1), context.tr(_faqKeys[i].$2)),
+    ];
     final faqWithIndex = q.isEmpty
-        ? List.generate(_faq.length, (i) => (i, _faq[i]))
-        : _faq
-            .asMap()
-            .entries
+        ? all
+        : all
             .where((e) =>
-                e.value.$1.toLowerCase().contains(q) ||
-                e.value.$2.toLowerCase().contains(q))
-            .map((e) => (e.key, e.value))
+                e.$2.toLowerCase().contains(q) || e.$3.toLowerCase().contains(q))
             .toList();
 
     return SettingsScaffold(
-      title: 'Centre d\'aide',
+      title: context.tr('set.help'),
       children: [
         TextField(
           onChanged: (v) => setState(() => _query = v),
-          decoration: const InputDecoration(
-            hintText: "Rechercher dans l'aide...",
-            prefixIcon: Icon(Icons.search),
+          decoration: InputDecoration(
+            hintText: context.tr('help.search'),
+            prefixIcon: const Icon(Icons.search),
           ),
         ),
         const SizedBox(height: 16),
-        const SettingsSectionLabel('Actions rapides'),
+        SettingsSectionLabel(context.tr('help.quickActions')),
         Row(children: [
           Expanded(
               child: _ActionCard(
@@ -298,14 +228,14 @@ class _HelpScreenState extends State<HelpScreen> {
                   data: _actions[3], onTap: _openWebsite)),
         ]),
         const SizedBox(height: 20),
-        const SettingsSectionLabel('Questions fréquentes'),
-        if (faq.isEmpty)
+        SettingsSectionLabel(context.tr('help.faq')),
+        if (faqWithIndex.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text('Aucun résultat pour « $_query ».',
+            child: Text(context.tr('help.noResult', {'q': _query}),
                 style: TextStyle(fontSize: 13, color: p.textMuted)),
           ),
-        for (final (origIdx, (question, answer)) in faqWithIndex)
+        for (final (origIdx, question, answer) in faqWithIndex)
           _FaqItem(
             question: question,
             answer: answer,
@@ -409,7 +339,7 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final (label, icon, bg, fg) = data;
+    final (labelKey, icon, bg, fg) = data;
     return Material(
       color: p.surface,
       borderRadius: BorderRadius.circular(14),
@@ -432,7 +362,7 @@ class _ActionCard extends StatelessWidget {
                 child: Icon(icon, size: 20, color: fg),
               ),
               const SizedBox(height: 8),
-              Text(label,
+              Text(context.tr(labelKey),
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
