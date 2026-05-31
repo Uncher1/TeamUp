@@ -103,10 +103,15 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   }
 
   Future<void> _share(Post p) async {
-    final text = '${p.authorName}: ${p.content}';
+    // A proper, shareable message (intro + quoted content + attribution), like
+    // the share text apps such as Instagram/Facebook produce.
+    final intro = context.tr('feed.shareIntro', {'name': p.authorName});
+    final footer = context.tr('feed.shareFooter');
+    final subject = context.tr('feed.shareSubject', {'name': p.authorName});
+    final text = '$intro\n\n"${p.content}"\n\n$footer';
     // Native share sheet on Android/iOS (the APK target).
     if (!kIsWeb) {
-      await Share.share(text);
+      await Share.share(text, subject: subject);
       return;
     }
     // Web: a desktop browser often has no native share sheet, so show our own

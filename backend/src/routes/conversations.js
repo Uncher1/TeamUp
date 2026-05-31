@@ -42,7 +42,8 @@ router.post('/direct/:userId', authRequired, async (req, res) => {
     return res.status(400).json({ error: 'invalid target user' });
   }
 
-  const [users] = await pool.query('SELECT id FROM users WHERE id = ?', [other]);
+  const [users] = await pool.query(
+    'SELECT id, full_name, avatar_url, presence_status FROM users WHERE id = ?', [other]);
   if (!users.length) return res.status(404).json({ error: 'user not found' });
 
   if (await isBlockedEitherWay(req.user.id, other)) {
@@ -54,6 +55,16 @@ router.post('/direct/:userId', authRequired, async (req, res) => {
     return res.status(403).json({ error: "Cet utilisateur n'accepte pas les messages." });
   }
 
+  // Include the other person's identity so the chat header can show their
+  // avatar + presence + name (no more "Conversation #X").
+  const otherInfo = {
+    type: 'direct',
+    other_user_id: other,
+    other_user_name: users[0].full_name,
+    other_user_avatar: users[0].avatar_url,
+    other_user_status: users[0].presence_status,
+  };
+
   const [existing] = await pool.query(
     `SELECT c.id
        FROM conversations c
@@ -63,7 +74,7 @@ router.post('/direct/:userId', authRequired, async (req, res) => {
       LIMIT 1`,
     [req.user.id, other]
   );
-  if (existing.length) return res.json({ id: existing[0].id, type: 'direct' });
+  if (existing.length) return res.json({ id: existing[0].id, ...otherInfo });
 
   const conn = await pool.getConnection();
   try {
@@ -75,7 +86,7 @@ router.post('/direct/:userId', authRequired, async (req, res) => {
       [id, req.user.id, id, other]
     );
     await conn.commit();
-    res.status(201).json({ id, type: 'direct' });
+    res.status(201).json({ id, ...otherInfo });
   } catch (e) {
     await conn.rollback();
     throw e;

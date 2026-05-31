@@ -124,13 +124,18 @@ class _Root extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      builder: (context, child) => ColoredBox(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: Center(
-          child: ClipRect(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: child,
+      builder: (context, child) => GestureDetector(
+        // Tap anywhere outside a text field to dismiss the keyboard / unfocus.
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: ColoredBox(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Center(
+            child: ClipRect(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: child,
+              ),
             ),
           ),
         ),

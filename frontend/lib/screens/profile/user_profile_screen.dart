@@ -8,9 +8,11 @@ import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
 import '../../core/app_strings.dart';
+import '../../core/link_launcher.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/public_profile.dart';
+import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../repositories/chat_repo.dart';
 import '../../repositories/user_repo.dart';
@@ -343,6 +345,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
             ),
           ],
+          if (_hasLinks(user)) ...[
+            const SizedBox(height: 20),
+            SectionLabel(context.tr('prof.links')),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (_nonEmpty(user.github))
+                  _LinkChip(Icons.code, 'GitHub', user.github!),
+                if (_nonEmpty(user.linkedin))
+                  _LinkChip(Icons.business_center_outlined, 'LinkedIn', user.linkedin!),
+                if (_nonEmpty(user.twitter))
+                  _LinkChip(Icons.alternate_email, 'Twitter / X', user.twitter!),
+                if (_nonEmpty(user.website))
+                  _LinkChip(Icons.link, context.tr('help.website'), user.website!),
+              ],
+            ),
+          ],
           const SizedBox(height: 20),
           SectionLabel(context.tr('cp.skills')),
           const SizedBox(height: 8),
@@ -392,6 +413,41 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       _nonEmpty(p.user.studyYear) ||
       _nonEmpty(p.user.location) ||
       _nonEmpty(p.user.phone);
+
+  bool _hasLinks(User user) =>
+      _nonEmpty(user.github) ||
+      _nonEmpty(user.linkedin) ||
+      _nonEmpty(user.twitter) ||
+      _nonEmpty(user.website);
+}
+
+class _LinkChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _LinkChip(this.icon, this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => openExternalLink(context, value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: context.palette.slate100,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: context.palette.textMuted),
+            const SizedBox(width: 5),
+            Text(label, style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _InfoRow extends StatelessWidget {

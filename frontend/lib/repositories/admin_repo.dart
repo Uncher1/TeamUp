@@ -46,4 +46,9 @@ class AdminRepository {
   Future<void> setRole(int userId, String role) async {
     await api.dio.patch('/admin/users/$userId/role', data: {'role': role});
   }
+
+  /// Admin-only: permanently delete a user account.
+  Future<void> deleteUser(int userId) async {
+    await api.dio.delete('/admin/users/$userId');
+  }
 }

@@ -8,8 +8,16 @@ import '../core/theme.dart';
 /// Sticky in-phone screen header with a back chevron + title (for sub-screens).
 class ScreenHeader extends StatelessWidget {
   final String title;
+
+  /// Optional custom title (e.g. avatar + name). Takes precedence over [title].
+  final Widget? titleWidget;
   final List<Widget> actions;
-  const ScreenHeader({super.key, required this.title, this.actions = const []});
+  const ScreenHeader({
+    super.key,
+    this.title = '',
+    this.titleWidget,
+    this.actions = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +34,8 @@ class ScreenHeader extends StatelessWidget {
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           Expanded(
-            child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+            child: titleWidget ??
+                Text(title, style: Theme.of(context).textTheme.titleLarge),
           ),
           ...actions,
         ],

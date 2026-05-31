@@ -23,6 +23,7 @@ import '../../models/conversation.dart';
 import '../../models/message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../profile/user_profile_screen.dart';
 
 class ChatThreadScreen extends StatefulWidget {
   final Conversation conversation;
@@ -210,7 +211,14 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            ScreenHeader(title: widget.conversation.displayName),
+            ScreenHeader(
+              title: widget.conversation.type == 'project'
+                  ? widget.conversation.displayName
+                  : '',
+              titleWidget: widget.conversation.type == 'direct'
+                  ? _DmHeaderTitle(conversation: widget.conversation)
+                  : null,
+            ),
             Expanded(
               child: provider.loadingMessages && provider.messages.isEmpty
                   ? const Center(child: CircularProgressIndicator())
@@ -686,6 +694,47 @@ class _InputBar extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(14)),
               child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Direct-message header: the other person's avatar (with presence dot) + name.
+/// Tapping it opens their public profile.
+class _DmHeaderTitle extends StatelessWidget {
+  final Conversation conversation;
+  const _DmHeaderTitle({required this.conversation});
+
+  @override
+  Widget build(BuildContext context) {
+    final otherId = conversation.otherUserId;
+    return GestureDetector(
+      onTap: otherId == null
+          ? null
+          : () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => UserProfileScreen(
+                  userId: otherId,
+                  initialName: conversation.otherUserName,
+                  initialAvatar: conversation.otherUserAvatar,
+                ),
+              )),
+      child: Row(
+        children: [
+          GradientAvatar(
+            name: conversation.displayName,
+            size: 36,
+            imageUrl: conversation.avatarImageUrl,
+            presenceStatus: conversation.avatarStatus,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              conversation.displayName,
+              style: Theme.of(context).textTheme.titleMedium,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

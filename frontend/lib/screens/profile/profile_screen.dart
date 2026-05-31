@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_strings.dart';
+import '../../core/link_launcher.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/user.dart';
@@ -238,11 +239,7 @@ class _SocialChip extends StatelessWidget {
   @override
   Widget build(BuildContext ctx) {
     return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(ctx).showSnackBar(
-          SnackBar(content: Text('$label: $value')),
-        );
-      },
+      onTap: () => openExternalLink(ctx, value),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(

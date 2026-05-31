@@ -67,6 +67,38 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     }
   }
 
+  Future<void> _deleteUser(AdminUser u) async {
+    final repo = context.read<AdminRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+    final okMsg = context.tr('admin.userDeleted');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.tr('admin.deleteUser')),
+        content: Text(ctx.tr('admin.deleteConfirm', {'name': u.fullName})),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(ctx.tr('common.cancel'))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.tr('common.delete')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await repo.deleteUser(u.id);
+      if (!mounted) return;
+      setState(() => _users.removeWhere((x) => x.id == u.id));
+      messenger.showSnackBar(SnackBar(content: Text(okMsg)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(ApiClient.messageFromError(e))));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
@@ -147,7 +179,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               PopupMenuButton<String>(
                 icon: Icon(Icons.more_vert, size: 20, color: p.textMuted),
                 tooltip: context.tr('admin.changeRole'),
-                onSelected: (role) => _setRole(u, role),
+                onSelected: (value) =>
+                    value == '__delete__' ? _deleteUser(u) : _setRole(u, value),
                 itemBuilder: (_) => [
                   for (final role in const ['user', 'moderator', 'admin'])
                     PopupMenuItem(
@@ -163,6 +196,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         ],
                       ),
                     ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: '__delete__',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
+                        const SizedBox(width: 8),
+                        Text(context.tr('admin.deleteUser'),
+                            style: const TextStyle(color: Color(0xFFDC2626))),
+                      ],
+                    ),
+                  ),
                 ],
               ),
           ],

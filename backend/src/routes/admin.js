@@ -39,4 +39,17 @@ router.patch('/users/:id/role', authRequired, requireRole('admin'), async (req, 
   res.json({ id, role });
 });
 
+// Permanently delete a user account — admin only. Cascades to all their data.
+router.delete('/users/:id', authRequired, requireRole('admin'), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'valid id required' });
+  // Admins delete their OWN account from Settings (with the proper flow), not here.
+  if (id === req.user.id) {
+    return res.status(400).json({ error: 'use Settings to delete your own account' });
+  }
+  const [r] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
+  if (!r.affectedRows) return res.status(404).json({ error: 'user not found' });
+  res.json({ deleted: true, id });
+});
+
 module.exports = router;
