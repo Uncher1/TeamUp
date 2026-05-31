@@ -3,10 +3,14 @@
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
@@ -84,6 +88,53 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     _scrollToBottom();
   }
 
+  /// Picks an arbitrary file (<= 5 MB) and sends it as a base64 attachment.
+  Future<void> _attachFile() async {
+    final result = await FilePicker.pickFiles(withData: true);
+    final f = (result?.files.isNotEmpty ?? false) ? result!.files.first : null;
+    final bytes = f?.bytes;
+    if (f == null || bytes == null) return;
+    if (bytes.length > 5 * 1024 * 1024) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(context.tr('chat.fileTooLarge'))));
+      }
+      return;
+    }
+    final dataUrl = 'data:application/octet-stream;base64,${base64Encode(bytes)}';
+    if (!mounted) return;
+    await context.read<ChatProvider>().sendMessage('', attachment: {
+      'type': 'file',
+      'name': f.name,
+      'data': dataUrl,
+    });
+    _scrollToBottom();
+  }
+
+  /// Bottom sheet: send a photo or a file.
+  void _pickAttachment() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image_outlined),
+              title: Text(ctx.tr('chat.photo')),
+              onTap: () { Navigator.pop(ctx); _attachImage(); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.attach_file),
+              title: Text(ctx.tr('chat.file')),
+              onTap: () { Navigator.pop(ctx); _attachFile(); },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ChatProvider>();
@@ -105,7 +156,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                           itemBuilder: (_, i) => _Bubble(message: provider.messages[i], mine: provider.messages[i].senderId == myId),
                         ),
             ),
-            _InputBar(controller: _ctrl, onSend: _send, onAttach: _attachImage),
+            _InputBar(controller: _ctrl, onSend: _send, onAttach: _pickAttachment),
           ],
         ),
       ),
@@ -199,30 +250,52 @@ class _Bubble extends StatelessWidget {
   }
 
   Widget _fileAttachment(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: mine ? Colors.white24 : context.palette.surface,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.insert_drive_file_outlined,
-            size: 20, color: mine ? Colors.white : context.palette.textPrimary),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            message.attachmentName ?? 'fichier',
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: mine ? Colors.white : context.palette.textPrimary),
-          ),
+    final fg = mine ? Colors.white : context.palette.textPrimary;
+    return GestureDetector(
+      onTap: () => _openFileAttachment(message),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: mine ? Colors.white24 : context.palette.surface,
+          borderRadius: BorderRadius.circular(10),
         ),
-      ]),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.insert_drive_file_outlined, size: 20, color: fg),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              message.attachmentName ?? 'fichier',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: fg),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.download_rounded, size: 18, color: fg),
+        ]),
+      ),
     );
   }
 
   static String _hm(DateTime t) {
     final tl = t.toLocal();
     return '${tl.hour.toString().padLeft(2, '0')}:${tl.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+/// Writes a received base64 file to a temp path and opens the system share
+/// sheet so the user can save or open it.
+Future<void> _openFileAttachment(Message m) async {
+  final data = m.attachmentData;
+  if (data == null || data.isEmpty) return;
+  try {
+    final bytes = base64Decode(data.split(',').last);
+    final dir = await getTemporaryDirectory();
+    final safe = (m.attachmentName ?? 'file').replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final path = '${dir.path}/$safe';
+    await File(path).writeAsBytes(bytes);
+    await Share.shareXFiles([XFile(path)]);
+  } catch (_) {
+    // best-effort open; ignore failures
   }
 }
 
@@ -243,9 +316,9 @@ class _InputBar extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.add_photo_alternate_outlined, color: context.palette.textMuted),
+            icon: Icon(Icons.attach_file, color: context.palette.textMuted),
             onPressed: onAttach,
-            tooltip: context.tr('chat.attachImage'),
+            tooltip: context.tr('chat.attach'),
           ),
           Expanded(
             child: TextField(

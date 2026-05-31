@@ -362,6 +362,10 @@ const Map<String, Map<String, String>> _strings = {
     'chat.start': 'Start the conversation',
     'chat.noMessages': 'No messages yet. Say hi 👋',
     'chat.attachImage': 'Send a photo',
+    'chat.attach': 'Attach',
+    'chat.photo': 'Photo',
+    'chat.file': 'File',
+    'chat.fileTooLarge': 'File too large (max 5 MB).',
     'chat.inputHint': 'Message...',
 
     // Notifications inbox
@@ -775,6 +779,10 @@ const Map<String, Map<String, String>> _strings = {
     'chat.start': 'Démarre la conversation',
     'chat.noMessages': 'Aucun message. Dis bonjour 👋',
     'chat.attachImage': 'Envoyer une photo',
+    'chat.attach': 'Joindre',
+    'chat.photo': 'Photo',
+    'chat.file': 'Fichier',
+    'chat.fileTooLarge': 'Fichier trop volumineux (max 5 Mo).',
     'chat.inputHint': 'Message...',
 
     // Notifications inbox
