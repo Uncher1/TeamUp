@@ -175,6 +175,7 @@ CREATE TABLE IF NOT EXISTS posts (
   type          ENUM('project_launch','team_update','looking_for','milestone','general')
                   NOT NULL DEFAULT 'general',
   content       TEXT NOT NULL,
+  language      VARCHAR(5) NOT NULL DEFAULT 'en',
   project_id    INT UNSIGNED NULL,
   comment_count INT UNSIGNED NOT NULL DEFAULT 0,
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

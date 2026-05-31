@@ -6,6 +6,7 @@ class Post {
   final int id;
   final String type;
   final String content;
+  final String language;
   int commentCount;
   final DateTime createdAt;
   final int authorId;
@@ -21,6 +22,7 @@ class Post {
     required this.id,
     required this.type,
     required this.content,
+    this.language = 'en',
     required this.commentCount,
     required this.createdAt,
     required this.authorId,
@@ -37,6 +39,7 @@ class Post {
         id: j['id'] as int,
         type: j['type'] as String? ?? 'general',
         content: j['content'] as String? ?? '',
+        language: j['language'] as String? ?? 'en',
         commentCount: (j['comment_count'] as num?)?.toInt() ?? 0,
         createdAt: DateTime.parse(j['created_at'] as String),
         authorId: j['author_id'] as int,

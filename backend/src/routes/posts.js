@@ -5,6 +5,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
+const { getUserLanguage } = require('../services/settings');
 
 const router = express.Router();
 const POST_TYPES = ['project_launch', 'team_update', 'looking_for', 'milestone', 'general'];
@@ -16,7 +17,7 @@ async function isPrivileged(userId) {
 }
 
 const FEED_SELECT = `
-  SELECT p.id, p.type, p.content, p.comment_count, p.created_at,
+  SELECT p.id, p.type, p.content, p.language, p.comment_count, p.created_at,
          p.author_id, u.full_name AS author_name, u.avatar_url AS author_avatar, u.role AS author_role,
          p.project_id, pr.title AS project_title,
          (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
@@ -44,9 +45,11 @@ router.post('/', authRequired, async (req, res) => {
   if (!content) return res.status(400).json({ error: 'content is required' });
   if (content.length > 4000) return res.status(400).json({ error: 'content too long' });
 
+  // Tag the post with the author's language so viewers can translate it.
+  const lang = await getUserLanguage(req.user.id);
   const [r] = await pool.query(
-    'INSERT INTO posts (author_id, type, content, project_id) VALUES (?, ?, ?, ?)',
-    [req.user.id, type, content, projectId]
+    'INSERT INTO posts (author_id, type, content, language, project_id) VALUES (?, ?, ?, ?, ?)',
+    [req.user.id, type, content, lang === 'fr' ? 'fr' : 'en', projectId]
   );
   const [rows] = await pool.query(
     `${FEED_SELECT} WHERE p.id = ?`,

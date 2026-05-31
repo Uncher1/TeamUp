@@ -9,11 +9,13 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/app_strings.dart';
+import '../../core/post_translator.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/post.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../repositories/feed_repo.dart';
 import '../profile/user_profile_screen.dart';
 import 'comments_sheet.dart';
@@ -28,6 +30,90 @@ void _openAuthor(BuildContext context, Post post) {
       initialAvatar: post.authorAvatar,
     ),
   ));
+}
+
+/// Post text with an on-demand "See translation" toggle (on-device ML Kit),
+/// shown only when the post's language differs from the viewer's app language.
+class _TranslatablePostContent extends StatefulWidget {
+  final Post post;
+  const _TranslatablePostContent({required this.post});
+
+  @override
+  State<_TranslatablePostContent> createState() => _TranslatablePostContentState();
+}
+
+class _TranslatablePostContentState extends State<_TranslatablePostContent> {
+  String? _translated;
+  bool _showing = false;
+  bool _loading = false;
+
+  Future<void> _toggle() async {
+    if (_loading) return;
+    if (_showing) {
+      setState(() => _showing = false);
+      return;
+    }
+    if (_translated != null) {
+      setState(() => _showing = true);
+      return;
+    }
+    final target = context.read<SettingsProvider>().language;
+    final failMsg = context.tr('feed.translateFailed');
+    setState(() => _loading = true);
+    final result =
+        await PostTranslator.translate(widget.post.content, widget.post.language, target);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      if (result != null && result.trim().isNotEmpty) {
+        _translated = result;
+        _showing = true;
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(failMsg)));
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewerLang = context.watch<SettingsProvider>().language;
+    final canTranslate = PostTranslator.canTranslate(widget.post.language, viewerLang);
+    final accent = Theme.of(context).colorScheme.primary;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(_showing && _translated != null ? _translated! : widget.post.content,
+            style: const TextStyle(height: 1.4)),
+        if (canTranslate)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: InkWell(
+              onTap: _loading ? null : _toggle,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_loading) ...[
+                    const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2)),
+                    const SizedBox(width: 6),
+                    Text(context.tr('feed.translating'),
+                        style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+                  ] else
+                    Text(
+                      context.tr(_showing ? 'feed.seeOriginal' : 'feed.seeTranslation'),
+                      style: TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600, color: accent),
+                    ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class HomeFeedScreen extends StatefulWidget {
@@ -337,7 +423,7 @@ class _PostCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(post.content, style: const TextStyle(height: 1.4)),
+          _TranslatablePostContent(post: post),
           if (post.projectTitle != null) ...[
             const SizedBox(height: 12),
             Container(
