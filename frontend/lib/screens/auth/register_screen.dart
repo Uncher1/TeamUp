@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
+import '../../core/validators.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -32,6 +33,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _submit() async {
+    if (!Validators.isEmail(_email.text)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.tr('common.invalidEmail'))));
+      return;
+    }
     final authProvider = context.read<AuthProvider>();
     final ok = await authProvider.register(_name.text, _email.text, _password.text,
         language: context.read<SettingsProvider>().language);

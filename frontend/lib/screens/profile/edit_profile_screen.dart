@@ -5,11 +5,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
 import '../../core/app_strings.dart';
+import '../../core/validators.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/skill.dart';
@@ -114,7 +116,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _avatarDataUrl = 'data:$mime;base64,$b64');
   }
 
+  /// Validates the social/website link fields. Returns an error message (or
+  /// null if all good). A field is only checked when it's non-empty.
+  String? _validateLinks() {
+    String? check(TextEditingController c, bool Function(String) ok, String site, String example) {
+      final v = c.text.trim();
+      if (v.isEmpty || ok(v)) return null;
+      return context.tr('ep.invalidUrl', {'site': site, 'example': example});
+    }
+    return check(_github, (v) => Validators.isUrlForHost(v, 'github.com'),
+            'GitHub', 'https://github.com/pseudo') ??
+        check(_linkedin, (v) => Validators.isUrlForHost(v, 'linkedin.com'),
+            'LinkedIn', 'https://linkedin.com/in/pseudo') ??
+        check(_twitter,
+            (v) => Validators.isUrlForHost(v, 'twitter.com') || Validators.isUrlForHost(v, 'x.com'),
+            'Twitter / X', 'https://x.com/pseudo') ??
+        check(_website, Validators.isHttpUrl, 'site web', 'https://exemple.com');
+  }
+
   Future<void> _save() async {
+    final linkError = _validateLinks();
+    if (linkError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(linkError)));
+      return;
+    }
     setState(() => _busy = true);
     final repo = context.read<UserRepository>();
     final auth = context.read<AuthProvider>();
@@ -229,6 +254,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   TextField(
                     controller: _phone,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s().\-]')),
+                    ],
                     decoration: InputDecoration(
                       labelText: context.tr('ep.phone'),
                       prefixIcon: const Icon(Icons.phone_outlined),

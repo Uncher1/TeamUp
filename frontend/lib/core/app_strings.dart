@@ -27,6 +27,7 @@ const Map<String, Map<String, String>> _strings = {
     'common.googleMobileOnly': 'Google sign-in is available on the mobile app.',
     'common.googleNoToken': 'Google: could not retrieve the token.',
     'common.googleFailed': 'Google sign-in failed',
+    'common.invalidEmail': 'Enter a valid email address.',
 
     // Login
     'login.title': 'Sign in',
@@ -403,6 +404,7 @@ const Map<String, Map<String, String>> _strings = {
     'ep.department': 'Field of study',
     'ep.year': 'Year',
     'ep.saved': 'Profile updated',
+    'ep.invalidUrl': 'Enter a valid {site} link (e.g. {example}).',
 
     // Change e-mail / password (confirm-by-code)
     'cc.sendCode': 'Send the code',
@@ -437,6 +439,7 @@ const Map<String, Map<String, String>> _strings = {
     'common.googleMobileOnly': 'La connexion Google est disponible sur l’app mobile.',
     'common.googleNoToken': 'Google : impossible de récupérer le token.',
     'common.googleFailed': 'Échec de la connexion Google',
+    'common.invalidEmail': 'Entre une adresse e-mail valide.',
 
     // Login
     'login.title': 'Connexion',
@@ -813,6 +816,7 @@ const Map<String, Map<String, String>> _strings = {
     'ep.department': 'Filière',
     'ep.year': 'Année',
     'ep.saved': 'Profil mis à jour',
+    'ep.invalidUrl': 'Entre un lien {site} valide (ex. {example}).',
 
     // Change e-mail / password (confirm-by-code)
     'cc.sendCode': 'Envoyer le code',
