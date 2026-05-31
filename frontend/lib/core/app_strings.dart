@@ -361,6 +361,7 @@ const Map<String, Map<String, String>> _strings = {
     'chat.emptySub': 'Start a chat from a profile or a project.',
     'chat.start': 'Start the conversation',
     'chat.noMessages': 'No messages yet. Say hi 👋',
+    'chat.attachImage': 'Send a photo',
     'chat.inputHint': 'Message...',
 
     // Notifications inbox
@@ -773,6 +774,7 @@ const Map<String, Map<String, String>> _strings = {
     'chat.emptySub': 'Lance une discussion depuis un profil ou un projet.',
     'chat.start': 'Démarre la conversation',
     'chat.noMessages': 'Aucun message. Dis bonjour 👋',
+    'chat.attachImage': 'Envoyer une photo',
     'chat.inputHint': 'Message...',
 
     // Notifications inbox

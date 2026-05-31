@@ -2,7 +2,10 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_strings.dart';
@@ -43,17 +46,42 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     super.dispose();
   }
 
-  void _send() {
-    final text = _ctrl.text.trim();
-    if (text.isEmpty) return;
-    context.read<ChatProvider>().sendMessage(text);
-    _ctrl.clear();
+  void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
         _scroll.animateTo(_scroll.position.maxScrollExtent,
             duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
       }
     });
+  }
+
+  void _send() {
+    final text = _ctrl.text.trim();
+    if (text.isEmpty) return;
+    context.read<ChatProvider>().sendMessage(text);
+    _ctrl.clear();
+    _scrollToBottom();
+  }
+
+  /// Picks an image from the gallery, compresses it and sends it as an
+  /// attachment (base64 data URL).
+  Future<void> _attachImage() async {
+    final x = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1280,
+      maxHeight: 1280,
+      imageQuality: 70,
+    );
+    if (x == null) return;
+    final bytes = await x.readAsBytes();
+    final dataUrl = 'data:${x.mimeType ?? 'image/jpeg'};base64,${base64Encode(bytes)}';
+    if (!mounted) return;
+    await context.read<ChatProvider>().sendMessage('', attachment: {
+      'type': 'image',
+      'name': x.name,
+      'data': dataUrl,
+    });
+    _scrollToBottom();
   }
 
   @override
@@ -77,7 +105,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                           itemBuilder: (_, i) => _Bubble(message: provider.messages[i], mine: provider.messages[i].senderId == myId),
                         ),
             ),
-            _InputBar(controller: _ctrl, onSend: _send),
+            _InputBar(controller: _ctrl, onSend: _send, onAttach: _attachImage),
           ],
         ),
       ),
@@ -122,8 +150,14 @@ class _Bubble extends StatelessWidget {
                   ],
                 ),
               ),
-            Text(message.content,
-                style: TextStyle(color: mine ? Colors.white : context.palette.textPrimary, height: 1.3)),
+            if (message.hasImage) _imageAttachment(context),
+            if (message.hasFile) _fileAttachment(context),
+            if (message.content.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: (message.hasImage || message.hasFile) ? 6 : 0),
+                child: Text(message.content,
+                    style: TextStyle(color: mine ? Colors.white : context.palette.textPrimary, height: 1.3)),
+              ),
             const SizedBox(height: 3),
             Text(
               _hm(message.createdAt),
@@ -138,6 +172,54 @@ class _Bubble extends StatelessWidget {
     );
   }
 
+  Widget _imageAttachment(BuildContext context) {
+    final bytes = base64Decode(message.attachmentData!.split(',').last);
+    return GestureDetector(
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          backgroundColor: Colors.black,
+          insetPadding: const EdgeInsets.all(12),
+          child: InteractiveViewer(
+            child: Image.memory(bytes, errorBuilder: (_, _, _) => const SizedBox.shrink()),
+          ),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.memory(
+          bytes,
+          width: 220,
+          fit: BoxFit.fitWidth,
+          gaplessPlayback: true,
+          errorBuilder: (_, _, _) => const Icon(Icons.broken_image, size: 40),
+        ),
+      ),
+    );
+  }
+
+  Widget _fileAttachment(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: mine ? Colors.white24 : context.palette.surface,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.insert_drive_file_outlined,
+            size: 20, color: mine ? Colors.white : context.palette.textPrimary),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            message.attachmentName ?? 'fichier',
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 13, color: mine ? Colors.white : context.palette.textPrimary),
+          ),
+        ),
+      ]),
+    );
+  }
+
   static String _hm(DateTime t) {
     final tl = t.toLocal();
     return '${tl.hour.toString().padLeft(2, '0')}:${tl.minute.toString().padLeft(2, '0')}';
@@ -147,7 +229,8 @@ class _Bubble extends StatelessWidget {
 class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
-  const _InputBar({required this.controller, required this.onSend});
+  final VoidCallback onAttach;
+  const _InputBar({required this.controller, required this.onSend, required this.onAttach});
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +242,11 @@ class _InputBar extends StatelessWidget {
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(Icons.add_photo_alternate_outlined, color: context.palette.textMuted),
+            onPressed: onAttach,
+            tooltip: context.tr('chat.attachImage'),
+          ),
           Expanded(
             child: TextField(
               controller: controller,

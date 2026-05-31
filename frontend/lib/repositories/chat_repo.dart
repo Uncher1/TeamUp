@@ -27,10 +27,17 @@ class ChatRepository {
         .toList();
   }
 
-  Future<Message> sendMessage(int conversationId, String content) async {
+  Future<Message> sendMessage(
+    int conversationId,
+    String content, {
+    Map<String, dynamic>? attachment,
+  }) async {
     final res = await api.dio.post(
       '/conversations/$conversationId/messages',
-      data: {'content': content},
+      data: {
+        'content': content,
+        'attachment': ?attachment,
+      },
     );
     return Message.fromJson(res.data as Map<String, dynamic>, fallbackConvId: conversationId);
   }
