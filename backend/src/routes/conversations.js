@@ -8,6 +8,7 @@ const { authRequired } = require('../middleware/auth');
 const { userInConversation, createMessage } = require('../services/chat');
 const { notifyNewMessage } = require('../services/notifications');
 const { getSettings, enabled } = require('../services/settings');
+const { enrichPolls, pollPublic } = require('../services/polls');
 
 const router = express.Router();
 
@@ -95,7 +96,77 @@ router.get('/:id/messages', authRequired, async (req, res) => {
   sql += ' ORDER BY m.created_at DESC LIMIT ?';
   args.push(limit);
   const [rows] = await pool.query(sql, args);
+  await enrichPolls(rows, req.user.id);
   res.json(rows.reverse());
+});
+
+// Create a poll — TEAM (project) conversations only.
+router.post('/:id/polls', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  const question = String(req.body?.question ?? '').trim().slice(0, 300);
+  const options = Array.isArray(req.body?.options)
+    ? req.body.options.map((o) => String(o).trim()).filter(Boolean).slice(0, 6)
+    : [];
+  if (!id || !question || options.length < 2) {
+    return res.status(400).json({ error: 'question and at least 2 options required' });
+  }
+  const [conv] = await pool.query('SELECT type FROM conversations WHERE id = ?', [id]);
+  if (!conv.length) return res.status(404).json({ error: 'conversation not found' });
+  if (conv[0].type !== 'project') {
+    return res.status(400).json({ error: 'polls are only available in team conversations' });
+  }
+  if (!(await userInConversation(id, req.user.id))) {
+    return res.status(403).json({ error: 'not a conversation member' });
+  }
+  const [pr] = await pool.query(
+    'INSERT INTO polls (conversation_id, question, options, created_by) VALUES (?, ?, ?, ?)',
+    [id, question, JSON.stringify(options), req.user.id]
+  );
+  const pollId = pr.insertId;
+  const [mr] = await pool.query(
+    `INSERT INTO messages (conversation_id, sender_id, content, attachment_type, attachment_data)
+     VALUES (?, ?, ?, 'poll', ?)`,
+    [id, req.user.id, question, String(pollId)]
+  );
+  await pool.query('UPDATE polls SET message_id = ? WHERE id = ?', [mr.insertId, pollId]);
+  const [rows] = await pool.query(
+    `SELECT m.id, m.conversation_id, m.sender_id, u.full_name AS sender_name, u.role AS sender_role,
+            m.content, m.attachment_type, m.attachment_name, m.attachment_data, m.created_at
+       FROM messages m JOIN users u ON u.id = m.sender_id WHERE m.id = ?`,
+    [mr.insertId]
+  );
+  const msg = rows[0];
+  msg.poll = await pollPublic(pollId, req.user.id);
+  const io = req.app.get('io');
+  io?.to(`conversation:${id}`).emit('message:new', msg);
+  res.status(201).json(msg);
+});
+
+// Vote (or change vote) on a poll.
+router.post('/polls/:pollId/vote', authRequired, async (req, res) => {
+  const pollId = Number(req.params.pollId);
+  const option = Number(req.body?.option);
+  if (!pollId || Number.isNaN(option)) {
+    return res.status(400).json({ error: 'pollId and option are required' });
+  }
+  const [pr] = await pool.query('SELECT conversation_id, options FROM polls WHERE id = ?', [pollId]);
+  if (!pr.length) return res.status(404).json({ error: 'poll not found' });
+  const convId = pr[0].conversation_id;
+  if (!(await userInConversation(convId, req.user.id))) {
+    return res.status(403).json({ error: 'not a conversation member' });
+  }
+  let optionsLen = 0;
+  try { optionsLen = JSON.parse(pr[0].options).length; } catch { optionsLen = 0; }
+  if (option < 0 || option >= optionsLen) return res.status(400).json({ error: 'invalid option' });
+  await pool.query(
+    `INSERT INTO poll_votes (poll_id, user_id, option_index) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE option_index = VALUES(option_index)`,
+    [pollId, req.user.id, option]
+  );
+  const poll = await pollPublic(pollId, req.user.id);
+  const io = req.app.get('io');
+  io?.to(`conversation:${convId}`).emit('poll:update', poll);
+  res.json(poll);
 });
 
 router.post('/:id/messages', authRequired, async (req, res) => {

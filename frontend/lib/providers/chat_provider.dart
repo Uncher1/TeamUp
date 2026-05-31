@@ -65,6 +65,29 @@ class ChatProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  /// Creates a poll (team conversation). The poll message arrives via socket.
+  Future<void> createPoll(String question, List<String> options) async {
+    if (_activeConvId == null) return;
+    try {
+      await _repo.createPoll(_activeConvId!, question, options);
+    } catch (_) {}
+  }
+
+  Future<void> votePoll(int pollId, int option) async {
+    try {
+      _applyPollUpdate(await _repo.votePoll(pollId, option));
+    } catch (_) {}
+  }
+
+  void _applyPollUpdate(Map<String, dynamic> poll) {
+    final pid = poll['id'];
+    final i = messages.indexWhere((m) => m.hasPoll && m.poll!['id'] == pid);
+    if (i >= 0) {
+      messages = [...messages]..[i] = messages[i].copyWith(poll: poll);
+      notifyListeners();
+    }
+  }
+
   void _joinSocket(int convId) async {
     final token = await _storage.read();
     if (token == null) return;
@@ -86,6 +109,9 @@ class ChatProvider extends ChangeNotifier {
           notifyListeners();
         }
       }
+    });
+    _socket!.on('poll:update', (data) {
+      if (data is Map) _applyPollUpdate(Map<String, dynamic>.from(data));
     });
   }
 

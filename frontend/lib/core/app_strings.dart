@@ -369,6 +369,13 @@ const Map<String, Map<String, String>> _strings = {
     'chat.recordVoice': 'Record a voice message',
     'chat.recording': 'Recording…',
     'chat.micDenied': 'Microphone permission denied.',
+    'chat.poll': 'Poll',
+    'chat.newPoll': 'New poll',
+    'chat.question': 'Question',
+    'chat.option': 'Option',
+    'chat.addOption': 'Add option',
+    'chat.create': 'Create',
+    'chat.votes': '{n} vote(s)',
     'chat.inputHint': 'Message...',
 
     // Notifications inbox
@@ -789,6 +796,13 @@ const Map<String, Map<String, String>> _strings = {
     'chat.recordVoice': 'Enregistrer un message vocal',
     'chat.recording': 'Enregistrement…',
     'chat.micDenied': 'Permission micro refusée.',
+    'chat.poll': 'Sondage',
+    'chat.newPoll': 'Nouveau sondage',
+    'chat.question': 'Question',
+    'chat.option': 'Option',
+    'chat.addOption': 'Ajouter une option',
+    'chat.create': 'Créer',
+    'chat.votes': '{n} vote(s)',
     'chat.inputHint': 'Message...',
 
     // Notifications inbox

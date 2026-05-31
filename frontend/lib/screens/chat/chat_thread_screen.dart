@@ -140,10 +140,29 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
               title: Text(ctx.tr('chat.file')),
               onTap: () { Navigator.pop(ctx); _attachFile(); },
             ),
+            if (widget.conversation.type == 'project')
+              ListTile(
+                leading: const Icon(Icons.poll_outlined),
+                title: Text(ctx.tr('chat.poll')),
+                onTap: () { Navigator.pop(ctx); _createPoll(); },
+              ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _createPoll() async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => const _PollComposer(),
+    );
+    if (result == null || !mounted) return;
+    await context.read<ChatProvider>().createPoll(
+          result['question'] as String,
+          (result['options'] as List).cast<String>(),
+        );
+    _scrollToBottom();
   }
 
   Future<void> _startRecord() async {
@@ -263,7 +282,8 @@ class _Bubble extends StatelessWidget {
             if (message.hasImage) _imageAttachment(context),
             if (message.hasAudio) _AudioBubble(dataUrl: message.attachmentData!, mine: mine),
             if (message.hasFile) _fileAttachment(context),
-            if (message.content.isNotEmpty)
+            if (message.hasPoll) _PollBubble(poll: message.poll!, mine: mine),
+            if (message.content.isNotEmpty && !message.hasPoll)
               Padding(
                 padding: EdgeInsets.only(top: (message.hasImage || message.hasFile) ? 6 : 0),
                 child: Text(message.content,
@@ -356,6 +376,143 @@ Future<void> _openFileAttachment(Message m) async {
     await Share.shareXFiles([XFile(path)]);
   } catch (_) {
     // best-effort open; ignore failures
+  }
+}
+
+class _PollBubble extends StatelessWidget {
+  final Map<String, dynamic> poll;
+  final bool mine;
+  const _PollBubble({required this.poll, required this.mine});
+
+  @override
+  Widget build(BuildContext context) {
+    final id = (poll['id'] as num).toInt();
+    final question = poll['question'] as String? ?? '';
+    final options = ((poll['options'] as List?) ?? const []).map((e) => '$e').toList();
+    final counts = ((poll['counts'] as List?) ?? const []).map((e) => (e as num).toInt()).toList();
+    final total = (poll['total'] as num?)?.toInt() ?? 0;
+    final myVote = (poll['my_vote'] as num?)?.toInt();
+    final fg = mine ? Colors.white : context.palette.textPrimary;
+    final track = mine ? Colors.white24 : context.palette.slate200;
+    final fill = mine
+        ? Colors.white.withValues(alpha: 0.4)
+        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.25);
+
+    return SizedBox(
+      width: 240,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(children: [
+            Icon(Icons.poll_outlined, size: 16, color: fg),
+            const SizedBox(width: 6),
+            Expanded(child: Text(question, style: TextStyle(fontWeight: FontWeight.w700, color: fg))),
+          ]),
+          const SizedBox(height: 8),
+          for (int i = 0; i < options.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: GestureDetector(
+                onTap: () => context.read<ChatProvider>().votePoll(id, i),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Stack(children: [
+                    Container(height: 34, width: double.infinity, color: track),
+                    FractionallySizedBox(
+                      widthFactor: total > 0 ? (i < counts.length ? counts[i] : 0) / total : 0.0,
+                      child: Container(height: 34, color: fill),
+                    ),
+                    Container(
+                      height: 34,
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(children: [
+                        if (myVote == i) ...[
+                          Icon(Icons.check_circle, size: 15, color: fg),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(options[i],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: fg,
+                                  fontWeight: myVote == i ? FontWeight.w700 : FontWeight.w500)),
+                        ),
+                        Text('${i < counts.length ? counts[i] : 0}',
+                            style: TextStyle(color: fg, fontSize: 12)),
+                      ]),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
+          Text(context.tr('chat.votes', {'n': '$total'}),
+              style: TextStyle(fontSize: 11, color: mine ? Colors.white70 : context.palette.textMuted)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PollComposer extends StatefulWidget {
+  const _PollComposer();
+  @override
+  State<_PollComposer> createState() => _PollComposerState();
+}
+
+class _PollComposerState extends State<_PollComposer> {
+  final _question = TextEditingController();
+  final List<TextEditingController> _options = [TextEditingController(), TextEditingController()];
+
+  @override
+  void dispose() {
+    _question.dispose();
+    for (final c in _options) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _submit() {
+    final q = _question.text.trim();
+    final opts = _options.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList();
+    if (q.isEmpty || opts.length < 2) return;
+    Navigator.pop(context, {'question': q, 'options': opts});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(context.tr('chat.newPoll')),
+      content: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: _question, decoration: InputDecoration(labelText: context.tr('chat.question'))),
+          for (int i = 0; i < _options.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: TextField(
+                controller: _options[i],
+                decoration: InputDecoration(labelText: '${context.tr('chat.option')} ${i + 1}'),
+              ),
+            ),
+          if (_options.length < 6)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => setState(() => _options.add(TextEditingController())),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(context.tr('chat.addOption')),
+              ),
+            ),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(context.tr('common.cancel'))),
+        FilledButton(onPressed: _submit, child: Text(context.tr('chat.create'))),
+      ],
+    );
   }
 }
 
