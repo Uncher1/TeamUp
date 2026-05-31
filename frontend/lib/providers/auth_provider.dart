@@ -158,6 +158,17 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Re-fetches the full profile from the backend so screens watching [user]
+  /// (e.g. the settings header) reflect edits like a new name or avatar.
+  Future<void> refreshUser() async {
+    try {
+      user = await repo.me();
+      notifyListeners();
+    } catch (_) {
+      // Keep the current user on failure.
+    }
+  }
+
   Future<void> logout() async {
     await storage.clear();
     user = null;

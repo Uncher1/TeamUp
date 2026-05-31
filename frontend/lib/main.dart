@@ -2,11 +2,15 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import 'core/api_client.dart';
+import 'core/app_info.dart';
 import 'core/storage.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
@@ -34,7 +38,15 @@ import 'screens/onboarding/complete_profile_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/shell/app_shell.dart';
 
-void main() => runApp(const TeamUpApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    AppInfo.version = (await PackageInfo.fromPlatform()).version;
+  } catch (_) {
+    // Keep the default version where it can't be read.
+  }
+  runApp(const TeamUpApp());
+}
 
 class TeamUpApp extends StatefulWidget {
   const TeamUpApp({super.key});
@@ -137,6 +149,9 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   bool _minSplashElapsed = false;
+  AuthStatus? _prevStatus;
+  bool _transitioning = false;
+  Timer? _transitionTimer;
 
   @override
   void initState() {
@@ -148,10 +163,34 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   @override
+  void dispose() {
+    _transitionTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    // Hold the splash until both the minimum time elapsed and auth is resolved.
+    // Hold the splash until the minimum launch time has elapsed.
     if (!_minSplashElapsed) return const SplashScreen();
+
+    // Show a brief loading screen when signing in or out (a smoother hand-off
+    // than an instant cut between the login screen and the home shell).
+    if (auth.status != AuthStatus.unknown &&
+        _prevStatus != null &&
+        auth.status != _prevStatus) {
+      _transitioning = true;
+      _transitionTimer?.cancel();
+      _transitionTimer = Timer(const Duration(milliseconds: 800), () {
+        if (mounted) setState(() => _transitioning = false);
+      });
+    }
+    _prevStatus = auth.status;
+
+    if (_transitioning) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     switch (auth.status) {
       case AuthStatus.unknown:
         return const SplashScreen();

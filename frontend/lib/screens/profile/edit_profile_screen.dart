@@ -140,8 +140,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await repo.setSkills(
         _skills.entries.map((e) => {'skill_id': e.key, 'level': e.value}).toList(),
       );
-      final updated = await repo.setInterests(_interests.toList());
-      auth.setUser(updated);
+      await repo.setInterests(_interests.toList());
+      // Re-fetch the full profile so the name/avatar refresh everywhere.
+      await auth.refreshUser();
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(savedMsg)));
       navigator.pop();

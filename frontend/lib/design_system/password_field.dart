@@ -28,6 +28,25 @@ class PasswordField extends StatefulWidget {
 
 class _PasswordFieldState extends State<PasswordField> {
   bool _obscure = true;
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _hasText = widget.controller.text.isNotEmpty;
+    widget.controller.addListener(_onText);
+  }
+
+  void _onText() {
+    final has = widget.controller.text.isNotEmpty;
+    if (has != _hasText) setState(() => _hasText = has);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onText);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +58,16 @@ class _PasswordFieldState extends State<PasswordField> {
       decoration: InputDecoration(
         labelText: widget.label,
         prefixIcon: widget.prefixIcon,
-        suffixIcon: IconButton(
-          // Closed eye while hidden, open eye while shown.
-          icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-          onPressed: () => setState(() => _obscure = !_obscure),
-        ),
+        // The eye toggle only appears once the user has typed something.
+        suffixIcon: _hasText
+            ? IconButton(
+                // Closed eye while hidden, open eye while shown.
+                icon: Icon(_obscure
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              )
+            : null,
       ),
     );
   }

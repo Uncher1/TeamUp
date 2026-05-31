@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/app_info.dart';
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
@@ -38,7 +39,8 @@ class AboutScreen extends StatelessWidget {
             Text('TeamUp',
                 style: TextStyle(
                     fontSize: 20, fontWeight: FontWeight.w700, color: p.textPrimary)),
-            Text('Version 1.0.0', style: TextStyle(fontSize: 13, color: p.textMuted)),
+            Text('Version ${AppInfo.version}',
+                style: TextStyle(fontSize: 13, color: p.textMuted)),
             const SizedBox(height: 16),
           ]),
         ),

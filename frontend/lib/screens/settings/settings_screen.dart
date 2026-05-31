@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_info.dart';
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
@@ -43,7 +44,10 @@ class SettingsScreen extends StatelessWidget {
           child: GradientBanner(
             padding: const EdgeInsets.all(16),
             child: Row(children: [
-              GradientAvatar(name: user?.fullName ?? '?', size: 56),
+              GradientAvatar(
+                  name: user?.fullName ?? '?',
+                  size: 56,
+                  imageUrl: user?.avatarUrl),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -123,7 +127,7 @@ class SettingsScreen extends StatelessWidget {
         SettingsTile(
           icon: Icons.info_outline,
           label: context.tr('set.about'),
-          subtitle: 'v1.0.0',
+          subtitle: 'v${AppInfo.version}',
           onTap: () => _push(context, const AboutScreen()),
         ),
 
@@ -152,7 +156,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Center(
-          child: Text('TeamUp · v1.0.0',
+          child: Text('TeamUp · v${AppInfo.version}',
               style: TextStyle(fontSize: 12, color: p.textMuted)),
         ),
       ],
