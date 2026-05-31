@@ -23,7 +23,7 @@ const SKILLS = [
   ['Pandas', 'Data & AI'], ['NumPy', 'Data & AI'], ['TensorFlow', 'Data & AI'], ['PyTorch', 'Data & AI'],
   ['Big Data', 'Data & AI'], ['Power BI', 'Data & AI'], ['Tableau', 'Data & AI'],
   // Databases
-  ['MySQL', 'Databases'], ['PostgreSQL', 'Databases'], ['MongoDB', 'Databases'], ['Redis', 'Databases'], ['Firebase', 'Databases'],
+  ['MySQL', 'Databases'], ['PostgreSQL', 'Databases'], ['SQLite', 'Databases'], ['MongoDB', 'Databases'], ['Redis', 'Databases'], ['Firebase', 'Databases'],
   // Cloud & DevOps
   ['Docker', 'Cloud & DevOps'], ['Kubernetes', 'Cloud & DevOps'], ['AWS', 'Cloud & DevOps'], ['Azure', 'Cloud & DevOps'],
   ['Google Cloud', 'Cloud & DevOps'], ['CI/CD', 'Cloud & DevOps'], ['Linux', 'Cloud & DevOps'], ['Git', 'Cloud & DevOps'],
@@ -150,12 +150,10 @@ const INTERESTS = [
   } catch (_e) { /* column already present */ }
   console.log('ok: interests.category');
 
-  // Clean reseed so the catalog has no leftover/orphan categories.
-  // (Cascades to user_skills / user_interests / project_required_skills — fine
-  // on a fresh DB with no real selections yet.)
-  await pool.query('DELETE FROM skills');
-  await pool.query('DELETE FROM interests');
-  console.log('ok: cleared old catalog');
+  // NON-DESTRUCTIVE: upsert only. We intentionally do NOT DELETE the catalog,
+  // because that cascades to user_skills / user_interests / project_required_skills
+  // and would wipe real users' selections on a live DB. Re-running this script is
+  // therefore safe and simply adds new entries / refreshes categories.
 
   for (const [name, cat] of SKILLS) {
     await pool.query(
