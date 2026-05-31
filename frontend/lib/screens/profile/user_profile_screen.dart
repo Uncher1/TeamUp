@@ -17,6 +17,7 @@ import '../../providers/auth_provider.dart';
 import '../../repositories/chat_repo.dart';
 import '../../repositories/user_repo.dart';
 import '../chat/chat_thread_screen.dart';
+import 'report_user_screen.dart';
 
 /// Read-only profile of another user, with friend / block / report actions and
 /// a "send message" button (opens a DM).
@@ -130,8 +131,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Future<void> _report() async {
-    final sent = await showReportDialog(context, widget.userId);
-    if (sent == true && mounted) _snack(context.tr('report.sent'));
+    // The report screen handles validation + its own success message.
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ReportUserScreen(
+        userId: widget.userId,
+        userName: _profile?.user.fullName,
+      ),
+    ));
   }
 
   Future<void> _message() async {
@@ -490,74 +496,4 @@ class _Note extends StatelessWidget {
           style: TextStyle(fontSize: 13, color: p.textMuted)),
     );
   }
-}
-
-/// Report dialog: pick a reason + optional details, then send. Returns true if
-/// the report was sent.
-Future<bool?> showReportDialog(BuildContext context, int userId) {
-  const reasons = ['spam', 'harassment', 'inappropriate', 'fake', 'other'];
-  String reason = reasons.first;
-  final details = TextEditingController();
-  bool sending = false;
-  return showDialog<bool>(
-    context: context,
-    builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setLocal) => AlertDialog(
-        title: Text(ctx.tr('report.title')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(ctx.tr('report.reason'),
-                style: TextStyle(fontSize: 12, color: ctx.palette.textMuted)),
-            const SizedBox(height: 6),
-            DropdownButton<String>(
-              value: reason,
-              isExpanded: true,
-              onChanged: (v) => setLocal(() => reason = v ?? reason),
-              items: [
-                for (final r in reasons)
-                  DropdownMenuItem(value: r, child: Text(ctx.tr('report.$r'))),
-              ],
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: details,
-              maxLines: 3,
-              maxLength: 2000,
-              decoration: InputDecoration(
-                hintText: ctx.tr('report.details'),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: sending ? null : () => Navigator.pop(ctx, false),
-              child: Text(ctx.tr('common.cancel'))),
-          FilledButton(
-            onPressed: sending
-                ? null
-                : () async {
-                    setLocal(() => sending = true);
-                    try {
-                      await ctx
-                          .read<UserRepository>()
-                          .reportUser(userId, reason, details.text.trim());
-                      if (ctx.mounted) Navigator.pop(ctx, true);
-                    } catch (_) {
-                      setLocal(() => sending = false);
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(content: Text(ctx.tr('common.error'))));
-                      }
-                    }
-                  },
-            child: Text(ctx.tr('report.submit')),
-          ),
-        ],
-      ),
-    ),
-  );
 }
