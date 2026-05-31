@@ -100,4 +100,5 @@ The API base URL is configured in `frontend/lib/core/config.dart`.
 
 ## License
 
-[MIT](LICENSE)
+[GNU AGPL-3.0](LICENSE) - if you run a modified version (including as a network
+service), you must make your source code available under the same license.

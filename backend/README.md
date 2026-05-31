@@ -164,4 +164,4 @@ backend/
 
 ## License
 
-MIT - see [`../LICENSE`](../LICENSE).
+GNU AGPL-3.0 - see [`../LICENSE`](../LICENSE).
