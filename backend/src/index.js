@@ -6,6 +6,7 @@ const helmet  = require('helmet');
 const morgan  = require('morgan');
 const rateLimit = require('express-rate-limit');
 const { initSocket } = require('./socket');
+const pool = require('./config/db');
 
 // Throttle auth endpoints (login/register/verify/resend/google) to slow down
 // brute-force + e-mail spam. Generous enough not to bother real users.
@@ -26,7 +27,16 @@ app.use(express.json({ limit: '1mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.get('/',           (_req, res) => res.json({ name: 'TeamUp API', version: '0.1.0' }));
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+// Health check that also touches the DB — doubles as a keep-alive ping to stop
+// the free host + managed DB from idling to sleep.
+app.get('/api/health', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ ok: true, db: true });
+  } catch (e) {
+    res.status(503).json({ ok: false, db: false });
+  }
+});
 
 app.use('/api/auth',          authLimiter, require('./routes/auth'));
 app.use('/api/users',         require('./routes/users'));
