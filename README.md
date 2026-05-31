@@ -10,7 +10,7 @@ then plan, recruit and chat, all in one native app.
 
 ---
 
-## 📲 Download the app (Android)
+## Download the app (Android)
 
 [![Download the APK](https://img.shields.io/badge/Download-Android%20APK-6366F1?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Uncher1/TeamUp/releases/latest)
 
@@ -21,7 +21,7 @@ automatically - no configuration needed.
 
 ---
 
-## ✨ Features
+## Features
 
 - **Authentication** - email + password with **email verification** (one-time
   `XXXX-XXXX` code), **Google Sign-In** (native), and confirm-by-email for
@@ -45,7 +45,7 @@ automatically - no configuration needed.
 
 ---
 
-## 🧱 Tech stack
+## Tech stack
 
 | Layer        | Technologies                                                                 |
 |--------------|------------------------------------------------------------------------------|
@@ -57,7 +57,7 @@ automatically - no configuration needed.
 
 ---
 
-## 📁 Repository structure
+## Repository structure
 
 ```
 TeamUp/
@@ -67,7 +67,7 @@ TeamUp/
 
 ---
 
-## 🚀 Quick start (local development)
+## Quick start (local development)
 
 ### Backend
 
@@ -97,10 +97,6 @@ flutter run                 # device or emulator
 The API base URL is configured in `frontend/lib/core/config.dart`.
 
 ---
-
-## 👥 Team
-
-Built by Team 28.
 
 ## License
 
