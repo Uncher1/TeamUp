@@ -7,11 +7,59 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import '../core/api_client.dart';
+import '../models/public_profile.dart';
 import '../models/user.dart';
 
 class UserRepository {
   final ApiClient api;
   UserRepository(this.api);
+
+  // ── Public profiles + social graph ─────────────────────────────────────────
+
+  /// Another user's profile (with the viewer's relationship to them).
+  Future<PublicProfile> getProfile(int userId) async {
+    final res = await api.dio.get('/users/$userId');
+    return PublicProfile.fromJson(Map<String, dynamic>.from(res.data as Map));
+  }
+
+  /// Sends a friend request (auto-accepts if they already requested me).
+  /// Returns the new friend_status.
+  Future<String> sendFriendRequest(int userId) async {
+    final res = await api.dio.post('/friends/$userId');
+    return (res.data as Map)['friend_status'] as String? ?? 'outgoing';
+  }
+
+  Future<void> acceptFriend(int userId) async {
+    await api.dio.post('/friends/$userId/accept');
+  }
+
+  /// Cancels a request, declines an incoming one, or unfriends.
+  Future<void> removeFriend(int userId) async {
+    await api.dio.delete('/friends/$userId');
+  }
+
+  Future<void> blockUser(int userId) async {
+    await api.dio.post('/users/$userId/block');
+  }
+
+  Future<void> unblockUser(int userId) async {
+    await api.dio.delete('/users/$userId/block');
+  }
+
+  Future<void> reportUser(int userId, String reason, String details) async {
+    await api.dio.post('/users/$userId/report',
+        data: {'reason': reason, 'details': details});
+  }
+
+  Future<List<Map<String, dynamic>>> friends() async {
+    final res = await api.dio.get('/friends');
+    return (res.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> friendRequests() async {
+    final res = await api.dio.get('/friends/requests');
+    return (res.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
 
   Future<User> updateProfile({
     String? fullName,

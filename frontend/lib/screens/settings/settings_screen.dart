@@ -17,6 +17,7 @@ import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../repositories/user_repo.dart';
+import '../profile/friends_screen.dart';
 import '../profile/profile_screen.dart';
 import 'about_screen.dart';
 import 'privacy_policy_screen.dart';
@@ -90,6 +91,11 @@ class SettingsScreen extends StatelessWidget {
           icon: Icons.lock_outline,
           label: context.tr('set.password'),
           onTap: () => _push(context, const PasswordScreen()),
+        ),
+        SettingsTile(
+          icon: Icons.people_outline,
+          label: context.tr('set.friends'),
+          onTap: () => _push(context, const FriendsScreen()),
         ),
         SettingsTile(
           icon: Icons.shield_outlined,

@@ -13,6 +13,18 @@ import '../../providers/matching_provider.dart';
 import '../../providers/projects_provider.dart';
 import '../../repositories/chat_repo.dart';
 import '../chat/chat_thread_screen.dart';
+import '../profile/user_profile_screen.dart';
+
+/// Opens a matched user's public profile.
+void _openProfile(BuildContext context, MatchedUser user) {
+  Navigator.of(context).push(MaterialPageRoute(
+    builder: (_) => UserProfileScreen(
+      userId: user.id,
+      initialName: user.fullName,
+      initialAvatar: user.avatarUrl,
+    ),
+  ));
+}
 
 class FindTeammatesScreen extends StatefulWidget {
   const FindTeammatesScreen({super.key});
@@ -167,11 +179,14 @@ class _CandidateCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GradientAvatar(
-                  name: user.fullName,
-                  size: 48,
-                  imageUrl: user.avatarUrl,
-                  presenceStatus: user.presenceStatus),
+              GestureDetector(
+                onTap: () => _openProfile(context, user),
+                child: GradientAvatar(
+                    name: user.fullName,
+                    size: 48,
+                    imageUrl: user.avatarUrl,
+                    presenceStatus: user.presenceStatus),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -180,9 +195,12 @@ class _CandidateCard extends StatelessWidget {
                     Row(
                       children: [
                         Flexible(
-                          child: Text(user.fullName,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          child: GestureDetector(
+                            onTap: () => _openProfile(context, user),
+                            child: Text(user.fullName,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
                         ),
                         RoleBadge(role: user.role, size: 14),
                       ],

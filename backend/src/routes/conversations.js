@@ -28,6 +28,8 @@ router.get('/', authRequired, async (req, res) => {
        LEFT JOIN projects p ON p.id = c.project_id
        LEFT JOIN conversation_members cm2 ON cm2.conversation_id = c.id AND cm2.user_id != ?
        LEFT JOIN users other ON other.id = cm2.user_id AND c.type = 'direct'
+      WHERE c.type = 'project'
+         OR EXISTS (SELECT 1 FROM messages msg WHERE msg.conversation_id = c.id)
       ORDER BY last_message_at DESC, c.created_at DESC`,
     [req.user.id, req.user.id]
   );

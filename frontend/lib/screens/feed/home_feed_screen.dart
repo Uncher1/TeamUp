@@ -15,8 +15,20 @@ import '../../models/post.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../repositories/feed_repo.dart';
+import '../profile/user_profile_screen.dart';
 import 'comments_sheet.dart';
 import 'create_post_sheet.dart';
+
+/// Opens a post author's public profile.
+void _openAuthor(BuildContext context, Post post) {
+  Navigator.of(context).push(MaterialPageRoute(
+    builder: (_) => UserProfileScreen(
+      userId: post.authorId,
+      initialName: post.authorName,
+      initialAvatar: post.authorAvatar,
+    ),
+  ));
+}
 
 class HomeFeedScreen extends StatefulWidget {
   const HomeFeedScreen({super.key});
@@ -277,8 +289,11 @@ class _PostCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GradientAvatar(
-                  name: post.authorName, size: 44, imageUrl: post.authorAvatar),
+              GestureDetector(
+                onTap: () => _openAuthor(context, post),
+                child: GradientAvatar(
+                    name: post.authorName, size: 44, imageUrl: post.authorAvatar),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -286,7 +301,12 @@ class _PostCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Flexible(child: Text(post.authorName, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                        Flexible(
+                            child: GestureDetector(
+                                onTap: () => _openAuthor(context, post),
+                                child: Text(post.authorName,
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                    overflow: TextOverflow.ellipsis))),
                         RoleBadge(role: post.authorRole),
                         const SizedBox(width: 8),
                         TypeBadge(type: post.type, label: label, icon: icon),

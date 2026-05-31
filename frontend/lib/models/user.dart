@@ -58,7 +58,8 @@ class User {
   /// profile from `GET /api/users/me` (adds bio, skills, interests).
   factory User.fromJson(Map<String, dynamic> json) => User(
         id: json['id'] as int,
-        email: json['email'] as String,
+        // Other users' payloads may omit/redact the e-mail (privacy).
+        email: json['email'] as String? ?? '',
         fullName: json['full_name'] as String,
         bio: json['bio'] as String?,
         avatarUrl: json['avatar_url'] as String?,

@@ -13,6 +13,7 @@ import '../../models/comment.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../repositories/feed_repo.dart';
+import '../profile/user_profile_screen.dart';
 
 class CommentsSheet extends StatefulWidget {
   final int postId;
@@ -323,6 +324,17 @@ class _CommentsSheetState extends State<CommentsSheet> {
   }
 }
 
+/// Opens a comment author's public profile.
+void _openCommentAuthor(BuildContext context, Comment comment) {
+  Navigator.of(context).push(MaterialPageRoute(
+    builder: (_) => UserProfileScreen(
+      userId: comment.authorId,
+      initialName: comment.authorName,
+      initialAvatar: comment.authorAvatar,
+    ),
+  ));
+}
+
 enum _CommentAction { edit, delete }
 
 class _CommentRow extends StatelessWidget {
@@ -345,10 +357,13 @@ class _CommentRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GradientAvatar(
-          name: comment.authorName,
-          imageUrl: comment.authorAvatar,
-          size: 36,
+        GestureDetector(
+          onTap: () => _openCommentAuthor(context, comment),
+          child: GradientAvatar(
+            name: comment.authorName,
+            imageUrl: comment.authorAvatar,
+            size: 36,
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -358,10 +373,13 @@ class _CommentRow extends StatelessWidget {
               Row(
                 children: [
                   Flexible(
-                    child: Text(
-                      comment.authorName,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                      overflow: TextOverflow.ellipsis,
+                    child: GestureDetector(
+                      onTap: () => _openCommentAuthor(context, comment),
+                      child: Text(
+                        comment.authorName,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                   RoleBadge(role: comment.authorRole, size: 13),
