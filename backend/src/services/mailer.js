@@ -237,6 +237,35 @@ async function sendAbuseReport({ reportedName, reportedId, reporterName, reporte
   });
 }
 
+// ── GDPR data export (sent to the user with their data attached) ─────────────
+
+/// Emails the user a copy of all their data as a JSON attachment.
+async function sendDataExport({ to, name, json, counts = {}, lang = 'en' }) {
+  const summary = Object.entries(counts)
+    .map(([k, v]) => `<li style="margin:2px 0;">${esc(k)}: <b>${esc(v)}</b></li>`)
+    .join('');
+  return sendMail({
+    to,
+    subject: t(lang, 'Your TeamUp data export', 'Ton export de données TeamUp'),
+    html: brandedHtml({
+      lang,
+      title: t(lang, 'Your data export', 'Ton export de données'),
+      intro:
+        t(lang, `Hello ${esc(name)},<br><br>`, `Bonjour ${esc(name)},<br><br>`) +
+        t(lang,
+          'As requested, here is a copy of the personal data we hold about you, attached as a JSON file. It includes:',
+          'Comme demandé, voici une copie des données personnelles que nous détenons sur toi, jointe en fichier JSON. Elle comprend :') +
+        `<ul style="font-size:13px;color:#475569;line-height:1.5;margin:12px 0;">${summary}</ul>`,
+      note: t(lang,
+        'You requested this export from the app. If this wasn’t you, change your password and contact teamup.team28@gmail.com.',
+        "Tu as demandé cet export depuis l'application. Si ce n'est pas toi, change ton mot de passe et contacte teamup.team28@gmail.com."),
+    }),
+    attachments: [
+      { filename: 'teamup-my-data.json', content: json, contentType: 'application/json' },
+    ],
+  });
+}
+
 module.exports = {
   sendMail,
   sendEmailChangeRequest,
@@ -245,5 +274,6 @@ module.exports = {
   sendPasswordChanged,
   sendVerificationCode,
   sendAbuseReport,
+  sendDataExport,
   brandedHtml,
 };

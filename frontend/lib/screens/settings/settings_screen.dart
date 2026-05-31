@@ -2,13 +2,8 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/app_info.dart';
 import '../../core/app_strings.dart';
@@ -268,18 +263,35 @@ Future<void> _pickPresence(BuildContext context, String current) async {
   }
 }
 
-/// GDPR data portability: fetch the user's full data and share it as JSON.
+/// GDPR data portability: ask the backend to e-mail the user a JSON copy of
+/// their data (cleaner and more reliable than a local file share).
 Future<void> _exportData(BuildContext context) async {
   final repo = context.read<UserRepository>();
   final messenger = ScaffoldMessenger.of(context);
+  final email = context.read<AuthProvider>().user?.email ?? '';
   final failMsg = context.tr('set.exportFail');
+  final sendingMsg = context.tr('set.exportSending');
+  final sentMsg = context.tr('set.exportSent', {'email': email});
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(ctx.tr('set.exportData')),
+      content: Text(ctx.tr('set.exportConfirm', {'email': email})),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(ctx.tr('common.cancel'))),
+        FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.tr('common.confirm'))),
+      ],
+    ),
+  );
+  if (confirm != true) return;
+  messenger.showSnackBar(SnackBar(content: Text(sendingMsg)));
   try {
-    final data = await repo.exportData();
-    final json = const JsonEncoder.withIndent('  ').convert(data);
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/teamup-my-data.json');
-    await file.writeAsString(json);
-    await Share.shareXFiles([XFile(file.path)]);
+    await repo.requestDataExport();
+    messenger.showSnackBar(SnackBar(content: Text(sentMsg)));
   } catch (_) {
     messenger.showSnackBar(SnackBar(content: Text(failMsg)));
   }

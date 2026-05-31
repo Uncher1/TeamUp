@@ -10,7 +10,7 @@ const { getSettings, enabled, getUserLanguage } = require('../services/settings'
 const { relationship } = require('./social');
 const {
   sendEmailChangeRequest, sendPasswordChangeRequest,
-  sendEmailChanged, sendPasswordChanged,
+  sendEmailChanged, sendPasswordChanged, sendDataExport,
 } = require('../services/mailer');
 const { generateCode } = require('../utils/code');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -290,9 +290,8 @@ router.put('/me/settings', authRequired, async (req, res) => {
   res.json(out);
 });
 
-// GDPR data portability: export everything we hold about the user as JSON.
-router.get('/me/export', authRequired, async (req, res) => {
-  const uid = req.user.id;
+// Builds the full GDPR export payload (+ section counts for the email summary).
+async function buildExport(uid) {
   const profile = await loadProfile(uid);
   const [projects] = await pool.query(
     'SELECT id, title, description, category, status, created_at FROM projects WHERE owner_id = ?', [uid]);
@@ -309,11 +308,70 @@ router.get('/me/export', authRequired, async (req, res) => {
     'SELECT id, conversation_id, content, attachment_type, attachment_name, created_at FROM messages WHERE sender_id = ?', [uid]);
   const [settings] = await pool.query(
     'SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', [uid]);
+  const [friends] = await pool.query(
+    `SELECT u.id, u.full_name
+       FROM friendships f
+       JOIN users u ON u.id = IF(f.requester_id = ?, f.addressee_id, f.requester_id)
+      WHERE f.status = 'accepted' AND (f.requester_id = ? OR f.addressee_id = ?)`,
+    [uid, uid, uid]);
+  const [blocked] = await pool.query(
+    'SELECT blocked_id FROM blocks WHERE blocker_id = ?', [uid]);
+
+  const data = {
+    export_info: {
+      app: 'TeamUp',
+      generated_at: new Date().toISOString(),
+      description: 'A copy of all personal data associated with your TeamUp account.',
+    },
+    profile,
+    projects,
+    memberships,
+    applications,
+    posts,
+    comments,
+    messages,
+    friends,
+    blocked_users: blocked.map((b) => b.blocked_id),
+    settings: Object.fromEntries(settings.map((s) => [s.setting_key, s.setting_value])),
+  };
+  const counts = {
+    projects: projects.length,
+    memberships: memberships.length,
+    applications: applications.length,
+    posts: posts.length,
+    comments: comments.length,
+    messages: messages.length,
+    friends: friends.length,
+  };
+  return { data, counts };
+}
+
+// GDPR data portability: download everything we hold about the user as JSON.
+router.get('/me/export', authRequired, async (req, res) => {
+  const { data } = await buildExport(req.user.id);
   res.setHeader('Content-Disposition', 'attachment; filename="teamup-my-data.json"');
-  res.json({
-    exported_at: new Date().toISOString(),
-    profile, projects, memberships, applications, posts, comments, messages, settings,
-  });
+  res.json(data);
+});
+
+// GDPR data portability (preferred): e-mail the export to the user's address.
+router.post('/me/export/email', authRequired, async (req, res) => {
+  const { data, counts } = await buildExport(req.user.id);
+  const [u] = await pool.query('SELECT email, full_name FROM users WHERE id = ?', [req.user.id]);
+  if (!u.length) return res.status(404).json({ error: 'user not found' });
+  const lang = await getUserLanguage(req.user.id);
+  try {
+    await sendDataExport({
+      to: u[0].email,
+      name: u[0].full_name,
+      json: JSON.stringify(data, null, 2),
+      counts,
+      lang,
+    });
+  } catch (e) {
+    console.error('[mail] data-export failed:', e.message);
+    return res.status(502).json({ error: 'could not send the export email' });
+  }
+  res.json({ sent: true, to: u[0].email });
 });
 
 router.get('/:id', authRequired, async (req, res) => {
