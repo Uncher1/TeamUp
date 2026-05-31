@@ -168,7 +168,10 @@ class _CandidateCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GradientAvatar(
-                  name: user.fullName, size: 48, imageUrl: user.avatarUrl),
+                  name: user.fullName,
+                  size: 48,
+                  imageUrl: user.avatarUrl,
+                  presenceStatus: user.presenceStatus),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

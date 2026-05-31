@@ -9,6 +9,7 @@ class Conversation {
   final String? projectTitle;
   final String? otherUserName;
   final String? otherUserAvatar;
+  final String? otherUserStatus;
   final int? otherUserId;
   final String? lastMessage;
   final DateTime? lastMessageAt;
@@ -20,6 +21,7 @@ class Conversation {
     this.projectTitle,
     this.otherUserName,
     this.otherUserAvatar,
+    this.otherUserStatus,
     this.otherUserId,
     this.lastMessage,
     this.lastMessageAt,
@@ -35,6 +37,9 @@ class Conversation {
   /// photo; project conversations fall back to the gradient initial.
   String? get avatarImageUrl => type == 'direct' ? otherUserAvatar : null;
 
+  /// Presence dot for the row — only meaningful for direct (1:1) chats.
+  String? get avatarStatus => type == 'direct' ? otherUserStatus : null;
+
   factory Conversation.fromJson(Map<String, dynamic> j) => Conversation(
         id: j['id'] as int,
         type: j['type'] as String? ?? 'direct',
@@ -42,6 +47,7 @@ class Conversation {
         projectTitle: j['project_title'] as String?,
         otherUserName: j['other_user_name'] as String?,
         otherUserAvatar: j['other_user_avatar'] as String?,
+        otherUserStatus: j['other_user_status'] as String?,
         otherUserId: j['other_user_id'] as int?,
         lastMessage: j['last_message'] as String?,
         lastMessageAt: j['last_message_at'] != null

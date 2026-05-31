@@ -54,7 +54,8 @@ class SettingsScreen extends StatelessWidget {
               GradientAvatar(
                   name: user?.fullName ?? '?',
                   size: 56,
-                  imageUrl: user?.avatarUrl),
+                  imageUrl: user?.avatarUrl,
+                  presenceStatus: user?.presenceStatus),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -112,6 +113,31 @@ class SettingsScreen extends StatelessWidget {
         ),
 
         SettingsSectionLabel(context.tr('set.preferences')),
+        SettingsTile(
+          icon: Icons.online_prediction,
+          label: context.tr('presence.title'),
+          subtitle: context.tr('presence.sub'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: GradientAvatar.presenceColor(user?.presenceStatus) ??
+                      p.textMuted,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(_presenceLabel(context, user?.presenceStatus ?? 'online'),
+                  style: TextStyle(fontSize: 12, color: p.textMuted)),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right, size: 20, color: p.textMuted),
+            ],
+          ),
+          onTap: () => _pickPresence(context, user?.presenceStatus ?? 'online'),
+        ),
         SettingToggleTile(
           icon: Icons.dark_mode_outlined,
           label: context.tr('set.darkMode'),
@@ -179,6 +205,60 @@ class SettingsScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+String _presenceLabel(BuildContext context, String status) {
+  switch (status) {
+    case 'dnd':
+      return context.tr('presence.dnd');
+    case 'offline':
+      return context.tr('presence.offline');
+    case 'online':
+    default:
+      return context.tr('presence.online');
+  }
+}
+
+/// Discord-style status picker: updates presence on the backend and refreshes
+/// the in-memory user so the dot updates everywhere immediately.
+Future<void> _pickPresence(BuildContext context, String current) async {
+  final repo = context.read<UserRepository>();
+  final auth = context.read<AuthProvider>();
+  final messenger = ScaffoldMessenger.of(context);
+  final failMsg = context.tr('common.error');
+  final chosen = await showModalBottomSheet<String>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final status in const ['online', 'dnd', 'offline'])
+            ListTile(
+              leading: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: GradientAvatar.presenceColor(status),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              title: Text(_presenceLabel(ctx, status)),
+              trailing: status == current
+                  ? Icon(Icons.check, color: Theme.of(ctx).colorScheme.primary)
+                  : null,
+              onTap: () => Navigator.pop(ctx, status),
+            ),
+        ],
+      ),
+    ),
+  );
+  if (chosen == null || chosen == current) return;
+  try {
+    final updated = await repo.updateProfile(presenceStatus: chosen);
+    auth.setUser(updated);
+  } catch (_) {
+    messenger.showSnackBar(SnackBar(content: Text(failMsg)));
   }
 }
 

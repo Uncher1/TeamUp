@@ -19,6 +19,7 @@ router.get('/', authRequired, async (req, res) => {
             other.id AS other_user_id,
             other.full_name AS other_user_name,
             other.avatar_url AS other_user_avatar,
+            other.presence_status AS other_user_status,
             (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
             (SELECT MAX(created_at) FROM messages WHERE conversation_id = c.id) AS last_message_at
        FROM conversations c

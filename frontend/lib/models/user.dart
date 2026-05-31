@@ -12,6 +12,7 @@ class User {
   final String? bio;
   final String? avatarUrl;
   final String role; // 'user' | 'moderator' | 'admin'
+  final String presenceStatus; // 'online' | 'dnd' | 'offline'
   final bool emailVerified;
   final List<UserSkill> skills;
   final List<Interest> interests;
@@ -38,6 +39,7 @@ class User {
     this.bio,
     this.avatarUrl,
     this.role = 'user',
+    this.presenceStatus = 'online',
     this.emailVerified = true,
     this.skills = const [],
     this.interests = const [],
@@ -61,6 +63,7 @@ class User {
         bio: json['bio'] as String?,
         avatarUrl: json['avatar_url'] as String?,
         role: json['role'] as String? ?? 'user',
+        presenceStatus: json['presence_status'] as String? ?? 'online',
         // Absent (legacy payload) → treat as verified so nobody is locked out.
         emailVerified: json['email_verified'] == null
             ? true
@@ -91,6 +94,7 @@ class User {
     String? bio,
     String? avatarUrl,
     String? role,
+    String? presenceStatus,
     bool? emailVerified,
     List<UserSkill>? skills,
     List<Interest>? interests,
@@ -111,6 +115,7 @@ class User {
       bio: bio ?? this.bio,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
+      presenceStatus: presenceStatus ?? this.presenceStatus,
       emailVerified: emailVerified ?? this.emailVerified,
       skills: skills ?? this.skills,
       interests: interests ?? this.interests,

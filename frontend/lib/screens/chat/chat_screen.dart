@@ -87,7 +87,10 @@ class _ConvTile extends StatelessWidget {
         child: Row(
           children: [
             GradientAvatar(
-                name: conv.displayName, size: 48, imageUrl: conv.avatarImageUrl),
+                name: conv.displayName,
+                size: 48,
+                imageUrl: conv.avatarImageUrl,
+                presenceStatus: conv.avatarStatus),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

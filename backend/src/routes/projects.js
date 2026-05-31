@@ -39,7 +39,7 @@ async function loadProject(id) {
     [id]
   );
   const [members] = await pool.query(
-    `SELECT u.id, u.full_name, u.avatar_url, pm.role, pm.joined_at
+    `SELECT u.id, u.full_name, u.avatar_url, u.presence_status, pm.role, pm.joined_at
        FROM project_members pm JOIN users u ON u.id = pm.user_id
       WHERE pm.project_id = ?`,
     [id]

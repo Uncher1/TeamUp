@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   full_name     VARCHAR(120) NOT NULL,
   role          VARCHAR(20) NOT NULL DEFAULT 'user',  -- user | moderator | admin
+  presence_status VARCHAR(10) NOT NULL DEFAULT 'online', -- online | dnd | offline
   email_verified       TINYINT(1) NOT NULL DEFAULT 0,
   verification_code    VARCHAR(9) NULL,
   verification_expires DATETIME NULL,

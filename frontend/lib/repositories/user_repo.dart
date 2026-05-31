@@ -27,6 +27,7 @@ class UserRepository {
     String? twitter,
     String? website,
     String? avatarUrl,
+    String? presenceStatus,
   }) async {
     final data = <String, dynamic>{};
     if (fullName != null) data['full_name'] = fullName;
@@ -42,6 +43,7 @@ class UserRepository {
     if (twitter != null) data['twitter'] = twitter;
     if (website != null) data['website'] = website;
     if (avatarUrl != null) data['avatar_url'] = avatarUrl;
+    if (presenceStatus != null) data['presence_status'] = presenceStatus;
     final res = await api.dio.patch('/users/me', data: data);
     return User.fromJson(res.data as Map<String, dynamic>);
   }

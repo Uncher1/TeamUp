@@ -8,6 +8,7 @@ class MatchedUser {
   final String? email;
   final String? avatarUrl;
   final String role;
+  final String presenceStatus;
   final double score;
   final double skillMatch;
   final double interestMatch;
@@ -18,6 +19,7 @@ class MatchedUser {
     this.email,
     this.avatarUrl,
     this.role = 'user',
+    this.presenceStatus = 'online',
     required this.score,
     required this.skillMatch,
     required this.interestMatch,
@@ -29,6 +31,7 @@ class MatchedUser {
         email: j['email'] as String?,
         avatarUrl: j['avatar_url'] as String?,
         role: j['role'] as String? ?? 'user',
+        presenceStatus: j['presence_status'] as String? ?? 'online',
         score: (j['score'] as num).toDouble(),
         skillMatch: (j['skill_match'] as num).toDouble(),
         interestMatch: (j['interest_match'] as num).toDouble(),

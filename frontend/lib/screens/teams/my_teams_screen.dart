@@ -235,7 +235,8 @@ class _TeamCard extends StatelessWidget {
                       child: GradientAvatar(
                           name: entry.value.fullName,
                           size: 30,
-                          imageUrl: entry.value.avatarUrl),
+                          imageUrl: entry.value.avatarUrl,
+                          presenceStatus: entry.value.presenceStatus),
                     ),
                   ),
               ],

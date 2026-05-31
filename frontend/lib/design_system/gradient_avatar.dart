@@ -14,15 +14,66 @@ class GradientAvatar extends StatelessWidget {
   final double size;
   final String? imageUrl;
 
+  /// Discord-style presence: 'online' (green), 'dnd' (red), 'offline' (grey).
+  /// When null, no status dot is drawn.
+  final String? presenceStatus;
+
   const GradientAvatar({
     super.key,
     required this.name,
     this.size = 44,
     this.imageUrl,
+    this.presenceStatus,
   });
+
+  /// Color for a presence value, or null if it should not be shown.
+  static Color? presenceColor(String? status) {
+    switch (status) {
+      case 'online':
+        return const Color(0xFF22C55E); // green
+      case 'dnd':
+        return const Color(0xFFEF4444); // red
+      case 'offline':
+        return const Color(0xFF94A3B8); // grey
+      default:
+        return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final avatar = _buildAvatar();
+    final dotColor = presenceColor(presenceStatus);
+    if (dotColor == null) return avatar;
+    // Ring matches the surrounding surface so the dot reads as "on top of".
+    final ring = context.palette.surface;
+    final dot = size * 0.30;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          avatar,
+          Positioned(
+            right: -1,
+            bottom: -1,
+            child: Container(
+              width: dot,
+              height: dot,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: ring, width: dot * 0.18),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar() {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       Widget photo;
       if (imageUrl!.startsWith('data:')) {
