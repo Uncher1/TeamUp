@@ -323,19 +323,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 20),
                   SectionLabel(context.tr('proj.themes')),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final i in lookup.interests)
-                        FilterChip(
-                          label: Text(i.name),
-                          selected: _interests.contains(i.id),
-                          onSelected: (_) => setState(() {
-                            if (!_interests.add(i.id)) _interests.remove(i.id);
-                          }),
-                        ),
-                    ],
+                  CategoryChips(
+                    items: lookup.interests
+                        .map((i) => (id: i.id, name: i.name, category: i.category))
+                        .toList(),
+                    chipBuilder: (id, name) => FilterChip(
+                      label: Text(name),
+                      selected: _interests.contains(id),
+                      onSelected: (_) => setState(() {
+                        if (!_interests.add(id)) _interests.remove(id);
+                      }),
+                    ),
                   ),
                 ],
               ),
@@ -397,13 +395,12 @@ class _SkillLevelPicker extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final s in available)
-                  ActionChip(label: Text('+ ${s.name}'), onPressed: () => onAdd(s.id)),
-              ],
+            child: CategoryChips(
+              items: available
+                  .map((s) => (id: s.id, name: s.name, category: s.category))
+                  .toList(),
+              chipBuilder: (id, name) =>
+                  ActionChip(label: Text('+ $name'), onPressed: () => onAdd(id)),
             ),
           ),
       ],

@@ -12,7 +12,7 @@ router.get('/skills', async (_req, res) => {
 
 router.get('/interests', async (_req, res) => {
   const [rows] = await pool.query(
-    'SELECT id, name FROM interests ORDER BY name'
+    'SELECT id, name, category FROM interests ORDER BY category, name'
   );
   res.json(rows);
 });

@@ -1,5 +1,6 @@
 export 'app_card.dart';
 export 'brand_header.dart';
+export 'category_chips.dart';
 export 'code_input.dart';
 export 'feedback_widgets.dart';
 export 'google_auth_button.dart';

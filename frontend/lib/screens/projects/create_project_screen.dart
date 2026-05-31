@@ -524,16 +524,12 @@ class _SkillPicker extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration:
                 BoxDecoration(color: context.palette.slate100, borderRadius: BorderRadius.circular(14)),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final s in available)
-                  ActionChip(
-                    label: Text('+ ${s.name}'),
-                    onPressed: () => onAdd(s.id),
-                  ),
-              ],
+            child: CategoryChips(
+              items: available
+                  .map((s) => (id: s.id, name: s.name, category: s.category))
+                  .toList(),
+              chipBuilder: (id, name) =>
+                  ActionChip(label: Text('+ $name'), onPressed: () => onAdd(id)),
             ),
           ),
       ],
@@ -581,17 +577,15 @@ class _InterestPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final i in interests)
-          FilterChip(
-            label: Text(i.name),
-            selected: selected.contains(i.id),
-            onSelected: (_) => onToggle(i.id),
-          ),
-      ],
+    return CategoryChips(
+      items: interests
+          .map((i) => (id: i.id, name: i.name, category: i.category))
+          .toList(),
+      chipBuilder: (id, name) => FilterChip(
+        label: Text(name),
+        selected: selected.contains(id),
+        onSelected: (_) => onToggle(id),
+      ),
     );
   }
 }

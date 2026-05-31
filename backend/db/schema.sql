@@ -60,8 +60,9 @@ CREATE TABLE IF NOT EXISTS user_skills (
 -- Interest catalog + user interests
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS interests (
-  id    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  name  VARCHAR(80) NOT NULL UNIQUE
+  id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name      VARCHAR(80) NOT NULL UNIQUE,
+  category  VARCHAR(60)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS user_interests (
