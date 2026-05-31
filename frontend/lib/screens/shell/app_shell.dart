@@ -213,7 +213,24 @@ class _AppShellState extends State<AppShell> {
               onMenu: () => _scaffoldKey.currentState?.openDrawer(),
               onBell: _showNotificationPopup,
             ),
-            Expanded(child: _body),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 280),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.02),
+                      end: Offset.zero,
+                    ).animate(anim),
+                    child: child,
+                  ),
+                ),
+                child: KeyedSubtree(key: ValueKey(_section), child: _body),
+              ),
+            ),
           ],
         ),
       ),

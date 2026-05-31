@@ -124,12 +124,30 @@ class _Root extends StatelessWidget {
   }
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _minSplashElapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Keep the animated splash visible for ~2s on every cold start.
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (mounted) setState(() => _minSplashElapsed = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    // Hold the splash until both the minimum time elapsed and auth is resolved.
+    if (!_minSplashElapsed) return const SplashScreen();
     switch (auth.status) {
       case AuthStatus.unknown:
         return const SplashScreen();
