@@ -210,7 +210,8 @@ CREATE TABLE IF NOT EXISTS notifications (
   id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id    INT UNSIGNED NOT NULL,
   type       ENUM('team_invite','message','project_update','mention',
-                  'team_join','project_complete','application') NOT NULL,
+                  'team_join','project_complete','application',
+                  'friend_request','friend_accept') NOT NULL,
   title      VARCHAR(160) NOT NULL,
   body       VARCHAR(500),
   link_type  VARCHAR(40),
@@ -255,4 +256,38 @@ CREATE TABLE IF NOT EXISTS poll_votes (
   PRIMARY KEY (poll_id, user_id),
   FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- Social graph: friendships, blocks, reports
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS friendships (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  requester_id  INT UNSIGNED NOT NULL,
+  addressee_id  INT UNSIGNED NOT NULL,
+  status        VARCHAR(10) NOT NULL DEFAULT 'pending', -- pending | accepted
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_pair (requester_id, addressee_id),
+  FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS blocks (
+  blocker_id  INT UNSIGNED NOT NULL,
+  blocked_id  INT UNSIGNED NOT NULL,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (blocker_id, blocked_id),
+  FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS reports (
+  id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  reporter_id       INT UNSIGNED NOT NULL,
+  reported_user_id  INT UNSIGNED NOT NULL,
+  reason            VARCHAR(60) NOT NULL,
+  details           TEXT,
+  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (reporter_id)      REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

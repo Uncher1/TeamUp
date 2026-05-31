@@ -7,6 +7,7 @@ const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { hash, verify } = require('../utils/password');
 const { getSettings, enabled, getUserLanguage } = require('../services/settings');
+const { relationship } = require('./social');
 const {
   sendEmailChangeRequest, sendPasswordChangeRequest,
   sendEmailChanged, sendPasswordChanged,
@@ -321,19 +322,24 @@ router.get('/:id', authRequired, async (req, res) => {
   const profile = await loadProfile(id);
   if (!profile) return res.status(404).json({ error: 'user not found' });
   if (id !== req.user.id) {
+    const rel = await relationship(req.user.id, id);
     const s = await getSettings(id);
-    // Private profile: only expose a minimal public identity to others.
+    // Private profile: only expose a minimal public identity to others, but
+    // still include the viewer's relationship so they can act on the profile.
     if (!enabled(s, 'profilePublic')) {
       return res.json({
         id: profile.id,
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
         role: profile.role,
+        presence_status: profile.presence_status,
         is_private: true,
+        ...rel,
       });
     }
     if (!enabled(s, 'showEmail')) profile.email = null;
     if (!enabled(s, 'showPhone')) profile.phone = null;
+    return res.json({ ...profile, ...rel });
   }
   res.json(profile);
 });

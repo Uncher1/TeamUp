@@ -9,6 +9,7 @@ const { userInConversation, createMessage } = require('../services/chat');
 const { notifyNewMessage } = require('../services/notifications');
 const { getSettings, enabled } = require('../services/settings');
 const { enrichPolls, pollPublic } = require('../services/polls');
+const { isBlockedEitherWay } = require('./social');
 
 const router = express.Router();
 
@@ -41,6 +42,10 @@ router.post('/direct/:userId', authRequired, async (req, res) => {
 
   const [users] = await pool.query('SELECT id FROM users WHERE id = ?', [other]);
   if (!users.length) return res.status(404).json({ error: 'user not found' });
+
+  if (await isBlockedEitherWay(req.user.id, other)) {
+    return res.status(403).json({ error: 'blocked' });
+  }
 
   const targetSettings = await getSettings(other);
   if (!enabled(targetSettings, 'allowMessages')) {

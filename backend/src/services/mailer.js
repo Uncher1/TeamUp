@@ -45,12 +45,19 @@ function brandedHtml({ title, intro, note, lang = 'en' }) {
 </body></html>`;
 }
 
-async function sendMail({ to, subject, html }) {
+async function sendMail({ to, subject, html, attachments }) {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.warn('[mailer] SMTP not configured — skipping email to', to);
     return { skipped: true };
   }
-  return transporter.sendMail({ from: FROM, to, subject, html });
+  return transporter.sendMail({ from: FROM, to, subject, html, attachments });
+}
+
+// Escapes user-supplied text before dropping it into HTML emails.
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // A prominent monospace code block reused by the code-bearing e-mails.
@@ -202,6 +209,34 @@ async function sendPasswordChanged({ to, lang = 'en' }) {
   });
 }
 
+// ── Abuse report (sent to the TeamUp team inbox) ─────────────────────────────
+
+/// Sent to the moderation inbox when a user reports another account.
+async function sendAbuseReport({ reportedName, reportedId, reporterName, reporterEmail, reason, details }) {
+  const to = process.env.REPORT_TO || process.env.SMTP_USER || 'teamup.team28@gmail.com';
+  const rows = [
+    ['Reported user', `${esc(reportedName)} (id ${esc(reportedId)})`],
+    ['Reason', esc(reason)],
+    ['Reported by', `${esc(reporterName)} (${esc(reporterEmail)})`],
+    ['Date', dateTime('en')],
+  ].map(([k, v]) =>
+    `<tr><td style="padding:4px 12px 4px 0;color:#94a3b8;font-size:13px;white-space:nowrap;">${k}</td>
+         <td style="padding:4px 0;color:#0f172a;font-size:13px;font-weight:600;">${v}</td></tr>`).join('');
+  return sendMail({
+    to,
+    subject: `[TeamUp] Report: ${reportedName} (id ${reportedId})`,
+    html: brandedHtml({
+      lang: 'en',
+      title: 'New account report',
+      intro:
+        '<table style="border-collapse:collapse;margin-bottom:14px;">' + rows + '</table>' +
+        '<div style="font-size:13px;color:#475569;line-height:1.5;"><b>Details:</b><br>' +
+        (esc(details).replace(/\n/g, '<br>') || muted('(none provided)')) + '</div>',
+      note: 'Review this report in the admin tools and take action if warranted.',
+    }),
+  });
+}
+
 module.exports = {
   sendMail,
   sendEmailChangeRequest,
@@ -209,5 +244,6 @@ module.exports = {
   sendEmailChanged,
   sendPasswordChanged,
   sendVerificationCode,
+  sendAbuseReport,
   brandedHtml,
 };
