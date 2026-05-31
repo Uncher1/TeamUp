@@ -2,8 +2,13 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/app_info.dart';
 import '../../core/app_strings.dart';
@@ -11,8 +16,10 @@ import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../repositories/user_repo.dart';
 import '../profile/profile_screen.dart';
 import 'about_screen.dart';
+import 'privacy_policy_screen.dart';
 import 'admin_panel_screen.dart';
 import 'delete_account_screen.dart';
 import 'email_screen.dart';
@@ -89,6 +96,12 @@ class SettingsScreen extends StatelessWidget {
           subtitle: context.tr('set.privacySub'),
           onTap: () => _push(context, const PrivacyScreen()),
         ),
+        SettingsTile(
+          icon: Icons.download_outlined,
+          label: context.tr('set.exportData'),
+          subtitle: context.tr('set.exportDataSub'),
+          onTap: () => _exportData(context),
+        ),
 
         SettingsSectionLabel(context.tr('nav.notifications')),
         SettingsTile(
@@ -123,6 +136,11 @@ class SettingsScreen extends StatelessWidget {
           icon: Icons.help_outline,
           label: context.tr('set.help'),
           onTap: () => _push(context, const HelpScreen()),
+        ),
+        SettingsTile(
+          icon: Icons.privacy_tip_outlined,
+          label: context.tr('set.privacyPolicy'),
+          onTap: () => _push(context, const PrivacyPolicyScreen()),
         ),
         SettingsTile(
           icon: Icons.info_outline,
@@ -161,5 +179,22 @@ class SettingsScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// GDPR data portability: fetch the user's full data and share it as JSON.
+Future<void> _exportData(BuildContext context) async {
+  final repo = context.read<UserRepository>();
+  final messenger = ScaffoldMessenger.of(context);
+  final failMsg = context.tr('set.exportFail');
+  try {
+    final data = await repo.exportData();
+    final json = const JsonEncoder.withIndent('  ').convert(data);
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/teamup-my-data.json');
+    await file.writeAsString(json);
+    await Share.shareXFiles([XFile(file.path)]);
+  } catch (_) {
+    messenger.showSnackBar(SnackBar(content: Text(failMsg)));
   }
 }

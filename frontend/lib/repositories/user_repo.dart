@@ -77,6 +77,12 @@ class UserRepository {
     await api.dio.delete('/users/me');
   }
 
+  /// GDPR data export: everything we hold about the user, as JSON.
+  Future<Map<String, dynamic>> exportData() async {
+    final res = await api.dio.get('/users/me/export');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   /// [skills] is a list of {skill_id, level}.
   Future<User> setSkills(List<Map<String, int>> skills) async {
     final res = await api.dio.put('/users/me/skills', data: skills);

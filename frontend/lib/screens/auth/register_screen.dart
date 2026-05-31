@@ -11,6 +11,7 @@ import '../../core/validators.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../settings/privacy_policy_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -23,6 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  bool _consent = false;
 
   @override
   void dispose() {
@@ -36,6 +38,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!Validators.isEmail(_email.text)) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(context.tr('common.invalidEmail'))));
+      return;
+    }
+    if (!_consent) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.tr('register.mustConsent'))));
       return;
     }
     final authProvider = context.read<AuthProvider>();
@@ -234,7 +241,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _consent,
+                              onChanged: (v) => setState(() => _consent = v ?? false),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _consent = !_consent),
+                                child: Text(
+                                  context.tr('register.consent'),
+                                  style: TextStyle(fontSize: 12, color: context.palette.textMuted),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+                            child: Text(context.tr('register.readPolicy'),
+                                style: const TextStyle(fontSize: 12)),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
                         AppButton(
                           onPressed: busy ? null : _submit,
                           child: busy

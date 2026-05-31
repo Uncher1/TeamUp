@@ -286,6 +286,32 @@ router.put('/me/settings', authRequired, async (req, res) => {
   res.json(out);
 });
 
+// GDPR data portability: export everything we hold about the user as JSON.
+router.get('/me/export', authRequired, async (req, res) => {
+  const uid = req.user.id;
+  const profile = await loadProfile(uid);
+  const [projects] = await pool.query(
+    'SELECT id, title, description, category, status, created_at FROM projects WHERE owner_id = ?', [uid]);
+  const [memberships] = await pool.query(
+    'SELECT project_id, role, joined_at FROM project_members WHERE user_id = ?', [uid]);
+  const [applications] = await pool.query(
+    'SELECT id, project_id, message, status, created_at FROM project_applications WHERE user_id = ?', [uid]);
+  const [posts] = await pool.query(
+    'SELECT id, type, content, created_at FROM posts WHERE author_id = ?', [uid]);
+  const [comments] = await pool.query(
+    'SELECT id, post_id, content, created_at FROM post_comments WHERE author_id = ?', [uid]);
+  // Attachment binaries are omitted to keep the export light (metadata only).
+  const [messages] = await pool.query(
+    'SELECT id, conversation_id, content, attachment_type, attachment_name, created_at FROM messages WHERE sender_id = ?', [uid]);
+  const [settings] = await pool.query(
+    'SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', [uid]);
+  res.setHeader('Content-Disposition', 'attachment; filename="teamup-my-data.json"');
+  res.json({
+    exported_at: new Date().toISOString(),
+    profile, projects, memberships, applications, posts, comments, messages, settings,
+  });
+});
+
 router.get('/:id', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ error: 'invalid id' });
