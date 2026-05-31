@@ -56,7 +56,11 @@ async function rankUsersForProject(projectId, limit = 10) {
        FROM users u
        JOIN user_skills us ON us.user_id = u.id
       WHERE us.skill_id IN (?)
-        AND u.id NOT IN (?)`,
+        AND u.id NOT IN (?)
+        AND u.id NOT IN (
+          SELECT user_id FROM user_settings
+           WHERE setting_key = 'appearInSearch' AND setting_value = 'false'
+        )`,
     [requiredSkillIds, [...excluded, 0]]
   );
   if (!candidates.length) return [];

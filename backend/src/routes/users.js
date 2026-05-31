@@ -293,6 +293,16 @@ router.get('/:id', authRequired, async (req, res) => {
   if (!profile) return res.status(404).json({ error: 'user not found' });
   if (id !== req.user.id) {
     const s = await getSettings(id);
+    // Private profile: only expose a minimal public identity to others.
+    if (!enabled(s, 'profilePublic')) {
+      return res.json({
+        id: profile.id,
+        full_name: profile.full_name,
+        avatar_url: profile.avatar_url,
+        role: profile.role,
+        is_private: true,
+      });
+    }
     if (!enabled(s, 'showEmail')) profile.email = null;
     if (!enabled(s, 'showPhone')) profile.phone = null;
   }
