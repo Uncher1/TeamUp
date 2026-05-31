@@ -10,14 +10,14 @@ then plan, recruit and chat, all in one native app.
 
 ---
 
-## 📲 Télécharger l'app (Android)
+## 📲 Download the app (Android)
 
-[![Télécharger l'APK](https://img.shields.io/badge/T%C3%A9l%C3%A9charger-APK%20Android-6366F1?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Uncher1/TeamUp/releases/latest)
+[![Download the APK](https://img.shields.io/badge/Download-Android%20APK-6366F1?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Uncher1/TeamUp/releases/latest)
 
-Récupère le dernier **APK** depuis la page **[Releases](https://github.com/Uncher1/TeamUp/releases/latest)**,
-transfère-le sur ton téléphone Android et installe-le (autorise « Installer
-depuis des sources inconnues » si Android le demande). L'application se connecte
-directement à l'API en ligne - aucune configuration nécessaire.
+Grab the latest **APK** from the **[Releases](https://github.com/Uncher1/TeamUp/releases/latest)**
+page, transfer it to your Android device and install it (allow "Install from
+unknown sources" if Android prompts you). The app connects to the live API
+automatically - no configuration needed.
 
 ---
 
