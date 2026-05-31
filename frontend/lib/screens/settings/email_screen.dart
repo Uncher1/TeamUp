@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
@@ -49,9 +50,9 @@ class _EmailScreenState extends State<EmailScreen> {
 
   Future<void> _requestCode() async {
     final email = _new.text.trim();
-    if (email.isEmpty) return _snack('Saisis une nouvelle adresse e-mail.');
+    if (email.isEmpty) return _snack(context.tr('em.needNew'));
     if (email != _confirm.text.trim()) {
-      return _snack('Les deux adresses ne correspondent pas.');
+      return _snack(context.tr('em.mismatch'));
     }
     setState(() => _busy = true);
     try {
@@ -73,7 +74,7 @@ class _EmailScreenState extends State<EmailScreen> {
       final user = await context.read<UserRepository>().confirmChange(_code.text);
       if (!mounted) return;
       context.read<AuthProvider>().setUser(user);
-      _snack('Adresse e-mail mise à jour.');
+      _snack(context.tr('em.updated'));
       Navigator.of(context).maybePop();
     } catch (e) {
       if (mounted) _snack(ApiClient.messageFromError(e));
@@ -87,7 +88,7 @@ class _EmailScreenState extends State<EmailScreen> {
     _startCooldown();
     try {
       await context.read<UserRepository>().resendChange();
-      if (mounted) _snack('Un nouveau code a été envoyé.');
+      if (mounted) _snack(context.tr('verify.resent'));
     } catch (e) {
       if (mounted) _snack(ApiClient.messageFromError(e));
     }
@@ -98,7 +99,7 @@ class _EmailScreenState extends State<EmailScreen> {
     final p = context.palette;
     final current = context.watch<AuthProvider>().user?.email ?? '';
     return SettingsScaffold(
-      title: 'Adresse e-mail',
+      title: context.tr('set.email'),
       children: [
         Container(
           padding: const EdgeInsets.all(16),
@@ -121,7 +122,7 @@ class _EmailScreenState extends State<EmailScreen> {
                     Row(children: [
                       const Icon(Icons.check, size: 12, color: Color(0xFF059669)),
                       const SizedBox(width: 4),
-                      Text('Adresse actuelle',
+                      Text(context.tr('em.current'),
                           style: TextStyle(fontSize: 12, color: p.textMuted)),
                     ]),
                   ],
@@ -138,38 +139,36 @@ class _EmailScreenState extends State<EmailScreen> {
 
   // ── Phase 1: enter the new address ─────────────────────────────────────────
   List<Widget> _requestPhase(AppPalette p, String current) => [
-        const SettingsSectionLabel("Changer d'adresse"),
+        SettingsSectionLabel(context.tr('em.change')),
         TextField(
           controller: _new,
           keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-              labelText: 'Nouvelle adresse', prefixIcon: Icon(Icons.mail_outline)),
+          decoration: InputDecoration(
+              labelText: context.tr('em.new'), prefixIcon: const Icon(Icons.mail_outline)),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _confirm,
           keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-              labelText: "Confirmer l'adresse", prefixIcon: Icon(Icons.mail_outline)),
+          decoration: InputDecoration(
+              labelText: context.tr('em.confirm'), prefixIcon: const Icon(Icons.mail_outline)),
         ),
         const SizedBox(height: 12),
-        _infoBox(
-            "Un code de confirmation sera envoyé à ton adresse actuelle. "
-            "Le changement ne sera appliqué qu'une fois ce code saisi ici."),
+        _infoBox(context.tr('em.info')),
         const SizedBox(height: 20),
         AppButton(
           onPressed: _busy ? null : _requestCode,
           child: _busy
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Envoyer le code'),
+              : Text(context.tr('cc.sendCode')),
         ),
       ];
 
   // ── Phase 2: enter the code received on the OLD address ─────────────────────
   List<Widget> _confirmPhase(AppPalette p, String current) => [
-        const SettingsSectionLabel('Confirmer le changement'),
+        SettingsSectionLabel(context.tr('cc.confirmChange')),
         Text(
-          'Saisis le code à 8 caractères envoyé à $current.',
+          context.tr('em.enterCode', {'email': current}),
           style: TextStyle(fontSize: 13, color: p.textMuted),
         ),
         const SizedBox(height: 12),
@@ -190,19 +189,21 @@ class _EmailScreenState extends State<EmailScreen> {
           onPressed: (_busy || _code.text.length != 9) ? null : _confirmCode,
           child: _busy
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Confirmer le changement'),
+              : Text(context.tr('cc.confirmChange')),
         ),
         const SizedBox(height: 8),
         Center(
           child: TextButton(
             onPressed: _cooldown > 0 ? null : _resend,
-            child: Text(_cooldown > 0 ? 'Renvoyer le code ($_cooldown s)' : 'Renvoyer le code'),
+            child: Text(_cooldown > 0
+                ? context.tr('verify.resendIn', {'s': '$_cooldown'})
+                : context.tr('verify.resend')),
           ),
         ),
         Center(
           child: TextButton(
             onPressed: () => setState(() => _codeSent = false),
-            child: Text('Annuler', style: TextStyle(color: p.textMuted)),
+            child: Text(context.tr('common.cancel'), style: TextStyle(color: p.textMuted)),
           ),
         ),
       ];

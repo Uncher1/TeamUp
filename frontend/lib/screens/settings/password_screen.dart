@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../repositories/user_repo.dart';
@@ -50,10 +51,10 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
   Future<void> _requestCode() async {
     if (_new.text.length < 8) {
-      return _snack('Le nouveau mot de passe doit faire au moins 8 caractères.');
+      return _snack(context.tr('pwd2.min8msg'));
     }
     if (_new.text != _confirm.text) {
-      return _snack('Les deux mots de passe ne correspondent pas.');
+      return _snack(context.tr('pwd2.mismatch'));
     }
     setState(() => _busy = true);
     try {
@@ -76,7 +77,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
     try {
       await context.read<UserRepository>().confirmChange(_code.text);
       if (!mounted) return;
-      _snack('Mot de passe mis à jour.');
+      _snack(context.tr('pwd2.updated'));
       Navigator.of(context).maybePop();
     } catch (e) {
       if (mounted) _snack(ApiClient.messageFromError(e));
@@ -90,7 +91,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
     _startCooldown();
     try {
       await context.read<UserRepository>().resendChange();
-      if (mounted) _snack('Un nouveau code a été envoyé.');
+      if (mounted) _snack(context.tr('verify.resent'));
     } catch (e) {
       if (mounted) _snack(ApiClient.messageFromError(e));
     }
@@ -100,7 +101,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
   Widget build(BuildContext context) {
     final p = context.palette;
     return SettingsScaffold(
-      title: 'Mot de passe',
+      title: context.tr('set.password'),
       children: _codeSent ? _confirmPhase(p) : _requestPhase(p),
     );
   }
@@ -109,30 +110,30 @@ class _PasswordScreenState extends State<PasswordScreen> {
   List<Widget> _requestPhase(AppPalette p) {
     final pwd = _new.text;
     final rules = <(String, bool)>[
-      ('Au moins 8 caractères', pwd.length >= 8),
-      ('Une lettre majuscule', pwd.contains(RegExp(r'[A-Z]'))),
-      ('Une lettre minuscule', pwd.contains(RegExp(r'[a-z]'))),
-      ('Un chiffre', pwd.contains(RegExp(r'[0-9]'))),
-      ('Un caractère spécial', pwd.contains(RegExp(r'[^A-Za-z0-9]'))),
+      (context.tr('pwd.min8'), pwd.length >= 8),
+      (context.tr('pwd.upper'), pwd.contains(RegExp(r'[A-Z]'))),
+      (context.tr('pwd.lower'), pwd.contains(RegExp(r'[a-z]'))),
+      (context.tr('pwd.digit'), pwd.contains(RegExp(r'[0-9]'))),
+      (context.tr('pwd.special'), pwd.contains(RegExp(r'[^A-Za-z0-9]'))),
     ];
     return [
-      const SettingsSectionLabel('Mettre à jour le mot de passe'),
+      SettingsSectionLabel(context.tr('pwd2.section')),
       PasswordField(
         controller: _current,
-        label: 'Mot de passe actuel',
+        label: context.tr('pwd2.current'),
         prefixIcon: const Icon(Icons.lock_outline),
       ),
       const SizedBox(height: 12),
       PasswordField(
         controller: _new,
-        label: 'Nouveau mot de passe',
+        label: context.tr('pwd2.new'),
         prefixIcon: const Icon(Icons.lock_outline),
         onChanged: (_) => setState(() {}),
       ),
       const SizedBox(height: 12),
       PasswordField(
         controller: _confirm,
-        label: 'Confirmer le mot de passe',
+        label: context.tr('pwd2.confirm'),
         prefixIcon: const Icon(Icons.lock_outline),
       ),
       // Smoothly expand/collapse the strength checklist.
@@ -151,7 +152,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Recommandations :',
+                      Text(context.tr('pwd2.recommend'),
                           style: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w600, color: p.textMuted)),
                       const SizedBox(height: 8),
@@ -182,22 +183,21 @@ class _PasswordScreenState extends State<PasswordScreen> {
         ),
       ),
       const SizedBox(height: 16),
-      _infoBox("Un code de confirmation sera envoyé à ton adresse e-mail. "
-          "Le mot de passe ne change qu'une fois ce code saisi ici."),
+      _infoBox(context.tr('pwd2.info')),
       const SizedBox(height: 16),
       AppButton(
         onPressed: _busy ? null : _requestCode,
         child: _busy
             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-            : const Text('Envoyer le code'),
+            : Text(context.tr('cc.sendCode')),
       ),
     ];
   }
 
   // ── Phase 2: enter the e-mailed code ────────────────────────────────────────
   List<Widget> _confirmPhase(AppPalette p) => [
-        const SettingsSectionLabel('Confirmer le changement'),
-        Text('Saisis le code à 8 caractères envoyé à ton adresse e-mail.',
+        SettingsSectionLabel(context.tr('cc.confirmChange')),
+        Text(context.tr('pwd2.enterCode'),
             style: TextStyle(fontSize: 13, color: p.textMuted)),
         const SizedBox(height: 12),
         TextField(
@@ -217,19 +217,21 @@ class _PasswordScreenState extends State<PasswordScreen> {
           onPressed: (_busy || _code.text.length != 9) ? null : _confirmCode,
           child: _busy
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Confirmer le changement'),
+              : Text(context.tr('cc.confirmChange')),
         ),
         const SizedBox(height: 8),
         Center(
           child: TextButton(
             onPressed: _cooldown > 0 ? null : _resend,
-            child: Text(_cooldown > 0 ? 'Renvoyer le code ($_cooldown s)' : 'Renvoyer le code'),
+            child: Text(_cooldown > 0
+                ? context.tr('verify.resendIn', {'s': '$_cooldown'})
+                : context.tr('verify.resend')),
           ),
         ),
         Center(
           child: TextButton(
             onPressed: () => setState(() => _codeSent = false),
-            child: Text('Annuler', style: TextStyle(color: p.textMuted)),
+            child: Text(context.tr('common.cancel'), style: TextStyle(color: p.textMuted)),
           ),
         ),
       ];
