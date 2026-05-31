@@ -62,7 +62,8 @@ function initSocket(server) {
         const msg = await createMessage(
           payload?.conversationId,
           socket.userId,
-          payload?.content
+          payload?.content,
+          payload?.attachment
         );
         io.to(`conversation:${msg.conversation_id}`).emit('message:new', msg);
         await notifyNewMessage(io, msg, socket.userId);

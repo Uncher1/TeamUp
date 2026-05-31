@@ -156,6 +156,9 @@ CREATE TABLE IF NOT EXISTS messages (
   conversation_id INT UNSIGNED NOT NULL,
   sender_id       INT UNSIGNED NOT NULL,
   content         TEXT NOT NULL,
+  attachment_type VARCHAR(10) NULL,    -- 'image' | 'file'
+  attachment_name VARCHAR(255) NULL,
+  attachment_data LONGTEXT NULL,        -- base64 data URL
   created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   KEY idx_messages_conv_created (conversation_id, created_at),
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,

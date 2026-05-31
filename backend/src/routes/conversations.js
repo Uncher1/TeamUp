@@ -83,7 +83,8 @@ router.get('/:id/messages', authRequired, async (req, res) => {
   const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
   const before = req.query.before ? new Date(req.query.before) : null;
 
-  let sql = `SELECT m.id, m.sender_id, u.full_name AS sender_name, u.role AS sender_role, m.content, m.created_at
+  let sql = `SELECT m.id, m.sender_id, u.full_name AS sender_name, u.role AS sender_role,
+                    m.content, m.attachment_type, m.attachment_name, m.attachment_data, m.created_at
                FROM messages m JOIN users u ON u.id = m.sender_id
               WHERE m.conversation_id = ?`;
   const args = [id];
@@ -101,7 +102,7 @@ router.post('/:id/messages', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ error: 'invalid conversation id' });
   try {
-    const msg = await createMessage(id, req.user.id, req.body?.content);
+    const msg = await createMessage(id, req.user.id, req.body?.content, req.body?.attachment);
     const io = req.app.get('io');
     // Mirror the message to any socket clients watching this conversation.
     io?.to(`conversation:${id}`).emit('message:new', msg);
