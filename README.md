@@ -53,7 +53,7 @@ automatically - no configuration needed.
 | **Backend**  | Node.js, Express 5, Socket.IO, JWT, bcrypt, Nodemailer, google-auth-library  |
 | **Database** | MySQL / MariaDB                                                              |
 | **Security** | Helmet, CORS, rate limiting, hashed passwords, env-based secrets             |
-| **Hosting**  | API + MySQL on [Alwaysdata](https://www.alwaysdata.com)                      |
+| **Hosting**  | API on [Render](https://render.com), MySQL on [Aiven](https://aiven.io)      |
 
 ---
 
