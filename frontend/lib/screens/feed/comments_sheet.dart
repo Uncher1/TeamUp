@@ -214,7 +214,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
           Divider(color: context.palette.slate100, height: 1),
           // Input row
           _buildInputRow(),
-          const SizedBox(height: 8),
+          // Lift the input above the phone's gesture/navigation bar. padding.bottom
+          // is the system inset when the keyboard is closed (0 while it's open,
+          // where viewInsets in the outer Padding takes over).
+          SizedBox(height: 8 + MediaQuery.of(context).padding.bottom),
         ],
       ),
     );
