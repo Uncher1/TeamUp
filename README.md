@@ -98,11 +98,9 @@ The API base URL is configured in `frontend/lib/core/config.dart`.
 
 ---
 
-## 👥 Team 28
+## 👥 Team
 
-- Abdelkarim MAKHLAS
-- Mahad MOUMINE ALI
-- Iyed MARAHGNI
+Built by Team 28.
 
 ## License
 
