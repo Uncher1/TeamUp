@@ -178,11 +178,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: InputDecoration(labelText: context.tr('common.email')),
                   ),
                   const SizedBox(height: 14),
-                  TextField(
+                  PasswordField(
                     controller: _password,
-                    obscureText: true,
+                    label: context.tr('register.passwordHint'),
                     onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(labelText: context.tr('register.passwordHint')),
                   ),
                   // Smoothly expand/collapse the strength checklist.
                   AnimatedSize(

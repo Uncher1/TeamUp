@@ -117,26 +117,23 @@ class _PasswordScreenState extends State<PasswordScreen> {
     ];
     return [
       const SettingsSectionLabel('Mettre à jour le mot de passe'),
-      TextField(
+      PasswordField(
         controller: _current,
-        obscureText: true,
-        decoration: const InputDecoration(
-            labelText: 'Mot de passe actuel', prefixIcon: Icon(Icons.lock_outline)),
+        label: 'Mot de passe actuel',
+        prefixIcon: const Icon(Icons.lock_outline),
       ),
       const SizedBox(height: 12),
-      TextField(
+      PasswordField(
         controller: _new,
-        obscureText: true,
+        label: 'Nouveau mot de passe',
+        prefixIcon: const Icon(Icons.lock_outline),
         onChanged: (_) => setState(() {}),
-        decoration: const InputDecoration(
-            labelText: 'Nouveau mot de passe', prefixIcon: Icon(Icons.lock_outline)),
       ),
       const SizedBox(height: 12),
-      TextField(
+      PasswordField(
         controller: _confirm,
-        obscureText: true,
-        decoration: const InputDecoration(
-            labelText: 'Confirmer le mot de passe', prefixIcon: Icon(Icons.lock_outline)),
+        label: 'Confirmer le mot de passe',
+        prefixIcon: const Icon(Icons.lock_outline),
       ),
       // Smoothly expand/collapse the strength checklist.
       AnimatedSize(

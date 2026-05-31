@@ -11,5 +11,6 @@ export 'section_label.dart';
 export 'status_pill.dart';
 export 'type_badge.dart';
 export 'settings_widgets.dart';
+export 'password_field.dart';
 export 'pressable.dart';
 export 'role_badge.dart';

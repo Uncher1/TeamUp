@@ -63,10 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(labelText: context.tr('common.email')),
                   ),
                   const SizedBox(height: 14),
-                  TextField(
+                  PasswordField(
                     controller: _password,
-                    obscureText: true,
-                    decoration: InputDecoration(labelText: context.tr('common.password')),
+                    label: context.tr('common.password'),
                     onSubmitted: (_) => busy ? null : _submit(),
                   ),
                   const SizedBox(height: 24),
