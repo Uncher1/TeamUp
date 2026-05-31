@@ -71,7 +71,11 @@ const INTERESTS = [
 ];
 
 (async () => {
-  await pool.query("ALTER TABLE interests ADD COLUMN IF NOT EXISTS category VARCHAR(60)");
+  // Ensure interests.category exists. `IF NOT EXISTS` is MariaDB-only, so on
+  // MySQL 8 (and when the column already exists) we just swallow the error.
+  try {
+    await pool.query("ALTER TABLE interests ADD COLUMN category VARCHAR(60)");
+  } catch (_e) { /* column already present */ }
   console.log('ok: interests.category');
 
   for (const [name, cat] of SKILLS) {
