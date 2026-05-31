@@ -6,6 +6,7 @@ const express = require('express');
 const { authRequired } = require('../middleware/auth');
 const matching = require('../services/matching');
 const { getSettings, enabled } = require('../services/settings');
+const { applyPresenceVisibility } = require('../services/presence');
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.get('/projects/:id/users', authRequired, async (req, res) => {
     const s = await getSettings(u.user_id);
     if (enabled(s, 'appearInSearch')) filtered.push(u);
   }
+  await applyPresenceVisibility(req.user.id, filtered, { idKey: 'user_id' });
   res.json(filtered);
 });
 

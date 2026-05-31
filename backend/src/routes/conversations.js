@@ -10,6 +10,7 @@ const { notifyNewMessage } = require('../services/notifications');
 const { getSettings, enabled } = require('../services/settings');
 const { enrichPolls, pollPublic } = require('../services/polls');
 const { isBlockedEitherWay } = require('./social');
+const { applyPresenceVisibility, effectivePresence } = require('../services/presence');
 
 const router = express.Router();
 
@@ -33,6 +34,8 @@ router.get('/', authRequired, async (req, res) => {
       ORDER BY last_message_at DESC, c.created_at DESC`,
     [req.user.id, req.user.id]
   );
+  await applyPresenceVisibility(req.user.id, rows,
+    { idKey: 'other_user_id', statusKey: 'other_user_status' });
   res.json(rows);
 });
 
@@ -57,12 +60,13 @@ router.post('/direct/:userId', authRequired, async (req, res) => {
 
   // Include the other person's identity so the chat header can show their
   // avatar + presence + name (no more "Conversation #X").
+  const visibleStatus = await effectivePresence(req.user.id, other, users[0].presence_status);
   const otherInfo = {
     type: 'direct',
     other_user_id: other,
     other_user_name: users[0].full_name,
     other_user_avatar: users[0].avatar_url,
-    other_user_status: users[0].presence_status,
+    other_user_status: visibleStatus,
   };
 
   const [existing] = await pool.query(

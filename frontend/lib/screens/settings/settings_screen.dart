@@ -11,6 +11,7 @@ import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../repositories/settings_repo.dart';
 import '../../repositories/user_repo.dart';
 import '../profile/friends_screen.dart';
 import '../profile/profile_screen.dart';
@@ -139,6 +140,12 @@ class SettingsScreen extends StatelessWidget {
           ),
           onTap: () => _pickPresence(context, user?.presenceStatus ?? 'online'),
         ),
+        SettingsTile(
+          icon: Icons.visibility_outlined,
+          label: context.tr('presence.visTitle'),
+          subtitle: context.tr('presence.visSub'),
+          onTap: () => _pickPresenceVisibility(context),
+        ),
         SettingToggleTile(
           icon: Icons.dark_mode_outlined,
           label: context.tr('set.darkMode'),
@@ -258,6 +265,60 @@ Future<void> _pickPresence(BuildContext context, String current) async {
   try {
     final updated = await repo.updateProfile(presenceStatus: chosen);
     auth.setUser(updated);
+  } catch (_) {
+    messenger.showSnackBar(SnackBar(content: Text(failMsg)));
+  }
+}
+
+String _presenceVisLabel(BuildContext context, String v) {
+  switch (v) {
+    case 'friends':
+      return context.tr('presence.visFriends');
+    case 'nobody':
+      return context.tr('presence.visNobody');
+    case 'everyone':
+    default:
+      return context.tr('presence.visEveryone');
+  }
+}
+
+/// WhatsApp-style: choose who may see your online status (everyone/friends/nobody).
+Future<void> _pickPresenceVisibility(BuildContext context) async {
+  final repo = context.read<SettingsRepository>();
+  final messenger = ScaffoldMessenger.of(context);
+  final failMsg = context.tr('common.error');
+  var current = 'everyone';
+  try {
+    final s = await repo.getAll();
+    current = s['presenceVisibility'] ?? 'everyone';
+  } catch (_) {}
+  if (!context.mounted) return;
+  final chosen = await showModalBottomSheet<String>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final v in const ['everyone', 'friends', 'nobody'])
+            ListTile(
+              leading: Icon(v == 'everyone'
+                  ? Icons.public
+                  : v == 'friends'
+                      ? Icons.people_outline
+                      : Icons.lock_outline),
+              title: Text(_presenceVisLabel(ctx, v)),
+              trailing: v == current
+                  ? Icon(Icons.check, color: Theme.of(ctx).colorScheme.primary)
+                  : null,
+              onTap: () => Navigator.pop(ctx, v),
+            ),
+        ],
+      ),
+    ),
+  );
+  if (chosen == null || chosen == current) return;
+  try {
+    await repo.update({'presenceVisibility': chosen});
   } catch (_) {
     messenger.showSnackBar(SnackBar(content: Text(failMsg)));
   }

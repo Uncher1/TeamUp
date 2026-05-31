@@ -144,6 +144,11 @@ const Map<String, Map<String, String>> _strings = {
     'presence.online': 'Online',
     'presence.dnd': 'Do not disturb',
     'presence.offline': 'Offline',
+    'presence.visTitle': 'Who can see my status',
+    'presence.visSub': 'Control who sees if you are online',
+    'presence.visEveryone': 'Everyone',
+    'presence.visFriends': 'Friends only',
+    'presence.visNobody': 'Nobody',
     // Other-user profile actions
     'uprof.message': 'Message',
     'uprof.cantMessage': "This user doesn't accept messages.",
@@ -631,6 +636,11 @@ const Map<String, Map<String, String>> _strings = {
     'presence.online': 'En ligne',
     'presence.dnd': 'Ne pas déranger',
     'presence.offline': 'Hors ligne',
+    'presence.visTitle': 'Qui peut voir mon statut',
+    'presence.visSub': 'Choisis qui voit si tu es en ligne',
+    'presence.visEveryone': 'Tout le monde',
+    'presence.visFriends': 'Amis seulement',
+    'presence.visNobody': 'Personne',
     // Actions sur le profil d'autrui
     'uprof.message': 'Message',
     'uprof.cantMessage': "Cet utilisateur n'accepte pas les messages.",

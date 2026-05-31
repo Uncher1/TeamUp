@@ -8,6 +8,7 @@ const { authRequired } = require('../middleware/auth');
 const { hash, verify } = require('../utils/password');
 const { getSettings, enabled, getUserLanguage } = require('../services/settings');
 const { relationship } = require('./social');
+const { effectivePresence } = require('../services/presence');
 const {
   sendEmailChangeRequest, sendPasswordChangeRequest,
   sendEmailChanged, sendPasswordChanged, sendDataExport,
@@ -382,6 +383,8 @@ router.get('/:id', authRequired, async (req, res) => {
   if (id !== req.user.id) {
     const rel = await relationship(req.user.id, id);
     const s = await getSettings(id);
+    // Respect the target's presence visibility (WhatsApp-style).
+    const visibleStatus = await effectivePresence(req.user.id, id, profile.presence_status);
     // Private profile: only expose a minimal public identity to others, but
     // still include the viewer's relationship so they can act on the profile.
     if (!enabled(s, 'profilePublic')) {
@@ -390,13 +393,14 @@ router.get('/:id', authRequired, async (req, res) => {
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
         role: profile.role,
-        presence_status: profile.presence_status,
+        presence_status: visibleStatus,
         is_private: true,
         ...rel,
       });
     }
     if (!enabled(s, 'showEmail')) profile.email = null;
     if (!enabled(s, 'showPhone')) profile.phone = null;
+    profile.presence_status = visibleStatus;
     return res.json({ ...profile, ...rel });
   }
   res.json(profile);
