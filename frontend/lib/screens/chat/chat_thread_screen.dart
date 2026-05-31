@@ -2,14 +2,18 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/app_strings.dart';
@@ -33,6 +37,11 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
   final _scroll = ScrollController();
   late final ChatProvider _chat;
 
+  final AudioRecorder _recorder = AudioRecorder();
+  bool _recording = false;
+  int _recordSecs = 0;
+  Timer? _recordTimer;
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +55,8 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
   void dispose() {
     _ctrl.dispose();
     _scroll.dispose();
+    _recordTimer?.cancel();
+    _recorder.dispose();
     _chat.closeConversation();
     super.dispose();
   }
@@ -135,6 +146,43 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     );
   }
 
+  Future<void> _startRecord() async {
+    if (!await _recorder.hasPermission()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(context.tr('chat.micDenied'))));
+      }
+      return;
+    }
+    final dir = await getTemporaryDirectory();
+    final path = '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+    if (!mounted) return;
+    setState(() { _recording = true; _recordSecs = 0; });
+    _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _recordSecs++);
+    });
+  }
+
+  Future<void> _stopRecord({required bool send}) async {
+    _recordTimer?.cancel();
+    final path = await _recorder.stop();
+    if (mounted) setState(() => _recording = false);
+    if (!send || path == null) return;
+    final bytes = await File(path).readAsBytes();
+    if (bytes.isEmpty || bytes.length > 5 * 1024 * 1024) return;
+    final dataUrl = 'data:audio/mp4;base64,${base64Encode(bytes)}';
+    if (!mounted) return;
+    await context.read<ChatProvider>().sendMessage('', attachment: {
+      'type': 'audio',
+      'name': 'voice.m4a',
+      'data': dataUrl,
+    });
+    _scrollToBottom();
+  }
+
+  static String fmtSecs(int s) => '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ChatProvider>();
@@ -156,7 +204,18 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                           itemBuilder: (_, i) => _Bubble(message: provider.messages[i], mine: provider.messages[i].senderId == myId),
                         ),
             ),
-            _InputBar(controller: _ctrl, onSend: _send, onAttach: _pickAttachment),
+            _recording
+                ? _RecordingBar(
+                    seconds: _recordSecs,
+                    onCancel: () => _stopRecord(send: false),
+                    onSend: () => _stopRecord(send: true),
+                  )
+                : _InputBar(
+                    controller: _ctrl,
+                    onSend: _send,
+                    onAttach: _pickAttachment,
+                    onMic: _startRecord,
+                  ),
           ],
         ),
       ),
@@ -202,6 +261,7 @@ class _Bubble extends StatelessWidget {
                 ),
               ),
             if (message.hasImage) _imageAttachment(context),
+            if (message.hasAudio) _AudioBubble(dataUrl: message.attachmentData!, mine: mine),
             if (message.hasFile) _fileAttachment(context),
             if (message.content.isNotEmpty)
               Padding(
@@ -299,11 +359,134 @@ Future<void> _openFileAttachment(Message m) async {
   }
 }
 
+class _RecordingBar extends StatelessWidget {
+  final int seconds;
+  final VoidCallback onCancel;
+  final VoidCallback onSend;
+  const _RecordingBar({required this.seconds, required this.onCancel, required this.onSend});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 8, 12, 12),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        border: Border(top: BorderSide(color: context.palette.slate100)),
+      ),
+      child: Row(children: [
+        IconButton(
+          icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+          onPressed: onCancel,
+        ),
+        const Icon(Icons.fiber_manual_record, color: Color(0xFFEF4444), size: 14),
+        const SizedBox(width: 8),
+        Text(_ChatThreadScreenState.fmtSecs(seconds),
+            style: TextStyle(color: context.palette.textPrimary, fontWeight: FontWeight.w600)),
+        const SizedBox(width: 10),
+        Text(context.tr('chat.recording'),
+            style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+        const Spacer(),
+        InkWell(
+          onTap: onSend,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(14)),
+            child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+class _AudioBubble extends StatefulWidget {
+  final String dataUrl;
+  final bool mine;
+  const _AudioBubble({required this.dataUrl, required this.mine});
+
+  @override
+  State<_AudioBubble> createState() => _AudioBubbleState();
+}
+
+class _AudioBubbleState extends State<_AudioBubble> {
+  final AudioPlayer _player = AudioPlayer();
+  late final Uint8List _bytes;
+  bool _playing = false;
+  Duration _dur = Duration.zero;
+  Duration _pos = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = base64Decode(widget.dataUrl.split(',').last);
+    _player.onPlayerStateChanged.listen((s) {
+      if (mounted) setState(() => _playing = s == PlayerState.playing);
+    });
+    _player.onDurationChanged.listen((d) { if (mounted) setState(() => _dur = d); });
+    _player.onPositionChanged.listen((p) { if (mounted) setState(() => _pos = p); });
+    _player.onPlayerComplete.listen((_) {
+      if (mounted) setState(() { _playing = false; _pos = Duration.zero; });
+    });
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    if (_playing) {
+      await _player.pause();
+    } else {
+      await _player.play(BytesSource(_bytes));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = widget.mine ? Colors.white : context.palette.textPrimary;
+    final totalMs = _dur.inMilliseconds == 0 ? 1 : _dur.inMilliseconds;
+    final shown = (_playing || _pos > Duration.zero) ? _pos : _dur;
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      GestureDetector(
+        onTap: _toggle,
+        child: Icon(_playing ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 32, color: fg),
+      ),
+      const SizedBox(width: 8),
+      SizedBox(
+        width: 110,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: LinearProgressIndicator(
+            value: (_pos.inMilliseconds / totalMs).clamp(0.0, 1.0),
+            minHeight: 4,
+            color: fg,
+            backgroundColor: fg.withValues(alpha: 0.3),
+          ),
+        ),
+      ),
+      const SizedBox(width: 8),
+      Text(_ChatThreadScreenState.fmtSecs(shown.inSeconds),
+          style: TextStyle(fontSize: 11, color: fg)),
+    ]);
+  }
+}
+
 class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onAttach;
-  const _InputBar({required this.controller, required this.onSend, required this.onAttach});
+  final VoidCallback onMic;
+  const _InputBar({
+    required this.controller,
+    required this.onSend,
+    required this.onAttach,
+    required this.onMic,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +516,11 @@ class _InputBar extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(Icons.mic_none_rounded, color: context.palette.textMuted),
+            onPressed: onMic,
+            tooltip: context.tr('chat.recordVoice'),
+          ),
           InkWell(
             onTap: onSend,
             borderRadius: BorderRadius.circular(14),

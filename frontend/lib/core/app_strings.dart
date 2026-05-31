@@ -366,6 +366,9 @@ const Map<String, Map<String, String>> _strings = {
     'chat.photo': 'Photo',
     'chat.file': 'File',
     'chat.fileTooLarge': 'File too large (max 5 MB).',
+    'chat.recordVoice': 'Record a voice message',
+    'chat.recording': 'Recording…',
+    'chat.micDenied': 'Microphone permission denied.',
     'chat.inputHint': 'Message...',
 
     // Notifications inbox
@@ -783,6 +786,9 @@ const Map<String, Map<String, String>> _strings = {
     'chat.photo': 'Photo',
     'chat.file': 'Fichier',
     'chat.fileTooLarge': 'Fichier trop volumineux (max 5 Mo).',
+    'chat.recordVoice': 'Enregistrer un message vocal',
+    'chat.recording': 'Enregistrement…',
+    'chat.micDenied': 'Permission micro refusée.',
     'chat.inputHint': 'Message...',
 
     // Notifications inbox

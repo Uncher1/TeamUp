@@ -52,6 +52,8 @@ dependencies:
   material_symbols_icons: ^4.2928.1
   file_picker: ^11.0.2
   path_provider: ^2.1.5
+  record: ^6.2.1
+  audioplayers: ^6.7.0
 
 dev_dependencies:
   flutter_test:

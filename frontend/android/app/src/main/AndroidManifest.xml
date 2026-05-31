@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Voice messages (audio recording) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="TeamUp"
         android:name="${applicationName}"

@@ -29,6 +29,7 @@ class Message {
 
   bool get hasImage => attachmentType == 'image' && (attachmentData?.isNotEmpty ?? false);
   bool get hasFile => attachmentType == 'file' && (attachmentData?.isNotEmpty ?? false);
+  bool get hasAudio => attachmentType == 'audio' && (attachmentData?.isNotEmpty ?? false);
 
   factory Message.fromJson(Map<String, dynamic> j, {int fallbackConvId = 0}) => Message(
         id: j['id'] as int,

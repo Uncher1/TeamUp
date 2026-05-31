@@ -36,7 +36,7 @@ async function createMessage(conversationId, senderId, rawContent, attachment) {
   // Optional attachment: { type: 'image'|'file', name, data (base64 data URL) }.
   let att = null;
   if (attachment && typeof attachment === 'object') {
-    const type = attachment.type === 'image' || attachment.type === 'file' ? attachment.type : null;
+    const type = ['image', 'file', 'audio'].includes(attachment.type) ? attachment.type : null;
     const data = typeof attachment.data === 'string' ? attachment.data : '';
     if (type && data) {
       if (data.length > MAX_ATTACHMENT_CHARS) throw httpError(413, 'attachment too large');
