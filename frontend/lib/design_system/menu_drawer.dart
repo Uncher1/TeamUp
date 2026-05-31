@@ -1,3 +1,7 @@
+// TeamUp - student team-matching app
+// Copyright (C) 2026 Team 28
+// Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_strings.dart';

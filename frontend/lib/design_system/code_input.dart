@@ -1,3 +1,7 @@
+// TeamUp - student team-matching app
+// Copyright (C) 2026 Team 28
+// Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
+
 import 'package:flutter/services.dart';
 
 /// Forces a text field to the `XXXX-XXXX` shape: uppercase letters + digits,

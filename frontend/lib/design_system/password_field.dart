@@ -1,3 +1,7 @@
+// TeamUp - student team-matching app
+// Copyright (C) 2026 Team 28
+// Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
+
 import 'package:flutter/material.dart';
 
 /// A password TextField with a built-in show/hide eye toggle on the right

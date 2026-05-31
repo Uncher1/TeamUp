@@ -1,3 +1,7 @@
+// TeamUp - student team-matching app
+// Copyright (C) 2026 Team 28
+// Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
+
 const mysql = require('mysql2/promise');
 
 // Managed MySQL providers (e.g. Aiven) require TLS. Enable it with DB_SSL=true.

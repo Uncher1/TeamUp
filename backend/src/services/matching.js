@@ -1,3 +1,7 @@
+// TeamUp - student team-matching app
+// Copyright (C) 2026 Team 28
+// Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
+
 const pool = require('../config/db');
 
 // score = W_SKILL * skill_match + W_INTEREST * interest_match    (∈ [0, 1])
