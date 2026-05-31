@@ -1,4 +1,4 @@
-# TeamUp — Backend
+# TeamUp - Backend
 
 REST + WebSocket API for **TeamUp**, a student social network for forming
 project teams. Team 28.
@@ -26,7 +26,7 @@ node scripts/seed-catalog.js # loads the skills / interests catalog
 npm run dev                  # API on http://localhost:3000
 ```
 
-Optional demo data for local testing: `npm run db:seed` (sample users —
+Optional demo data for local testing: `npm run db:seed` (sample users -
 password `password`). The production database contains no demo data.
 
 ## API overview
@@ -35,18 +35,18 @@ All authenticated endpoints expect `Authorization: Bearer <jwt>`.
 
 | Method | Path                                   | Auth | Description                                      |
 |--------|----------------------------------------|------|--------------------------------------------------|
-| POST   | /api/auth/register                     |  —   | Create account `{ email, password, full_name }` |
-| POST   | /api/auth/login                        |  —   | Returns JWT                                      |
-| POST   | /api/auth/google                       |  —   | Sign in / up with a Google ID token              |
-| POST   | /api/auth/verify                       |  —   | Verify the email with the `XXXX-XXXX` code       |
-| POST   | /api/auth/resend                       |  —   | Resend the verification code                     |
+| POST   | /api/auth/register                     |  -   | Create account `{ email, password, full_name }` |
+| POST   | /api/auth/login                        |  -   | Returns JWT                                      |
+| POST   | /api/auth/google                       |  -   | Sign in / up with a Google ID token              |
+| POST   | /api/auth/verify                       |  -   | Verify the email with the `XXXX-XXXX` code       |
+| POST   | /api/auth/resend                       |  -   | Resend the verification code                     |
 | GET    | /api/users/me                          |  ✓   | Current user with skills + interests             |
 | PATCH  | /api/users/me                          |  ✓   | Update `full_name`, `bio`, `avatar_url`          |
 | PUT    | /api/users/me/skills                   |  ✓   | Replace skill set `[{ skill_id, level }]`        |
 | PUT    | /api/users/me/interests                |  ✓   | Replace interests `[interest_id]`                |
 | GET    | /api/users/:id                         |  ✓   | Public profile                                   |
-| GET    | /api/skills                            |  —   | Catalog                                          |
-| GET    | /api/interests                         |  —   | Catalog                                          |
+| GET    | /api/skills                            |  -   | Catalog                                          |
+| GET    | /api/interests                         |  -   | Catalog                                          |
 | GET    | /api/projects                          |  ✓   | List open projects                               |
 | POST   | /api/projects                          |  ✓   | Create project                                   |
 | GET    | /api/projects/:id                      |  ✓   | Project detail (skills, interests, members)      |
@@ -72,7 +72,7 @@ All authenticated endpoints expect `Authorization: Bearer <jwt>`.
 Real-time events are delivered over **Socket.IO** (`message:new` on the
 conversation room). A ready-to-run REST Client collection covering the full happy-path
 (register → login → create project → match → chat) is provided in
-[`requests.http`](requests.http) — compatible with the VS Code
+[`requests.http`](requests.http) - compatible with the VS Code
 *REST Client* extension.
 
 ## Matching algorithm (v0)
@@ -85,11 +85,11 @@ interest_match = |I_U ∩ I_P|  /  |I_U ∪ I_P|                          (Jacca
 score          = 0.7 · skill_match + 0.3 · interest_match              (∈ [0, 1])
 ```
 
-- `w_p_s ∈ {1..5}` — importance the project owner assigned to skill `s`.
-- `level_u_s ∈ {1..5}` — self-rated proficiency of user `U` on skill `s`.
+- `w_p_s ∈ {1..5}` - importance the project owner assigned to skill `s`.
+- `level_u_s ∈ {1..5}` - self-rated proficiency of user `U` on skill `s`.
 - Owner and existing members are excluded from candidates.
 - Candidate set is **pre-filtered in SQL** to users with at least one of the
-  required skills — no full-table scan over `user_skills`.
+  required skills - no full-table scan over `user_skills`.
 - Results sorted by `score` desc, top *N* returned.
 
 Implemented in [`src/services/matching.js`](src/services/matching.js).
@@ -124,7 +124,7 @@ erDiagram
     conversations ||--o{ messages : contains
 ```
 
-Full DDL: [`db/schema.sql`](db/schema.sql) — 13 tables, foreign keys with
+Full DDL: [`db/schema.sql`](db/schema.sql) - 13 tables, foreign keys with
 `ON DELETE CASCADE`, composite indexes on hot lookups.
 
 ## Repository layout
@@ -164,4 +164,4 @@ backend/
 
 ## License
 
-MIT — see [`../LICENSE`](../LICENSE).
+MIT - see [`../LICENSE`](../LICENSE).

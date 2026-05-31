@@ -3,10 +3,10 @@
 **A mobile social network that helps students form project teams.**
 
 Students publish project ideas, declare their skills, interests and goals, and
-get matched with complementary teammates through a smart ranking algorithm —
+get matched with complementary teammates through a smart ranking algorithm -
 then plan, recruit and chat, all in one native app.
 
-> Engineering-school project — Team 28.
+> Engineering-school project - Team 28.
 
 ---
 
@@ -17,31 +17,31 @@ then plan, recruit and chat, all in one native app.
 Récupère le dernier **APK** depuis la page **[Releases](https://github.com/Uncher1/TeamUp/releases/latest)**,
 transfère-le sur ton téléphone Android et installe-le (autorise « Installer
 depuis des sources inconnues » si Android le demande). L'application se connecte
-directement à l'API en ligne — aucune configuration nécessaire.
+directement à l'API en ligne - aucune configuration nécessaire.
 
 ---
 
 ## ✨ Features
 
-- **Authentication** — email + password with **email verification** (one-time
+- **Authentication** - email + password with **email verification** (one-time
   `XXXX-XXXX` code), **Google Sign-In** (native), and confirm-by-email for
   sensitive changes (email / password).
-- **Profiles** — bio, school, skills (with proficiency level), interests,
+- **Profiles** - bio, school, skills (with proficiency level), interests,
   avatar, and social links.
-- **Smart matching** — weighted skill score + Jaccard interest similarity to
+- **Smart matching** - weighted skill score + Jaccard interest similarity to
   rank the most complementary teammates and projects.
-- **Projects** — create and manage projects (category, required skills, team
+- **Projects** - create and manage projects (category, required skills, team
   size, timeline, status), apply, and build teams.
-- **Social feed** — posts (launch / looking-for / milestone / update / general),
+- **Social feed** - posts (launch / looking-for / milestone / update / general),
   likes and comments.
-- **Real-time chat** — direct and team conversations over WebSockets (Socket.IO),
+- **Real-time chat** - direct and team conversations over WebSockets (Socket.IO),
   messages delivered instantly.
-- **Notifications** — in-app notification center with an unread badge.
-- **Moderation & admin** — roles (user / moderator / admin), shield badges,
+- **Notifications** - in-app notification center with an unread badge.
+- **Moderation & admin** - roles (user / moderator / admin), shield badges,
   content moderation, and an admin account-management panel.
-- **Internationalization** — full **French + English** UI (English by default,
+- **Internationalization** - full **French + English** UI (English by default,
   live switch) and bilingual transactional emails.
-- **Theming** — light / **dark mode** and a customizable accent color.
+- **Theming** - light / **dark mode** and a customizable accent color.
 
 ---
 
@@ -61,7 +61,7 @@ directement à l'API en ligne — aucune configuration nécessaire.
 
 ```
 TeamUp/
-├── backend/    # Node.js + Express 5 + MySQL API + Socket.IO  — see backend/README.md
+├── backend/    # Node.js + Express 5 + MySQL API + Socket.IO  - see backend/README.md
 └── frontend/   # Flutter mobile app (Android / iOS / web)
 ```
 
@@ -80,7 +80,7 @@ node scripts/seed-catalog.js# load the skills / interests catalog
 npm start                   # API on http://localhost:3000
 ```
 
-Optional demo data for local testing: `npm run db:seed` (creates sample users —
+Optional demo data for local testing: `npm run db:seed` (creates sample users -
 password `password`). The production database contains no demo data.
 
 See [`backend/README.md`](backend/README.md) for the full API reference and the
