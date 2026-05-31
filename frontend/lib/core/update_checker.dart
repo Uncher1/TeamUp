@@ -1,0 +1,109 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'app_strings.dart';
+
+/// Lightweight over-the-air update check for the sideloaded APK.
+///
+/// On Android, looks at the latest GitHub Release; if its version is newer than
+/// the installed one, prompts the user to download the new APK (opened in the
+/// browser, which then installs it over the current app — no uninstall needed).
+/// Any failure is swallowed: this must never block or crash the app.
+
+const String _repo = 'Uncher1/TeamUp';
+
+class _Release {
+  final String version; // e.g. "1.1.0"
+  final String? apkUrl; // arm64 APK asset, when present
+  final String pageUrl; // release page fallback
+  const _Release(this.version, this.apkUrl, this.pageUrl);
+}
+
+/// Checks once and, if a newer release exists, shows the update dialog.
+Future<void> maybePromptForUpdate(BuildContext context) async {
+  // Only meaningful for the installed Android app.
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+  try {
+    final latest = await _fetchLatest();
+    if (latest == null) return;
+    final info = await PackageInfo.fromPlatform();
+    if (!_isNewer(latest.version, info.version)) return;
+    if (!context.mounted) return;
+    await _showUpdateDialog(context, latest);
+  } catch (_) {
+    // Network/parse error: ignore silently.
+  }
+}
+
+Future<_Release?> _fetchLatest() async {
+  final dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 8),
+    receiveTimeout: const Duration(seconds: 8),
+  ));
+  final res = await dio.get(
+    'https://api.github.com/repos/$_repo/releases/latest',
+    options: Options(headers: {'Accept': 'application/vnd.github+json'}),
+  );
+  final data = res.data;
+  if (data is! Map) return null;
+  final tag = (data['tag_name'] as String?)?.trim();
+  if (tag == null || tag.isEmpty) return null;
+  final version = tag.startsWith('v') ? tag.substring(1) : tag;
+
+  String? apkUrl;
+  final assets = data['assets'];
+  if (assets is List) {
+    for (final a in assets) {
+      if (a is Map &&
+          (a['name'] as String? ?? '').contains('arm64-v8a')) {
+        apkUrl = a['browser_download_url'] as String?;
+        break;
+      }
+    }
+  }
+  final pageUrl = (data['html_url'] as String?) ??
+      'https://github.com/$_repo/releases/latest';
+  return _Release(version, apkUrl, pageUrl);
+}
+
+/// True when [remote] is a strictly higher version than [current].
+bool _isNewer(String remote, String current) {
+  List<int> parse(String v) =>
+      v.split(RegExp(r'[.+]')).map((e) => int.tryParse(e) ?? 0).toList();
+  final r = parse(remote);
+  final c = parse(current);
+  final n = r.length > c.length ? r.length : c.length;
+  for (var i = 0; i < n; i++) {
+    final rv = i < r.length ? r[i] : 0;
+    final cv = i < c.length ? c[i] : 0;
+    if (rv != cv) return rv > cv;
+  }
+  return false;
+}
+
+Future<void> _showUpdateDialog(BuildContext context, _Release latest) async {
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(ctx.tr('update.title')),
+      content: Text(ctx.tr('update.body', {'version': latest.version})),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(ctx.tr('update.later')),
+        ),
+        TextButton(
+          onPressed: () async {
+            final url = latest.apkUrl ?? latest.pageUrl;
+            await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+            if (ctx.mounted) Navigator.pop(ctx);
+          },
+          child: Text(ctx.tr('update.cta')),
+        ),
+      ],
+    ),
+  );
+}

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
+import '../../core/update_checker.dart';
 import '../../design_system/ds.dart';
 import '../../design_system/menu_drawer.dart';
 import '../../models/app_notification.dart';
@@ -112,6 +113,7 @@ class _AppShellState extends State<AppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NotificationsProvider>().refreshUnread();
       context.read<SettingsProvider>().load();
+      maybePromptForUpdate(context);
     });
   }
 
