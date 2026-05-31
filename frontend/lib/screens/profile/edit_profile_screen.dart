@@ -18,6 +18,7 @@ import '../../models/skill.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/lookup_provider.dart';
 import '../../repositories/user_repo.dart';
+import 'crop_avatar_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -104,16 +105,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final picker = ImagePicker();
     final x = await picker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 70,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
     );
     if (x == null) return;
-    final bytes = await x.readAsBytes();
-    final b64 = base64Encode(bytes);
-    final mime = x.mimeType ?? 'image/jpeg';
+    final raw = await x.readAsBytes();
     if (!mounted) return;
-    setState(() => _avatarDataUrl = 'data:$mime;base64,$b64');
+    // Let the user crop (square/circle) before saving.
+    final cropped = await Navigator.of(context).push<Uint8List>(
+      MaterialPageRoute(builder: (_) => CropAvatarScreen(imageBytes: raw)),
+    );
+    if (cropped == null) return;
+    final b64 = base64Encode(cropped);
+    setState(() => _avatarDataUrl = 'data:image/png;base64,$b64');
   }
 
   /// Validates the social/website link fields. Returns an error message (or
