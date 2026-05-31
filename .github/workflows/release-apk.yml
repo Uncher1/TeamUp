@@ -1,0 +1,59 @@
+name: Build & Release APK
+
+# Push a version tag (e.g. v1.1.0) and GitHub builds the signed APK and
+# publishes it as a Release automatically - no local environment needed.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: {}   # manual run: builds the APK to validate, no Release
+
+permissions:
+  contents: write   # needed to create the GitHub Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Restore signing keystore
+        working-directory: frontend/android/app
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > teamup-release.jks
+
+      - name: Write key.properties
+        working-directory: frontend/android
+        run: |
+          cat > key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=teamup-release.jks
+          EOF
+
+      - name: Build release APKs
+        working-directory: frontend
+        run: |
+          flutter pub get
+          flutter build apk --release --split-per-abi
+
+      - name: Publish Release with APKs
+        if: startsWith(github.ref, 'refs/tags/')   # only on a version tag
+        uses: softprops/action-gh-release@v2
+        with:
+          files: frontend/build/app/outputs/flutter-apk/*-release.apk
+          fail_on_unmatched_files: true
+          generate_release_notes: true
