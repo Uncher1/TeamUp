@@ -1,45 +1,33 @@
 # TeamUp — Backend
 
-REST API for **TeamUp**, a student social network for forming project teams.
-Team 28 — Mid-Project Follow-Up (2026-05-05).
+REST + WebSocket API for **TeamUp**, a student social network for forming
+project teams. Team 28.
 
 ## Stack
 
 - **Node.js 18+ / Express 5**
-- **MariaDB 10.4+** (driver: `mysql2`)
+- **MySQL / MariaDB** (driver: `mysql2`)
 - **JWT** auth (`jsonwebtoken` + `bcryptjs`)
-- Hardened by `helmet`, request logs via `morgan`
-- 100% REST, JSON-only
+- **Socket.IO** for real-time chat
+- **Nodemailer** (transactional, bilingual emails) + **google-auth-library** (Google Sign-In)
+- Hardened by `helmet`, `cors`, **rate limiting** on auth; request logs via `morgan`
 
-## Quick start (XAMPP / local MariaDB)
+## Quick start (local)
 
 ```bash
-# 1. Start MariaDB from the XAMPP Control Panel (Start → MySQL).
-# 2. Apply the schema (creates the `teamup` database):
-"C:\xampp\mysql\bin\mysql.exe" -u root < db/schema.sql
-
-# 3. Configure env. On a default XAMPP install set:
-#       DB_USER=root
-#       DB_PASSWORD=
+# 1. Start a local MySQL / MariaDB (e.g. XAMPP → MySQL).
+# 2. Configure env (DB creds, JWT secret, SMTP, Google client id):
 cp .env.example .env
 
-# 4. Install, seed and run:
+# 3. Install, create the schema + catalog, and run:
 npm install
-npm run db:seed              # demo users / skills / interests / projects
+node scripts/load-schema.js  # creates the tables in the configured DB
+node scripts/seed-catalog.js # loads the skills / interests catalog
 npm run dev                  # API on http://localhost:3000
 ```
 
-Demo accounts created by `db:seed` all share the password `password`.
-
-## Quick start (Docker — alternative)
-
-```bash
-cp .env.example .env
-docker compose up -d         # boots MariaDB, applies schema.sql
-npm install
-npm run db:seed
-npm run dev
-```
+Optional demo data for local testing: `npm run db:seed` (sample users —
+password `password`). The production database contains no demo data.
 
 ## API overview
 
@@ -49,6 +37,9 @@ All authenticated endpoints expect `Authorization: Bearer <jwt>`.
 |--------|----------------------------------------|------|--------------------------------------------------|
 | POST   | /api/auth/register                     |  —   | Create account `{ email, password, full_name }` |
 | POST   | /api/auth/login                        |  —   | Returns JWT                                      |
+| POST   | /api/auth/google                       |  —   | Sign in / up with a Google ID token              |
+| POST   | /api/auth/verify                       |  —   | Verify the email with the `XXXX-XXXX` code       |
+| POST   | /api/auth/resend                       |  —   | Resend the verification code                     |
 | GET    | /api/users/me                          |  ✓   | Current user with skills + interests             |
 | PATCH  | /api/users/me                          |  ✓   | Update `full_name`, `bio`, `avatar_url`          |
 | PUT    | /api/users/me/skills                   |  ✓   | Replace skill set `[{ skill_id, level }]`        |
@@ -67,9 +58,19 @@ All authenticated endpoints expect `Authorization: Bearer <jwt>`.
 | GET    | /api/conversations                     |  ✓   | List my conversations                            |
 | POST   | /api/conversations/direct/:userId      |  ✓   | Get-or-create a direct conversation              |
 | GET    | /api/conversations/:id/messages        |  ✓   | List messages (`?before=&limit=`)                |
-| POST   | /api/conversations/:id/messages        |  ✓   | Send a message                                   |
+| POST   | /api/conversations/:id/messages        |  ✓   | Send a message (also broadcast over Socket.IO)   |
+| GET    | /api/posts                             |  ✓   | Social feed (posts + likes + comment counts)     |
+| POST   | /api/posts                             |  ✓   | Create a post                                    |
+| POST   | /api/posts/:id/like                    |  ✓   | Like / unlike a post                             |
+| GET    | /api/posts/:id/comments                |  ✓   | List comments                                    |
+| POST   | /api/posts/:id/comments                |  ✓   | Add a comment                                    |
+| DELETE | /api/posts/:id                         |  ✓   | Delete (author, or moderator / admin)            |
+| GET    | /api/notifications                     |  ✓   | Notification center (with unread count)          |
+| GET    | /api/admin/users                       | admin| List / search users                              |
+| PATCH  | /api/admin/users/:id/role              | admin| Promote / demote a user                          |
 
-A ready-to-run REST Client collection covering the full happy-path
+Real-time events are delivered over **Socket.IO** (`message:new` on the
+conversation room). A ready-to-run REST Client collection covering the full happy-path
 (register → login → create project → match → chat) is provided in
 [`requests.http`](requests.http) — compatible with the VS Code
 *REST Client* extension.
@@ -131,36 +132,35 @@ Full DDL: [`db/schema.sql`](db/schema.sql) — 13 tables, foreign keys with
 ```
 backend/
 ├── db/
-│   ├── schema.sql           # DDL (13 tables)
-│   └── seed.js              # demo users + projects + skills + interests
+│   ├── schema.sql           # DDL
+│   └── seed.js              # optional demo data (local only)
+├── scripts/
+│   ├── load-schema.js       # create tables in a fresh/hosted DB
+│   └── seed-catalog.js      # load the skills / interests catalog
 ├── src/
 │   ├── config/db.js         # mysql2 pool
-│   ├── middleware/auth.js   # JWT verification
-│   ├── routes/
-│   │   ├── auth.js
-│   │   ├── users.js
-│   │   ├── projects.js
-│   │   ├── matching.js
-│   │   ├── conversations.js
-│   │   └── lookup.js        # /skills, /interests
-│   ├── services/matching.js
-│   ├── utils/{jwt,password}.js
+│   ├── middleware/auth.js   # JWT + requireRole
+│   ├── routes/              # auth, users, projects, posts, matching,
+│   │                        #   conversations, notifications, admin, lookup
+│   ├── services/            # matching, chat, mailer, settings, notifications
+│   ├── utils/{jwt,password,code}.js
+│   ├── socket.js            # Socket.IO setup
 │   └── index.js
-├── requests.http            # REST Client walkthrough (auth → matching → chat)
-└── docker-compose.yml       # alternative to XAMPP
+└── requests.http            # REST Client walkthrough (auth → matching → chat)
 ```
 
-## Status (2026-05-04)
+## Status
 
-- [x] Database design (13 tables)
-- [x] Backend skeleton (Express 5, JWT, JSON, helmet, morgan)
-- [x] Auth (register, login, bcrypt + JWT, email validation)
-- [x] Users / skills / interests
-- [x] Projects + applications
-- [x] Matching algorithm v0
-- [x] Chat (REST) — direct + project conversations
-- [ ] WebSocket real-time chat (planned)
-- [ ] Frontend (Flutter) — workload underestimated, see Figma mockup
+- [x] Database schema + matching algorithm
+- [x] Auth: register, login, bcrypt + JWT, **email verification**, **Google Sign-In**, confirm-by-email changes
+- [x] Users / skills / interests / profiles
+- [x] Projects + applications + matching
+- [x] Social feed (posts, likes, comments)
+- [x] **Real-time chat** over Socket.IO (direct + project conversations)
+- [x] Notifications
+- [x] Moderation & admin (roles, content moderation, admin panel)
+- [x] Bilingual (FR/EN) transactional emails
+- [x] Flutter mobile app (signed Android release)
 
 ## License
 
