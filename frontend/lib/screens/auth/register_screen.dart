@@ -146,78 +146,107 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final busy = context.watch<AuthProvider>().busy;
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
+          children: [
+            // ── Top bar: back + language switch ────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 12, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Navigator.of(context).maybePop(),
-                      ),
-                      const LanguageToggle(),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.of(context).maybePop(),
                   ),
-                  const Center(child: BrandHeader(iconSize: 36, fontSize: 28)),
-                  const SizedBox(height: 24),
-                  Text(context.tr('register.title'), style: Theme.of(context).textTheme.headlineSmall),
-                  const SizedBox(height: 4),
-                  Text(context.tr('register.subtitle'), style: TextStyle(color: context.palette.textMuted)),
-                  const SizedBox(height: 24),
-                  TextField(controller: _name, decoration: InputDecoration(labelText: context.tr('register.fullName'))),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(labelText: context.tr('common.email')),
-                  ),
-                  const SizedBox(height: 14),
-                  PasswordField(
-                    controller: _password,
-                    label: context.tr('register.passwordHint'),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  // Smoothly expand/collapse the strength checklist.
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.topCenter,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 260),
-                      curve: Curves.easeOut,
-                      opacity: _password.text.isEmpty ? 0.0 : 1.0,
-                      child: _password.text.isEmpty
-                          ? const SizedBox(width: double.infinity)
-                          : Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: _passwordRules(),
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  AppButton(
-                    onPressed: busy ? null : _submit,
-                    child: busy
-                        ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(context.tr('register.cta')),
-                  ),
-                  const SizedBox(height: 16),
-                  const OrDivider(),
-                  const SizedBox(height: 16),
-                  GoogleAuthButton(onPressed: busy ? () {} : _handleGoogle),
+                  const LanguageToggle(),
                 ],
               ),
             ),
-          ),
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(
+                            child: BrandHeader(iconSize: 48, fontSize: 34)),
+                        const SizedBox(height: 24),
+                        Text(
+                          context.tr('register.title'),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          context.tr('register.subtitle'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: context.palette.textMuted),
+                        ),
+                        const SizedBox(height: 24),
+                        TextField(
+                            controller: _name,
+                            decoration: InputDecoration(
+                                labelText: context.tr('register.fullName'))),
+                        const SizedBox(height: 14),
+                        TextField(
+                          controller: _email,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                              labelText: context.tr('common.email')),
+                        ),
+                        const SizedBox(height: 14),
+                        PasswordField(
+                          controller: _password,
+                          label: context.tr('register.passwordHint'),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        // Smoothly expand/collapse the strength checklist.
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 260),
+                          curve: Curves.easeOutCubic,
+                          alignment: Alignment.topCenter,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 260),
+                            curve: Curves.easeOut,
+                            opacity: _password.text.isEmpty ? 0.0 : 1.0,
+                            child: _password.text.isEmpty
+                                ? const SizedBox(width: double.infinity)
+                                : Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: _passwordRules(),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        AppButton(
+                          onPressed: busy ? null : _submit,
+                          child: busy
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white))
+                              : Text(context.tr('register.cta')),
+                        ),
+                        const SizedBox(height: 16),
+                        const OrDivider(),
+                        const SizedBox(height: 16),
+                        GoogleAuthButton(
+                            onPressed: busy ? () {} : _handleGoogle),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

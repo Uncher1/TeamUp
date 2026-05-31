@@ -26,14 +26,14 @@ const Map<String, Map<String, String>> _strings = {
 
     // Login
     'login.title': 'Sign in',
-    'login.subtitle': 'Find your team.',
+    'login.subtitle': 'Sign in to find your teammates and bring your projects to life.',
     'login.cta': 'Sign in',
     'login.fail': 'Sign-in failed',
     'login.noAccount': "No account? Sign up",
 
     // Register
     'register.title': 'Create an account',
-    'register.subtitle': 'Join TeamUp.',
+    'register.subtitle': 'Create your account and start building the team behind your next project.',
     'register.fullName': 'Full name',
     'register.passwordHint': 'Password (min. 8 characters)',
     'register.cta': 'Sign up',
@@ -436,14 +436,14 @@ const Map<String, Map<String, String>> _strings = {
 
     // Login
     'login.title': 'Connexion',
-    'login.subtitle': 'Retrouve ton équipe.',
+    'login.subtitle': 'Connecte-toi pour retrouver ton équipe et donner vie à tes projets.',
     'login.cta': 'Se connecter',
     'login.fail': 'Échec de la connexion',
     'login.noAccount': "Pas de compte ? S'inscrire",
 
     // Register
     'register.title': 'Créer un compte',
-    'register.subtitle': 'Rejoins TeamUp.',
+    'register.subtitle': 'Crée ton compte et commence à monter l’équipe de ton prochain projet.',
     'register.fullName': 'Nom complet',
     'register.passwordHint': 'Mot de passe (min. 8 caractères)',
     'register.cta': "S'inscrire",

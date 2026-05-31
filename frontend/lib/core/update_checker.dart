@@ -22,10 +22,16 @@ class _Release {
   const _Release(this.version, this.apkUrl, this.pageUrl);
 }
 
+/// True once we've run the check this app session (avoids double prompts when
+/// both the login screen and the home shell trigger it).
+bool _promptedThisSession = false;
+
 /// Checks once and, if a newer release exists, shows the update dialog.
 Future<void> maybePromptForUpdate(BuildContext context) async {
   // Only meaningful for the installed Android app.
   if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+  if (_promptedThisSession) return;
+  _promptedThisSession = true;
   try {
     final latest = await _fetchLatest();
     if (latest == null) return;
