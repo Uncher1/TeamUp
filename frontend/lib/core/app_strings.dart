@@ -365,6 +365,7 @@ const Map<String, Map<String, String>> _strings = {
 
     // Admin panel + moderation
     'admin.title': 'Administration',
+    'admin.manageAccounts': 'Account management',
     'admin.searchHint': 'Search a user...',
     'admin.you': '(you)',
     'admin.changeRole': 'Change role',
@@ -747,6 +748,7 @@ const Map<String, Map<String, String>> _strings = {
 
     // Admin panel + moderation
     'admin.title': 'Administration',
+    'admin.manageAccounts': 'Gestion des comptes',
     'admin.searchHint': 'Rechercher un utilisateur...',
     'admin.you': '(toi)',
     'admin.changeRole': 'Changer le rôle',

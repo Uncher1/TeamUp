@@ -123,12 +123,12 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => _push(context, const AboutScreen()),
         ),
 
-        if (user?.role == 'admin' || user?.role == 'moderator') ...[
+        if (user?.role == 'admin') ...[
           SettingsSectionLabel(context.tr('admin.title')),
           SettingsTile(
             icon: Icons.shield_outlined,
-            label: context.tr('admin.title'),
-            subtitle: context.tr(user!.role == 'admin' ? 'role.admin' : 'role.moderator'),
+            label: context.tr('admin.manageAccounts'),
+            subtitle: context.tr('role.admin'),
             onTap: () => _push(context, const AdminPanelScreen()),
           ),
         ],
