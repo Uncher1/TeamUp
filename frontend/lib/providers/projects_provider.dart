@@ -44,6 +44,19 @@ class ProjectsProvider extends ChangeNotifier {
     }
   }
 
+  /// Deletes a project (own, or any if moderator/admin) and drops it locally.
+  Future<bool> deleteProject(int id) async {
+    try {
+      await repo.deleteProject(id);
+      myProjects = myProjects.where((p) => p.id != id).toList();
+      projects = projects.where((p) => p.id != id).toList();
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Project?> create({
     required String title,
     required String description,

@@ -8,6 +8,7 @@ import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/post.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../repositories/feed_repo.dart';
 import 'comments_sheet.dart';
@@ -43,6 +44,27 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     final pos = _scrollController.position;
     if (pos.pixels >= pos.maxScrollExtent - 300) {
       context.read<FeedProvider>().loadMore();
+    }
+  }
+
+  Future<void> _deletePost(Post p) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(context.tr('mod.deletePost')),
+        content: Text(context.tr('mod.deletePostConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.tr('common.cancel'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(context.tr('common.delete')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await context.read<FeedProvider>().deletePost(p.id);
     }
   }
 
@@ -160,11 +182,15 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           if (cardIndex < postItems.length) {
             if (isSpacer) return const SizedBox(height: 12);
             final p = postItems[cardIndex];
+            final me = context.read<AuthProvider>().user;
+            final canDelete = me != null &&
+                (me.role == 'moderator' || me.role == 'admin' || p.authorId == me.id);
             return _PostCard(
                 post: p,
                 onLike: () => context.read<FeedProvider>().toggleLike(p),
                 onComment: () => _openComments(p),
                 onShare: () => _share(p),
+                onDelete: canDelete ? () => _deletePost(p) : null,
               );
           }
         }
@@ -227,11 +253,13 @@ class _PostCard extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback onComment;
   final VoidCallback onShare;
+  final VoidCallback? onDelete; // null = viewer can't delete this post
   const _PostCard({
     required this.post,
     required this.onLike,
     required this.onComment,
     required this.onShare,
+    this.onDelete,
   });
 
   @override
@@ -263,6 +291,19 @@ class _PostCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onDelete != null)
+                PopupMenuButton<int>(
+                  icon: Icon(Icons.more_horiz, size: 20, color: context.palette.textMuted),
+                  padding: EdgeInsets.zero,
+                  onSelected: (_) => onDelete!(),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 0,
+                      child: Text(context.tr('mod.deletePost'),
+                          style: const TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: 12),

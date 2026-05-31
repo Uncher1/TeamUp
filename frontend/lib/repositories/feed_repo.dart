@@ -49,6 +49,11 @@ class FeedRepository {
     await api.dio.delete('/posts/$postId/comments/$commentId');
   }
 
+  /// Deletes a post (own post, or any post for a moderator/admin).
+  Future<void> deletePost(int postId) async {
+    await api.dio.delete('/posts/$postId');
+  }
+
   /// Toggles the like; returns (liked, likeCount).
   Future<(bool, int)> toggleLike(int postId) async {
     final res = await api.dio.post('/posts/$postId/like');

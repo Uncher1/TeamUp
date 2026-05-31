@@ -86,6 +86,18 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Deletes a post (own, or any if moderator/admin) and drops it from the feed.
+  Future<bool> deletePost(int postId) async {
+    try {
+      await _repo.deletePost(postId);
+      posts = posts.where((p) => p.id != postId).toList();
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> createPost({required String type, required String content}) async {
     try {
       final created = await _repo.create(type: type, content: content);

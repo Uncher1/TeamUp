@@ -235,7 +235,9 @@ class _CommentsSheetState extends State<CommentsSheet> {
         subtitle: context.tr('feed.noCommentsSub'),
       );
     }
-    final myId = context.read<AuthProvider>().user?.id;
+    final me = context.read<AuthProvider>().user;
+    final myId = me?.id;
+    final canModerate = me != null && (me.role == 'moderator' || me.role == 'admin');
     return ListView.separated(
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -246,6 +248,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
         return _CommentRow(
           comment: c,
           isOwn: myId != null && c.authorId == myId,
+          canModerate: canModerate,
           onEdit: () => _editComment(c),
           onDelete: () => _deleteComment(c),
         );
@@ -318,12 +321,14 @@ enum _CommentAction { edit, delete }
 class _CommentRow extends StatelessWidget {
   final Comment comment;
   final bool isOwn;
+  final bool canModerate;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _CommentRow({
     required this.comment,
     required this.isOwn,
+    required this.canModerate,
     required this.onEdit,
     required this.onDelete,
   });
@@ -365,7 +370,7 @@ class _CommentRow extends StatelessWidget {
             ],
           ),
         ),
-        if (isOwn)
+        if (isOwn || canModerate)
           PopupMenuButton<_CommentAction>(
             icon: Icon(Icons.more_horiz, size: 18, color: context.palette.textMuted),
             padding: EdgeInsets.zero,
@@ -377,10 +382,12 @@ class _CommentRow extends StatelessWidget {
               }
             },
             itemBuilder: (_) => [
-              PopupMenuItem(
-                value: _CommentAction.edit,
-                child: Text(context.tr('common.edit')),
-              ),
+              // Only the author may edit; moderators/admins can delete others'.
+              if (isOwn)
+                PopupMenuItem(
+                  value: _CommentAction.edit,
+                  child: Text(context.tr('common.edit')),
+                ),
               PopupMenuItem(
                 value: _CommentAction.delete,
                 child: Text(context.tr('common.delete'),

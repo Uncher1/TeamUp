@@ -13,6 +13,7 @@ import 'providers/matching_provider.dart';
 import 'providers/notifications_provider.dart';
 import 'providers/projects_provider.dart';
 import 'providers/settings_provider.dart';
+import 'repositories/admin_repo.dart';
 import 'repositories/auth_repo.dart';
 import 'repositories/chat_repo.dart';
 import 'repositories/feed_repo.dart';
@@ -42,6 +43,7 @@ class _TeamUpAppState extends State<TeamUpApp> {
   late final TokenStorage _storage = TokenStorage();
   late final ApiClient _api = ApiClient(storage: _storage);
   late final AuthRepository _authRepo = AuthRepository(_api);
+  late final AdminRepository _adminRepo = AdminRepository(_api);
   late final UserRepository _userRepo = UserRepository(_api);
   late final ProjectRepository _projectRepo = ProjectRepository(_api);
   late final LookupRepository _lookupRepo = LookupRepository(_api);
@@ -60,6 +62,7 @@ class _TeamUpAppState extends State<TeamUpApp> {
         Provider<ProjectRepository>.value(value: _projectRepo),
         Provider<ChatRepository>.value(value: _chatRepo),
         Provider<FeedRepository>.value(value: _feedRepo),
+        Provider<AdminRepository>.value(value: _adminRepo),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             repo: _authRepo,

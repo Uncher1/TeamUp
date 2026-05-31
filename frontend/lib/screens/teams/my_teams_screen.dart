@@ -5,6 +5,7 @@ import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/project.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/projects_provider.dart';
 
 class MyTeamsScreen extends StatefulWidget {
@@ -21,6 +22,26 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectsProvider>().loadMine();
     });
+  }
+
+  Future<void> _confirmDelete(BuildContext context, Project p) async {
+    final provider = context.read<ProjectsProvider>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(context.tr('mod.deleteProject')),
+        content: Text(context.tr('mod.deleteProjectConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.tr('common.cancel'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(context.tr('common.delete')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) await provider.deleteProject(p.id);
   }
 
   @override
@@ -72,7 +93,15 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
             )
           else
             for (final p in provider.myProjects) ...[
-              _TeamCard(project: p),
+              Builder(builder: (context) {
+                final me = context.read<AuthProvider>().user;
+                final canDelete = me != null &&
+                    (me.role == 'moderator' || me.role == 'admin' || p.ownerId == me.id);
+                return _TeamCard(
+                  project: p,
+                  onDelete: canDelete ? () => _confirmDelete(context, p) : null,
+                );
+              }),
               const SizedBox(height: 12),
             ],
         ],
@@ -97,7 +126,8 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
 
 class _TeamCard extends StatelessWidget {
   final Project project;
-  const _TeamCard({required this.project});
+  final VoidCallback? onDelete; // null = viewer can't delete this project
+  const _TeamCard({required this.project, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +180,19 @@ class _TeamCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               StatusPill(label: context.tr('status.${project.status}'), bg: bg, fg: fg),
+              if (onDelete != null)
+                PopupMenuButton<int>(
+                  icon: Icon(Icons.more_horiz, size: 20, color: palette.textMuted),
+                  padding: EdgeInsets.zero,
+                  onSelected: (_) => onDelete!(),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 0,
+                      child: Text(context.tr('mod.deleteProject'),
+                          style: const TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
             ],
           ),
           if (metaItems.isNotEmpty) ...[

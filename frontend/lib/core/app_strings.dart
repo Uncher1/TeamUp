@@ -361,6 +361,19 @@ const Map<String, Map<String, String>> _strings = {
     // Roles
     'role.admin': 'Admin',
     'role.moderator': 'Moderator',
+    'role.user': 'User',
+
+    // Admin panel + moderation
+    'admin.title': 'Administration',
+    'admin.searchHint': 'Search a user...',
+    'admin.you': '(you)',
+    'admin.changeRole': 'Change role',
+    'admin.empty': 'No user found',
+    'admin.roleChanged': 'Role updated',
+    'mod.deletePost': 'Delete post',
+    'mod.deletePostConfirm': 'Delete this post?',
+    'mod.deleteProject': 'Delete project',
+    'mod.deleteProjectConfirm': 'Delete this project?',
 
     // Profile
     'prof.title': 'Profile',
@@ -730,6 +743,19 @@ const Map<String, Map<String, String>> _strings = {
     // Roles
     'role.admin': 'Admin',
     'role.moderator': 'Modérateur',
+    'role.user': 'Utilisateur',
+
+    // Admin panel + moderation
+    'admin.title': 'Administration',
+    'admin.searchHint': 'Rechercher un utilisateur...',
+    'admin.you': '(toi)',
+    'admin.changeRole': 'Changer le rôle',
+    'admin.empty': 'Aucun utilisateur trouvé',
+    'admin.roleChanged': 'Rôle mis à jour',
+    'mod.deletePost': 'Supprimer le post',
+    'mod.deletePostConfirm': 'Supprimer ce post ?',
+    'mod.deleteProject': 'Supprimer le projet',
+    'mod.deleteProjectConfirm': 'Supprimer ce projet ?',
 
     // Profile
     'prof.title': 'Profil',

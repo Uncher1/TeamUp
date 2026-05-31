@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../profile/profile_screen.dart';
 import 'about_screen.dart';
+import 'admin_panel_screen.dart';
 import 'delete_account_screen.dart';
 import 'email_screen.dart';
 import 'help_screen.dart';
@@ -121,6 +122,16 @@ class SettingsScreen extends StatelessWidget {
           subtitle: 'v1.0.0',
           onTap: () => _push(context, const AboutScreen()),
         ),
+
+        if (user?.role == 'admin' || user?.role == 'moderator') ...[
+          SettingsSectionLabel(context.tr('admin.title')),
+          SettingsTile(
+            icon: Icons.shield_outlined,
+            label: context.tr('admin.title'),
+            subtitle: context.tr(user!.role == 'admin' ? 'role.admin' : 'role.moderator'),
+            onTap: () => _push(context, const AdminPanelScreen()),
+          ),
+        ],
 
         SettingsSectionLabel(context.tr('set.danger')),
         SettingsTile(

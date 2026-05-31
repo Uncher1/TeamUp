@@ -47,6 +47,11 @@ class ProjectRepository {
     return Project.fromJson(res.data as Map<String, dynamic>);
   }
 
+  /// Deletes a project (its owner, or any project for a moderator/admin).
+  Future<void> deleteProject(int projectId) async {
+    await api.dio.delete('/projects/$projectId');
+  }
+
   Future<void> apply(int projectId, {String? message}) async {
     await api.dio.post('/projects/$projectId/apply', data: {
       if (message != null && message.isNotEmpty) 'message': message,
