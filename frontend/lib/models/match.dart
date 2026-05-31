@@ -6,6 +6,7 @@ class MatchedUser {
   final int id;
   final String fullName;
   final String? email;
+  final String? avatarUrl;
   final String role;
   final double score;
   final double skillMatch;
@@ -15,6 +16,7 @@ class MatchedUser {
     required this.id,
     required this.fullName,
     this.email,
+    this.avatarUrl,
     this.role = 'user',
     required this.score,
     required this.skillMatch,
@@ -25,6 +27,7 @@ class MatchedUser {
         id: j['user_id'] as int,
         fullName: j['full_name'] as String? ?? '',
         email: j['email'] as String?,
+        avatarUrl: j['avatar_url'] as String?,
         role: j['role'] as String? ?? 'user',
         score: (j['score'] as num).toDouble(),
         skillMatch: (j['skill_match'] as num).toDouble(),

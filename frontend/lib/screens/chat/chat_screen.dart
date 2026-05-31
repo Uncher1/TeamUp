@@ -86,7 +86,8 @@ class _ConvTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            GradientAvatar(name: conv.displayName, size: 48),
+            GradientAvatar(
+                name: conv.displayName, size: 48, imageUrl: conv.avatarImageUrl),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

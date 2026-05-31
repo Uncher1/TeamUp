@@ -20,12 +20,15 @@ class RequiredSkill {
 class ProjectMember {
   final int id;
   final String fullName;
+  final String? avatarUrl;
   final String role;
-  const ProjectMember({required this.id, required this.fullName, required this.role});
+  const ProjectMember(
+      {required this.id, required this.fullName, this.avatarUrl, required this.role});
 
   factory ProjectMember.fromJson(Map<String, dynamic> json) => ProjectMember(
         id: json['id'] as int,
         fullName: json['full_name'] as String,
+        avatarUrl: json['avatar_url'] as String?,
         role: json['role'] as String? ?? 'member',
       );
 }

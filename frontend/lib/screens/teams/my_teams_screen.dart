@@ -232,7 +232,10 @@ class _TeamCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(color: palette.surface, shape: BoxShape.circle),
-                      child: GradientAvatar(name: entry.value.fullName, size: 30),
+                      child: GradientAvatar(
+                          name: entry.value.fullName,
+                          size: 30,
+                          imageUrl: entry.value.avatarUrl),
                     ),
                   ),
               ],

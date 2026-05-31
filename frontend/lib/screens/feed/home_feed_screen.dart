@@ -277,7 +277,8 @@ class _PostCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GradientAvatar(name: post.authorName, size: 44),
+              GradientAvatar(
+                  name: post.authorName, size: 44, imageUrl: post.authorAvatar),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
