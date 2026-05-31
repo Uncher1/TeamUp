@@ -18,8 +18,10 @@ class ApiClient {
         dio = dio ??
             Dio(BaseOptions(
               baseUrl: Config.apiBaseUrl,
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
+              // Generous timeouts: a free-tier host can cold-start (~50s) after
+              // idling, so the first request must not give up too early.
+              connectTimeout: const Duration(seconds: 60),
+              receiveTimeout: const Duration(seconds: 60),
             )) {
     this.dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {

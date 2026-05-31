@@ -1,20 +1,18 @@
-import 'package:flutter/foundation.dart';
-
 /// Base URLs for the TeamUp backend.
 ///
-/// Android emulators reach the host machine via 10.0.2.2, not localhost.
-/// Web and desktop use localhost directly. For a physical device, override
-/// [host] with the machine's LAN IP.
+/// Defaults to the public production API (Render) so the shipped APK works for
+/// anyone, anywhere, with no configuration. For local development against your
+/// own backend, override the base URL at build/run time, e.g.:
+///   flutter run --dart-define=API_BASE=http://10.0.2.2:3000
 class Config {
-  static const int port = 3000;
+  /// Public production backend (Render + Aiven MySQL).
+  static const String _prodBase = 'https://teamup-api-hi2d.onrender.com';
 
-  static String get host {
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return '10.0.2.2';
-    }
-    return 'localhost';
-  }
+  /// Optional compile-time override for local development.
+  static const String _override = String.fromEnvironment('API_BASE');
 
-  static String get apiBaseUrl => 'http://$host:$port/api';
-  static String get socketUrl => 'http://$host:$port';
+  static String get _base => _override.isNotEmpty ? _override : _prodBase;
+
+  static String get apiBaseUrl => '$_base/api';
+  static String get socketUrl => _base;
 }
