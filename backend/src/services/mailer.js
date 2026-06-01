@@ -48,8 +48,15 @@ function brandedHtml({ title, intro, note, lang = 'en' }) {
 /// Sends via the Brevo transactional HTTP API (port 443) — used in production
 /// because Render's free tier BLOCKS outbound SMTP. Falls through to SMTP when
 /// no Brevo key is set (local dev).
+// Brevo wants a BARE email in sender.email (no "Name <addr>" form). Extract the
+// address out of a possibly-decorated FROM like `TeamUp <teamup.team28@gmail.com>`.
+function bareEmail(s) {
+  const m = /<([^>]+)>/.exec(s || '');
+  return (m ? m[1] : (s || '')).trim();
+}
+
 async function sendViaBrevo({ to, subject, html, attachments }) {
-  const sender = process.env.BREVO_SENDER || FROM || process.env.SMTP_USER;
+  const sender = bareEmail(process.env.BREVO_SENDER || FROM || process.env.SMTP_USER);
   const senderName = process.env.BREVO_SENDER_NAME || 'TeamUp · Comptes & sécurité';
   const body = {
     sender: { email: sender, name: senderName },
