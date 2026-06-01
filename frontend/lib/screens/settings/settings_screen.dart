@@ -329,44 +329,26 @@ Future<void> _pickPresenceVisibility(BuildContext context) async {
   }
 }
 
-/// GDPR data portability: ask the backend to e-mail the user a JSON copy of
-/// their data (cleaner and more reliable than a local file share).
+/// GDPR data portability: e-mail a JSON copy from the TeamUp address to the
+/// user's account address. If the mail server isn't reachable, we still hand
+/// them the file via the share sheet so it's never a dead end.
 Future<void> _exportData(BuildContext context) async {
   final repo = context.read<UserRepository>();
   final messenger = ScaffoldMessenger.of(context);
   final email = context.read<AuthProvider>().user?.email ?? '';
-  final failMsg = context.tr('set.exportFail');
   final sendingMsg = context.tr('set.exportSending');
   final sentMsg = context.tr('set.exportSent', {'email': email});
   final sharedMsg = context.tr('set.exportShared');
-  final confirm = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(ctx.tr('set.exportData')),
-      content: Text(ctx.tr('set.exportConfirm', {'email': email})),
-      actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(ctx.tr('common.cancel'))),
-        FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(ctx.tr('common.confirm'))),
-      ],
-    ),
-  );
-  if (confirm != true) return;
+  final failMsg = context.tr('set.exportFail');
   messenger.showSnackBar(SnackBar(content: Text(sendingMsg)));
   try {
-    final sent = await repo.requestDataExport();
-    if (sent) {
+    if (await repo.requestDataExport()) {
       messenger.showSnackBar(SnackBar(content: Text(sentMsg)));
       return;
     }
-    // Email unavailable → fall back to letting the user save/share the file.
     await _shareExportFile(repo);
     messenger.showSnackBar(SnackBar(content: Text(sharedMsg)));
   } catch (_) {
-    // Last resort: try the file share; if even that fails, report the error.
     try {
       await _shareExportFile(repo);
       messenger.showSnackBar(SnackBar(content: Text(sharedMsg)));

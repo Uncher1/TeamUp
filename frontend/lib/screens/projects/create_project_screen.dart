@@ -72,6 +72,24 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
   bool _busy = false;
 
+  // Scrolling + anchors so validation can jump to the first missing field.
+  final _scroll = ScrollController();
+  final _infoKey = GlobalKey();
+  final _categoryKey = GlobalKey();
+  final _timelineKey = GlobalKey();
+  final _skillsKey = GlobalKey();
+  final _themesKey = GlobalKey();
+
+  Future<void> _jumpTo(GlobalKey key) async {
+    final ctx = key.currentContext;
+    if (ctx != null) {
+      await Scrollable.ensureVisible(ctx,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          alignment: 0.1);
+    }
+  }
+
   Future<void> _pickPhoto() async {
     final x = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -101,6 +119,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   void dispose() {
     _title.dispose();
     _description.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -109,11 +128,20 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     final description = _description.text.trim();
     final messenger = ScaffoldMessenger.of(context);
     final createdMsg = context.tr('proj.created');
-    final requiredMsg = context.tr('proj.required');
-    if (title.isEmpty || description.isEmpty) {
-      messenger.showSnackBar(SnackBar(content: Text(requiredMsg)));
-      return;
+
+    // Every field is required. On the first missing one, scroll to it + explain.
+    void warn(GlobalKey key, String key2) {
+      messenger.showSnackBar(SnackBar(content: Text(context.tr(key2))));
+      _jumpTo(key);
     }
+    if (title.isEmpty || description.isEmpty) {
+      return warn(_infoKey, 'proj.errInfo');
+    }
+    if (_category == null) return warn(_categoryKey, 'proj.errCategory');
+    if (_timeline == null) return warn(_timelineKey, 'proj.errTimeline');
+    if (_skills.isEmpty) return warn(_skillsKey, 'proj.errSkills');
+    if (_interests.isEmpty) return warn(_themesKey, 'proj.errThemes');
+
     final projectsProvider = context.read<ProjectsProvider>();
     final chat = context.read<ChatRepository>();
     final navigator = Navigator.of(context);
@@ -177,6 +205,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     final palette = context.palette;
 
     return ListView(
+      controller: _scroll,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
         // ── Banner ──────────────────────────────────────────────────────────
@@ -250,10 +279,13 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Informations ────────────────────────────────────────────────────
-        SectionLabel(context.tr('proj.info')),
+        KeyedSubtree(key: _infoKey, child: SectionLabel(context.tr('proj.info'))),
         const SizedBox(height: 10),
         TextField(
           controller: _title,
+          maxLength: 80,
+          // Rebuild so the team avatar shows live initials from the title.
+          onChanged: (_) => setState(() {}),
           decoration: InputDecoration(labelText: context.tr('proj.titleLabel')),
         ),
         const SizedBox(height: 14),
@@ -261,6 +293,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           controller: _description,
           minLines: 3,
           maxLines: 6,
+          maxLength: 600,
           decoration: InputDecoration(
             labelText: context.tr('proj.description'),
             alignLabelWithHint: true,
@@ -269,7 +302,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Category ─────────────────────────────────────────────────────────
-        SectionLabel(context.tr('proj.category')),
+        KeyedSubtree(key: _categoryKey, child: SectionLabel(context.tr('proj.category'))),
         const SizedBox(height: 10),
         GridView.count(
           crossAxisCount: 2,
@@ -341,7 +374,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Durée estimée ────────────────────────────────────────────────────
-        SectionLabel(context.tr('proj.duration')),
+        KeyedSubtree(key: _timelineKey, child: SectionLabel(context.tr('proj.duration'))),
         const SizedBox(height: 10),
         GridView.count(
           crossAxisCount: 3,
@@ -363,7 +396,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Compétences requises ─────────────────────────────────────────────
-        SectionLabel(context.tr('proj.skillsRequired')),
+        KeyedSubtree(key: _skillsKey, child: SectionLabel(context.tr('proj.skillsRequired'))),
         const SizedBox(height: 4),
         Text(context.tr('proj.skillsHint'),
             style: TextStyle(fontSize: 12, color: palette.textMuted)),
@@ -382,7 +415,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 20),
 
         // ── Thématiques ──────────────────────────────────────────────────────
-        SectionLabel(context.tr('proj.themes')),
+        KeyedSubtree(key: _themesKey, child: SectionLabel(context.tr('proj.themes'))),
         const SizedBox(height: 10),
         _InterestPicker(
           interests: lookup.interests,
