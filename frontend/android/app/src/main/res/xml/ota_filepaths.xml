@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths shared by ota_update's FileProvider (downloaded APK lives in the
+     app's internal files/ota_update directory). -->
+<paths>
+    <files-path name="ota_update" path="ota_update/" />
+    <external-files-path name="ota_update_ext" path="ota_update/" />
+</paths>
