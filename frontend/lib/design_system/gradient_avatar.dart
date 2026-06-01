@@ -115,11 +115,8 @@ class GradientAvatar extends StatelessWidget {
   }
 }
 
-/// Opens a full-screen, pinch-to-zoom viewer for a profile/team photo.
-/// Uses the exact same proven structure as the chat image viewer:
-/// a black [Dialog] wrapping an [InteractiveViewer] around the [Image] — NO
-/// surrounding GestureDetector/Center (those steal the pinch gesture). Tap the
-/// dark backdrop to dismiss. No-op when there's no actual photo.
+/// Opens a black [Dialog] viewer for a profile/team photo with BOTH
+/// pinch-to-zoom and double-tap-to-zoom. No-op when there's no actual photo.
 void showZoomableImage(BuildContext context, {required String? imageUrl}) {
   if (imageUrl == null || imageUrl.isEmpty) return;
   final Widget image = imageUrl.startsWith('data:')
@@ -131,13 +128,58 @@ void showZoomableImage(BuildContext context, {required String? imageUrl}) {
     builder: (_) => Dialog(
       backgroundColor: Colors.black,
       insetPadding: const EdgeInsets.all(12),
-      child: InteractiveViewer(
-        minScale: 1,
-        maxScale: 5,
-        child: image,
-      ),
+      child: _ZoomBody(image: image),
     ),
   );
+}
+
+/// Pinch (InteractiveViewer) + double-tap (TransformationController) zoom.
+/// The double-tap GestureDetector wraps the viewer; double-tap and the scale
+/// recognizer use different pointer counts, so they don't fight (the standard
+/// Flutter "zoom a photo" recipe).
+class _ZoomBody extends StatefulWidget {
+  final Widget image;
+  const _ZoomBody({required this.image});
+
+  @override
+  State<_ZoomBody> createState() => _ZoomBodyState();
+}
+
+class _ZoomBodyState extends State<_ZoomBody> {
+  final TransformationController _tc = TransformationController();
+  TapDownDetails? _doubleTapDetails;
+
+  @override
+  void dispose() {
+    _tc.dispose();
+    super.dispose();
+  }
+
+  void _handleDoubleTap() {
+    if (_tc.value != Matrix4.identity()) {
+      _tc.value = Matrix4.identity(); // already zoomed → reset
+      return;
+    }
+    final pos = _doubleTapDetails?.localPosition ?? Offset.zero;
+    const scale = 2.5;
+    _tc.value = Matrix4.identity()
+      ..translateByDouble(-pos.dx * (scale - 1), -pos.dy * (scale - 1), 0, 1)
+      ..scaleByDouble(scale, scale, 1, 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onDoubleTapDown: (d) => _doubleTapDetails = d,
+      onDoubleTap: _handleDoubleTap,
+      child: InteractiveViewer(
+        transformationController: _tc,
+        minScale: 1,
+        maxScale: 5,
+        child: widget.image,
+      ),
+    );
+  }
 }
 
 /// Private helper — gradient circle with white initial. Extracted so both the
