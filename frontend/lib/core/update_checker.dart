@@ -5,6 +5,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -106,14 +107,125 @@ Future<void> _showUpdateDialog(BuildContext context, _Release latest) async {
           child: Text(ctx.tr('update.later')),
         ),
         TextButton(
-          onPressed: () async {
-            final url = latest.apkUrl ?? latest.pageUrl;
-            await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-            if (ctx.mounted) Navigator.pop(ctx);
+          onPressed: () {
+            Navigator.pop(ctx);
+            _runOtaUpdate(context, latest);
           },
           child: Text(ctx.tr('update.cta')),
         ),
       ],
     ),
   );
+}
+
+/// Opens [url] in the browser (the manual download fallback).
+Future<void> _openBrowser(String url) async {
+  try {
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  } catch (_) {/* ignore */}
+}
+
+/// Downloads the APK in-app and triggers the system installer (no manual file
+/// handling). Falls back to the browser if no APK asset or on failure.
+Future<void> _runOtaUpdate(BuildContext context, _Release latest) async {
+  final apk = latest.apkUrl;
+  if (apk == null) {
+    await _openBrowser(latest.pageUrl);
+    return;
+  }
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => _OtaProgressDialog(apkUrl: apk, fallbackUrl: latest.pageUrl),
+  );
+}
+
+/// Non-dismissible dialog that streams download progress and hands off to the
+/// Android package installer. Self-closes on install or error.
+class _OtaProgressDialog extends StatefulWidget {
+  final String apkUrl;
+  final String fallbackUrl;
+  const _OtaProgressDialog({required this.apkUrl, required this.fallbackUrl});
+
+  @override
+  State<_OtaProgressDialog> createState() => _OtaProgressDialogState();
+}
+
+class _OtaProgressDialogState extends State<_OtaProgressDialog> {
+  int _percent = 0;
+  bool _installing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _start();
+  }
+
+  void _start() {
+    try {
+      OtaUpdate()
+          .execute(widget.apkUrl, destinationFilename: 'teamup-update.apk')
+          .listen(
+        (OtaEvent event) {
+          switch (event.status) {
+            case OtaStatus.DOWNLOADING:
+              final pct = int.tryParse(event.value ?? '') ?? _percent;
+              if (mounted) setState(() => _percent = pct);
+              break;
+            case OtaStatus.INSTALLING:
+            case OtaStatus.INSTALLATION_DONE:
+              if (mounted) setState(() => _installing = true);
+              _close();
+              break;
+            case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+              _fail(permission: true);
+              break;
+            default:
+              _fail();
+          }
+        },
+        onError: (_) => _fail(),
+      );
+    } catch (_) {
+      _fail();
+    }
+  }
+
+  void _close() {
+    if (mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
+  }
+
+  /// On any failure, close, tell the user, and fall back to the browser.
+  void _fail({bool permission = false}) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final msg = context.tr(permission ? 'update.permission' : 'update.failed');
+    _close();
+    messenger.showSnackBar(SnackBar(content: Text(msg)));
+    _openBrowser(widget.fallbackUrl);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      content: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              value: (!_installing && _percent > 0) ? _percent / 100 : null,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(_installing
+                ? context.tr('update.installing')
+                : context.tr('update.downloading', {'percent': '$_percent'})),
+          ),
+        ],
+      ),
+    );
+  }
 }

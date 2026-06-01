@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Voice messages (audio recording) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Networking (post translation model + in-app update download) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- In-app updater: download + install the new APK over the current one -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <application
         android:label="TeamUp"
         android:name="${applicationName}"
