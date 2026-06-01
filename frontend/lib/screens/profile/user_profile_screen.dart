@@ -265,11 +265,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
-              GradientAvatar(
-                  name: user.fullName,
-                  size: 64,
-                  imageUrl: user.avatarUrl,
-                  presenceStatus: user.presenceStatus),
+              GestureDetector(
+                onTap: () => showZoomableImage(context, imageUrl: user.avatarUrl),
+                child: GradientAvatar(
+                    name: user.fullName,
+                    size: 64,
+                    imageUrl: user.avatarUrl,
+                    presenceStatus: user.presenceStatus),
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(

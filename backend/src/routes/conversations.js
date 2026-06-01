@@ -137,6 +137,7 @@ router.post('/:id/polls', authRequired, async (req, res) => {
   const options = Array.isArray(req.body?.options)
     ? req.body.options.map((o) => String(o).trim()).filter(Boolean).slice(0, 6)
     : [];
+  const multi = req.body?.multi ? 1 : 0;
   if (!id || !question || options.length < 2) {
     return res.status(400).json({ error: 'question and at least 2 options required' });
   }
@@ -149,8 +150,8 @@ router.post('/:id/polls', authRequired, async (req, res) => {
     return res.status(403).json({ error: 'not a conversation member' });
   }
   const [pr] = await pool.query(
-    'INSERT INTO polls (conversation_id, question, options, created_by) VALUES (?, ?, ?, ?)',
-    [id, question, JSON.stringify(options), req.user.id]
+    'INSERT INTO polls (conversation_id, question, options, created_by, multi) VALUES (?, ?, ?, ?, ?)',
+    [id, question, JSON.stringify(options), req.user.id, multi]
   );
   const pollId = pr.insertId;
   const [mr] = await pool.query(
@@ -179,7 +180,8 @@ router.post('/polls/:pollId/vote', authRequired, async (req, res) => {
   if (!pollId || Number.isNaN(option)) {
     return res.status(400).json({ error: 'pollId and option are required' });
   }
-  const [pr] = await pool.query('SELECT conversation_id, options FROM polls WHERE id = ?', [pollId]);
+  const [pr] = await pool.query(
+    'SELECT conversation_id, options, multi FROM polls WHERE id = ?', [pollId]);
   if (!pr.length) return res.status(404).json({ error: 'poll not found' });
   const convId = pr[0].conversation_id;
   if (!(await userInConversation(convId, req.user.id))) {
@@ -188,11 +190,29 @@ router.post('/polls/:pollId/vote', authRequired, async (req, res) => {
   let optionsLen = 0;
   try { optionsLen = JSON.parse(pr[0].options).length; } catch { optionsLen = 0; }
   if (option < 0 || option >= optionsLen) return res.status(400).json({ error: 'invalid option' });
-  await pool.query(
-    `INSERT INTO poll_votes (poll_id, user_id, option_index) VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE option_index = VALUES(option_index)`,
-    [pollId, req.user.id, option]
-  );
+
+  if (pr[0].multi === 1) {
+    // Multi-choice: tapping an option toggles it on/off.
+    const [ex] = await pool.query(
+      'SELECT 1 AS x FROM poll_votes WHERE poll_id = ? AND user_id = ? AND option_index = ?',
+      [pollId, req.user.id, option]);
+    if (ex.length) {
+      await pool.query(
+        'DELETE FROM poll_votes WHERE poll_id = ? AND user_id = ? AND option_index = ?',
+        [pollId, req.user.id, option]);
+    } else {
+      await pool.query(
+        'INSERT INTO poll_votes (poll_id, user_id, option_index) VALUES (?, ?, ?)',
+        [pollId, req.user.id, option]);
+    }
+  } else {
+    // Single-choice: the new pick replaces any previous one.
+    await pool.query(
+      'DELETE FROM poll_votes WHERE poll_id = ? AND user_id = ?', [pollId, req.user.id]);
+    await pool.query(
+      'INSERT INTO poll_votes (poll_id, user_id, option_index) VALUES (?, ?, ?)',
+      [pollId, req.user.id, option]);
+  }
   const poll = await pollPublic(pollId, req.user.id);
   const io = req.app.get('io');
   io?.to(`conversation:${convId}`).emit('poll:update', poll);

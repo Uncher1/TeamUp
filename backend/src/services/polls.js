@@ -9,9 +9,10 @@ function parseOptions(raw) {
   try { return JSON.parse(raw); } catch { return []; }
 }
 
-/** Public shape of a poll for a given viewer: options, vote counts, my vote. */
+/** Public shape of a poll for a given viewer: options, vote counts, my vote(s). */
 async function pollPublic(pollId, userId) {
-  const [rows] = await pool.query('SELECT id, question, options FROM polls WHERE id = ?', [pollId]);
+  const [rows] = await pool.query(
+    'SELECT id, question, options, multi FROM polls WHERE id = ?', [pollId]);
   if (!rows.length) return null;
   const options = parseOptions(rows[0].options);
   const counts = options.map(() => 0);
@@ -28,13 +29,16 @@ async function pollPublic(pollId, userId) {
     'SELECT option_index FROM poll_votes WHERE poll_id = ? AND user_id = ?',
     [pollId, userId]
   );
+  const myVotes = mine.map((r) => r.option_index);
   return {
     id: rows[0].id,
     question: rows[0].question,
     options,
     counts,
     total,
-    my_vote: mine.length ? mine[0].option_index : null,
+    multi: rows[0].multi === 1,
+    my_votes: myVotes,
+    my_vote: myVotes.length ? myVotes[0] : null, // legacy single-vote field
   };
 }
 

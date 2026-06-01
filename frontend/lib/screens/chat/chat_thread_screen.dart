@@ -193,6 +193,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     await context.read<ChatProvider>().createPoll(
           result['question'] as String,
           (result['options'] as List).cast<String>(),
+          multi: result['multi'] as bool? ?? false,
         );
     _scrollToBottom();
   }
@@ -211,7 +212,10 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     if (!mounted) return;
     setState(() { _recording = true; _recordSecs = 0; });
     _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _recordSecs++);
+      if (!mounted) return;
+      setState(() => _recordSecs++);
+      // Hard cap: a voice message can't exceed 10 minutes — auto-send at 10:00.
+      if (_recordSecs >= 600) _stopRecord(send: true);
     });
   }
 
@@ -511,7 +515,11 @@ class _PollBubble extends StatelessWidget {
     final options = ((poll['options'] as List?) ?? const []).map((e) => '$e').toList();
     final counts = ((poll['counts'] as List?) ?? const []).map((e) => (e as num).toInt()).toList();
     final total = (poll['total'] as num?)?.toInt() ?? 0;
-    final myVote = (poll['my_vote'] as num?)?.toInt();
+    final multi = poll['multi'] == true;
+    final myVotes = ((poll['my_votes'] as List?) ??
+            (poll['my_vote'] != null ? [poll['my_vote']] : const []))
+        .map((e) => (e as num).toInt())
+        .toSet();
     final fg = mine ? Colors.white : context.palette.textPrimary;
     final track = mine ? Colors.white24 : context.palette.slate200;
     final fill = mine
@@ -526,7 +534,7 @@ class _PollBubble extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(Icons.bar_chart_rounded, size: 18, color: fg),
+            Icon(multi ? Icons.checklist_rounded : Icons.bar_chart_rounded, size: 18, color: fg),
             const SizedBox(width: 6),
             Expanded(
               child: Text(question,
@@ -534,15 +542,27 @@ class _PollBubble extends StatelessWidget {
                       fontWeight: FontWeight.w700, fontSize: 15, color: fg, height: 1.3)),
             ),
           ]),
+          // Make multi-choice obvious right under the question.
+          if (multi)
+            Padding(
+              padding: const EdgeInsets.only(top: 2, left: 24),
+              child: Text(context.tr('chat.pollMultiHint'),
+                  style: TextStyle(fontSize: 11, color: footer, fontStyle: FontStyle.italic)),
+            ),
           const SizedBox(height: 12),
           for (int i = 0; i < options.length; i++)
             () {
               final count = i < counts.length ? counts[i] : 0;
               final pct = total > 0 ? count / total : 0.0;
-              final selected = myVote == i;
+              final selected = myVotes.contains(i);
+              // Single = radio, multi = checkbox; filled when selected.
+              final IconData mark = multi
+                  ? (selected ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded)
+                  : (selected ? Icons.radio_button_checked : Icons.radio_button_unchecked);
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => context.read<ChatProvider>().votePoll(id, i),
                   child: Container(
                     decoration: BoxDecoration(
@@ -567,10 +587,8 @@ class _PollBubble extends StatelessWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Row(children: [
-                            if (selected) ...[
-                              Icon(Icons.check_circle, size: 16, color: fg),
-                              const SizedBox(width: 6),
-                            ],
+                            Icon(mark, size: 16, color: fg),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(options[i],
                                   maxLines: 1,
@@ -610,6 +628,7 @@ class _PollComposer extends StatefulWidget {
 class _PollComposerState extends State<_PollComposer> {
   final _question = TextEditingController();
   final List<TextEditingController> _options = [TextEditingController(), TextEditingController()];
+  bool _multi = false;
 
   @override
   void dispose() {
@@ -624,7 +643,7 @@ class _PollComposerState extends State<_PollComposer> {
     final q = _question.text.trim();
     final opts = _options.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList();
     if (q.isEmpty || opts.length < 2) return;
-    Navigator.pop(context, {'question': q, 'options': opts});
+    Navigator.pop(context, {'question': q, 'options': opts, 'multi': _multi});
   }
 
   @override
@@ -658,6 +677,14 @@ class _PollComposerState extends State<_PollComposer> {
                 label: Text(context.tr('chat.addOption')),
               ),
             ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(context.tr('chat.pollMulti'), style: const TextStyle(fontSize: 14)),
+            subtitle: Text(context.tr('chat.pollMultiHint'),
+                style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+            value: _multi,
+            onChanged: (v) => setState(() => _multi = v),
+          ),
         ]),
       ),
       actions: [
@@ -739,6 +766,10 @@ class _AudioBubbleState extends State<_AudioBubble> {
     _player.onPlayerComplete.listen((_) {
       if (mounted) setState(() { _playing = false; _pos = Duration.zero; });
     });
+    // Preload the clip (without playing) so the TOTAL duration is known and
+    // shown right away — instead of 0:00 until the user hits play.
+    _player.setReleaseMode(ReleaseMode.stop);
+    _player.setSource(BytesSource(_bytes));
   }
 
   @override
@@ -751,7 +782,9 @@ class _AudioBubbleState extends State<_AudioBubble> {
     if (_playing) {
       await _player.pause();
     } else {
-      await _player.play(BytesSource(_bytes));
+      // Replay from the start once finished.
+      if (_dur > Duration.zero && _pos >= _dur) await _player.seek(Duration.zero);
+      await _player.resume();
     }
   }
 
@@ -912,12 +945,19 @@ class _DmHeaderTitle extends StatelessWidget {
               )),
       child: Row(
         children: [
-          GradientAvatar(
-            name: conversation.displayName,
-            size: 36,
-            imageUrl: conversation.avatarImageUrl,
-            presenceStatus: conversation.avatarStatus,
-            isTeam: conversation.isTeam,
+          GestureDetector(
+            // Team photo zoom (2-finger). For DMs the whole row already opens
+            // the profile, where the photo is zoomable too.
+            onTap: conversation.isTeam
+                ? () => showZoomableImage(context, imageUrl: conversation.avatarImageUrl)
+                : null,
+            child: GradientAvatar(
+              name: conversation.displayName,
+              size: 36,
+              imageUrl: conversation.avatarImageUrl,
+              presenceStatus: conversation.avatarStatus,
+              isTeam: conversation.isTeam,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(

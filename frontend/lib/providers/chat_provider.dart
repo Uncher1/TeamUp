@@ -68,10 +68,10 @@ class ChatProvider extends ChangeNotifier {
   /// Creates a poll (team conversation). Adds the poll message optimistically
   /// from the POST response (the socket `message:new` is de-duplicated by id),
   /// so it shows up immediately even if the socket echo is delayed.
-  Future<void> createPoll(String question, List<String> options) async {
+  Future<void> createPoll(String question, List<String> options, {bool multi = false}) async {
     if (_activeConvId == null) return;
     try {
-      final msg = await _repo.createPoll(_activeConvId!, question, options);
+      final msg = await _repo.createPoll(_activeConvId!, question, options, multi: multi);
       if (!messages.any((m) => m.id == msg.id)) {
         messages = [...messages, msg];
         notifyListeners();
@@ -111,9 +111,50 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> votePoll(int pollId, int option) async {
+    // Optimistic: reflect the tap immediately, then reconcile with the server.
+    _applyLocalVote(pollId, option);
     try {
       _applyPollUpdate(await _repo.votePoll(pollId, option));
     } catch (_) {}
+  }
+
+  /// Locally toggles/sets the viewer's vote so the UI responds instantly.
+  void _applyLocalVote(int pollId, int option) {
+    final i = messages.indexWhere((m) => m.hasPoll && m.poll!['id'] == pollId);
+    if (i < 0) return;
+    final poll = Map<String, dynamic>.from(messages[i].poll!);
+    final multi = poll['multi'] == true;
+    final counts = List<int>.from(
+        ((poll['counts'] as List?) ?? const []).map((e) => (e as num).toInt()));
+    final myVotes = List<int>.from(
+        ((poll['my_votes'] as List?) ?? const []).map((e) => (e as num).toInt()));
+    while (counts.length <= option) {
+      counts.add(0);
+    }
+    if (multi) {
+      if (myVotes.contains(option)) {
+        myVotes.remove(option);
+        if (counts[option] > 0) counts[option]--;
+      } else {
+        myVotes.add(option);
+        counts[option]++;
+      }
+    } else {
+      // Single choice: clear previous pick(s), then set this one.
+      for (final v in myVotes) {
+        if (v < counts.length && counts[v] > 0) counts[v]--;
+      }
+      myVotes
+        ..clear()
+        ..add(option);
+      counts[option]++;
+    }
+    poll['counts'] = counts;
+    poll['my_votes'] = myVotes;
+    poll['my_vote'] = myVotes.isNotEmpty ? myVotes.first : null;
+    poll['total'] = counts.fold<int>(0, (a, b) => a + b);
+    messages = [...messages]..[i] = messages[i].copyWith(poll: poll);
+    notifyListeners();
   }
 
   void _applyPollUpdate(Map<String, dynamic> poll) {

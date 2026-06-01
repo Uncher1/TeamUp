@@ -115,6 +115,48 @@ class GradientAvatar extends StatelessWidget {
   }
 }
 
+/// Opens a full-screen, pinch-to-zoom (2-finger) viewer for a profile/team
+/// photo. No-op when there's no actual photo (gradient initials can't zoom).
+void showZoomableImage(BuildContext context, {required String? imageUrl}) {
+  if (imageUrl == null || imageUrl.isEmpty) return;
+  Widget image;
+  if (imageUrl.startsWith('data:')) {
+    image = Image.memory(base64Decode(imageUrl.split(',').last),
+        fit: BoxFit.contain, gaplessPlayback: true,
+        errorBuilder: (_, a, b) => const SizedBox.shrink());
+  } else {
+    image = Image.network(imageUrl, fit: BoxFit.contain,
+        errorBuilder: (_, a, b) => const SizedBox.shrink());
+  }
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black,
+    builder: (ctx) => Stack(
+      children: [
+        // Tap the backdrop to dismiss; pinch to zoom the photo.
+        GestureDetector(
+          onTap: () => Navigator.of(ctx).pop(),
+          child: SizedBox.expand(
+            child: InteractiveViewer(
+              minScale: 1,
+              maxScale: 5,
+              child: Center(child: image),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 40,
+          right: 12,
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 28),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Private helper — gradient circle with white initial. Extracted so both the
 /// no-image path and error-fallback paths reuse identical rendering.
 class _GradientInitial extends StatelessWidget {

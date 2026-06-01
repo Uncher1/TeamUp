@@ -246,6 +246,7 @@ CREATE TABLE IF NOT EXISTS polls (
   question        VARCHAR(300) NOT NULL,
   options         JSON NOT NULL,
   created_by      INT UNSIGNED NOT NULL,
+  multi           TINYINT(1) NOT NULL DEFAULT 0,
   created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
   FOREIGN KEY (message_id)      REFERENCES messages(id)      ON DELETE CASCADE,
@@ -256,7 +257,7 @@ CREATE TABLE IF NOT EXISTS poll_votes (
   poll_id      INT UNSIGNED NOT NULL,
   user_id      INT UNSIGNED NOT NULL,
   option_index TINYINT UNSIGNED NOT NULL,
-  PRIMARY KEY (poll_id, user_id),
+  PRIMARY KEY (poll_id, user_id, option_index),
   FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

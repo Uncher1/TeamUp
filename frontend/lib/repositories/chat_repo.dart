@@ -44,10 +44,11 @@ class ChatRepository {
 
   /// Creates a poll in a team conversation and returns the new poll message.
   /// (It is also broadcast over the socket as `message:new`.)
-  Future<Message> createPoll(int conversationId, String question, List<String> options) async {
+  Future<Message> createPoll(int conversationId, String question, List<String> options,
+      {bool multi = false}) async {
     final res = await api.dio.post(
       '/conversations/$conversationId/polls',
-      data: {'question': question, 'options': options},
+      data: {'question': question, 'options': options, 'multi': multi},
     );
     return Message.fromJson(res.data as Map<String, dynamic>, fallbackConvId: conversationId);
   }
