@@ -13,6 +13,7 @@ const {
   sendEmailChangeRequest, sendPasswordChangeRequest,
   sendEmailChanged, sendPasswordChanged, sendDataExport,
 } = require('../services/mailer');
+const { deleteUserAndCleanup } = require('../services/accountDeletion');
 const { generateCode } = require('../utils/code');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CHANGE_TTL_MS = 30 * 60 * 1000; // 30 minutes
@@ -249,7 +250,7 @@ router.post('/me/change/resend', authRequired, async (req, res) => {
 });
 
 router.delete('/me', authRequired, async (req, res) => {
-  await pool.query('DELETE FROM users WHERE id = ?', [req.user.id]);
+  await deleteUserAndCleanup(req.user.id);
   res.json({ deleted: true });
 });
 

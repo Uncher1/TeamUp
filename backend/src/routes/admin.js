@@ -5,6 +5,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
+const { deleteUserAndCleanup } = require('../services/accountDeletion');
 
 const router = express.Router();
 const ROLES = ['user', 'moderator', 'admin'];
@@ -47,8 +48,8 @@ router.delete('/users/:id', authRequired, requireRole('admin'), async (req, res)
   if (id === req.user.id) {
     return res.status(400).json({ error: 'use Settings to delete your own account' });
   }
-  const [r] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
-  if (!r.affectedRows) return res.status(404).json({ error: 'user not found' });
+  const affected = await deleteUserAndCleanup(id);
+  if (!affected) return res.status(404).json({ error: 'user not found' });
   res.json({ deleted: true, id });
 });
 

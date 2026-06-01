@@ -45,9 +45,47 @@ function brandedHtml({ title, intro, note, lang = 'en' }) {
 </body></html>`;
 }
 
+/// Sends via the Brevo transactional HTTP API (port 443) — used in production
+/// because Render's free tier BLOCKS outbound SMTP. Falls through to SMTP when
+/// no Brevo key is set (local dev).
+async function sendViaBrevo({ to, subject, html, attachments }) {
+  const sender = process.env.BREVO_SENDER || FROM || process.env.SMTP_USER;
+  const body = {
+    sender: { email: sender, name: 'TeamUp' },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+  };
+  if (attachments && attachments.length) {
+    body.attachment = attachments.map((a) => ({
+      name: a.filename,
+      content: Buffer.from(a.content).toString('base64'),
+    }));
+  }
+  const r = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': process.env.BREVO_API_KEY,
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    throw new Error(`Brevo ${r.status}: ${txt}`);
+  }
+  return { sent: true };
+}
+
 async function sendMail({ to, subject, html, attachments }) {
+  // Production: Brevo HTTP (SMTP is blocked on Render free).
+  if (process.env.BREVO_API_KEY) {
+    return sendViaBrevo({ to, subject, html, attachments });
+  }
+  // Local/dev fallback: classic SMTP.
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('[mailer] SMTP not configured — skipping email to', to);
+    console.warn('[mailer] no BREVO_API_KEY and SMTP not configured — skipping email to', to);
     return { skipped: true };
   }
   return transporter.sendMail({ from: FROM, to, subject, html, attachments });
