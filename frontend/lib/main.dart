@@ -93,7 +93,7 @@ class _TeamUpAppState extends State<TeamUpApp> {
         ChangeNotifierProvider(create: (_) => LookupProvider(_lookupRepo)),
         ChangeNotifierProvider(create: (_) => MatchingProvider(_matchingRepo)),
         ChangeNotifierProvider(create: (_) => ChatProvider(_chatRepo, _storage)),
-        ChangeNotifierProvider(create: (_) => CallProvider(_storage)),
+        ChangeNotifierProvider(create: (_) => CallProvider(_storage, _api)),
         ChangeNotifierProvider(create: (_) => FeedProvider(_feedRepo)),
         ChangeNotifierProvider(create: (_) => NotificationsProvider(_notificationsRepo)),
         ChangeNotifierProvider(create: (_) => SettingsProvider(_settingsRepo)),

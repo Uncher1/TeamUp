@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:socket_io_client/socket_io_client.dart' as sio;
 
+import '../core/api_client.dart';
 import '../core/config.dart' show Config;
 import '../core/storage.dart';
 import '../core/webrtc_config.dart';
@@ -20,9 +21,14 @@ enum CallPhase { idle, outgoing, incoming, connecting, active }
 /// → call:ended. The CALLER creates the offer once the callee accepts.
 class CallProvider extends ChangeNotifier {
   final TokenStorage _storage;
-  CallProvider(this._storage);
+  final ApiClient _api;
+  CallProvider(this._storage, this._api);
 
   sio.Socket? _socket;
+
+  /// ICE servers (STUN + minted TURN) fetched from the backend; falls back to
+  /// the compile-time config when the fetch fails.
+  Map<String, dynamic>? _iceConfig;
 
   CallPhase phase = CallPhase.idle;
   bool get isBusy => phase != CallPhase.idle;
@@ -65,6 +71,19 @@ class CallProvider extends ChangeNotifier {
     );
     _bind();
     _socket!.connect();
+    _fetchIce();
+  }
+
+  /// Pull STUN+TURN servers from the backend (Cloudflare-minted TURN). Cached
+  /// for the session; safe to fail (we fall back to compile-time STUN/TURN).
+  Future<void> _fetchIce() async {
+    try {
+      final res = await _api.dio.get('/calls/turn');
+      final servers = (res.data as Map)['iceServers'];
+      if (servers is List && servers.isNotEmpty) {
+        _iceConfig = {'iceServers': servers, 'sdpSemantics': 'unified-plan'};
+      }
+    } catch (_) {/* keep fallback */}
   }
 
   void disconnect() {
@@ -220,7 +239,7 @@ class CallProvider extends ChangeNotifier {
   }
 
   Future<void> _createPc() async {
-    final pc = await createPeerConnection(WebRtcConfig.iceServers());
+    final pc = await createPeerConnection(_iceConfig ?? WebRtcConfig.iceServers());
     _pc = pc;
     for (final track in _localStream!.getTracks()) {
       await pc.addTrack(track, _localStream!);
