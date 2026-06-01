@@ -15,6 +15,9 @@ class Conversation {
   final int? otherUserId;
   final String? lastMessage;
   final DateTime? lastMessageAt;
+  final int? lastSenderId;
+  final String? lastSenderName;
+  final String? lastAttachmentType;
 
   const Conversation({
     required this.id,
@@ -29,7 +32,12 @@ class Conversation {
     this.otherUserId,
     this.lastMessage,
     this.lastMessageAt,
+    this.lastSenderId,
+    this.lastSenderName,
+    this.lastAttachmentType,
   });
+
+  bool get isTeam => type == 'project';
 
   String get displayName {
     if (type == 'project' && projectTitle != null) return projectTitle!;
@@ -59,5 +67,8 @@ class Conversation {
         lastMessageAt: j['last_message_at'] != null
             ? DateTime.parse(j['last_message_at'] as String)
             : null,
+        lastSenderId: j['last_sender_id'] as int?,
+        lastSenderName: j['last_sender_name'] as String?,
+        lastAttachmentType: j['last_attachment_type'] as String?,
       );
 }

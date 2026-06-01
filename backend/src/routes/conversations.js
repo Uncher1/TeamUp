@@ -25,6 +25,10 @@ router.get('/', authRequired, async (req, res) => {
             other.avatar_url AS other_user_avatar,
             other.presence_status AS other_user_status,
             (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
+            (SELECT sender_id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_sender_id,
+            (SELECT attachment_type FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_attachment_type,
+            (SELECT su.full_name FROM messages lm JOIN users su ON su.id = lm.sender_id
+              WHERE lm.conversation_id = c.id ORDER BY lm.created_at DESC LIMIT 1) AS last_sender_name,
             (SELECT MAX(created_at) FROM messages WHERE conversation_id = c.id) AS last_message_at
        FROM conversations c
        JOIN conversation_members cm ON cm.conversation_id = c.id AND cm.user_id = ?

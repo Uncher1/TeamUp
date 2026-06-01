@@ -9,6 +9,7 @@ import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
 import '../../models/conversation.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import 'chat_thread_screen.dart';
 
@@ -57,6 +58,7 @@ class _ChatScreenState extends State<ChatScreen> {
         subtitle: context.tr('chat.emptySub'),
       );
     }
+    final myId = context.read<AuthProvider>().user?.id ?? -1;
     return RefreshIndicator(
       onRefresh: () => context.read<ChatProvider>().loadConversations(),
       child: ListView.separated(
@@ -66,7 +68,7 @@ class _ChatScreenState extends State<ChatScreen> {
         separatorBuilder: (context, _) => Divider(color: context.palette.slate100, height: 1, indent: 82),
         itemBuilder: (_, i) {
           final c = provider.conversations[i];
-          return _ConvTile(conv: c, onTap: () => _open(c));
+          return _ConvTile(conv: c, myId: myId, onTap: () => _open(c));
         },
       ),
     );
@@ -75,13 +77,46 @@ class _ChatScreenState extends State<ChatScreen> {
 
 class _ConvTile extends StatelessWidget {
   final Conversation conv;
+  final int myId;
   final VoidCallback onTap;
-  const _ConvTile({required this.conv, required this.onTap});
+  const _ConvTile({required this.conv, required this.myId, required this.onTap});
+
+  /// The preview line: "You: …" / "Alice: …" prefix + a label for media
+  /// messages (Photo / File / Voice message / Poll).
+  String _preview(BuildContext context) {
+    String body;
+    switch (conv.lastAttachmentType) {
+      case 'image':
+        body = context.tr('chat.lastImage');
+        break;
+      case 'file':
+        body = context.tr('chat.lastFile');
+        break;
+      case 'audio':
+        body = context.tr('chat.lastVoice');
+        break;
+      case 'poll':
+        body = context.tr('chat.lastPoll');
+        break;
+      default:
+        body = (conv.lastMessage ?? '').trim();
+    }
+    if (body.isEmpty) return '';
+    String? prefix;
+    if (conv.lastSenderId != null && conv.lastSenderId == myId) {
+      prefix = context.tr('chat.you');
+    } else if (conv.isTeam && (conv.lastSenderName ?? '').isNotEmpty) {
+      // First name only, keeps the line short.
+      prefix = conv.lastSenderName!.trim().split(' ').first;
+    }
+    return prefix == null ? body : '$prefix : $body';
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final hasMessage = (conv.lastMessage ?? '').trim().isNotEmpty;
+    final preview = _preview(context);
+    final hasMessage = preview.isNotEmpty;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -93,7 +128,8 @@ class _ConvTile extends StatelessWidget {
                 name: conv.displayName,
                 size: 52,
                 imageUrl: conv.avatarImageUrl,
-                presenceStatus: conv.avatarStatus),
+                presenceStatus: conv.avatarStatus,
+                isTeam: conv.isTeam),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -115,26 +151,15 @@ class _ConvTile extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      if (conv.type == 'project')
-                        Padding(
-                          padding: const EdgeInsets.only(right: 5),
-                          child: Icon(Icons.groups_outlined, size: 15, color: p.textMuted),
-                        ),
-                      Expanded(
-                        child: Text(
-                          hasMessage ? conv.lastMessage! : context.tr('chat.start'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: p.textMuted,
-                            fontStyle: hasMessage ? FontStyle.normal : FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    hasMessage ? preview : context.tr('chat.start'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: p.textMuted,
+                      fontStyle: hasMessage ? FontStyle.normal : FontStyle.italic,
+                    ),
                   ),
                 ],
               ),

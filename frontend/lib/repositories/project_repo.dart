@@ -92,6 +92,23 @@ class ProjectRepository {
         data: {'allow_member_invite': allowMemberInvite});
   }
 
+  /// Owner-only: update any subset of the team's name, description, photo and
+  /// member-invite policy. Only non-null fields are sent.
+  Future<void> updateTeam(
+    int projectId, {
+    String? title,
+    String? description,
+    String? avatarUrl,
+    bool? allowMemberInvite,
+  }) async {
+    await api.dio.patch('/projects/$projectId/settings', data: {
+      'title': ?title,
+      'description': ?description,
+      'avatar_url': ?avatarUrl,
+      'allow_member_invite': ?allowMemberInvite,
+    });
+  }
+
   Future<void> inviteToTeam(int projectId, int userId) async {
     await api.dio.post('/projects/$projectId/invite', data: {'user_id': userId});
   }

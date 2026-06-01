@@ -322,7 +322,8 @@ router.delete('/:id', authRequired, async (req, res) => {
 router.get('/:id/membership', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ error: 'invalid id' });
-  const [p] = await pool.query('SELECT owner_id, allow_member_invite FROM projects WHERE id = ?', [id]);
+  const [p] = await pool.query(
+    'SELECT owner_id, title, description, avatar_url, allow_member_invite FROM projects WHERE id = ?', [id]);
   if (!p.length) return res.status(404).json({ error: 'project not found' });
   const [m] = await pool.query(
     'SELECT 1 AS x FROM project_members WHERE project_id = ? AND user_id = ?', [id, req.user.id]);
@@ -334,6 +335,9 @@ router.get('/:id/membership', authRequired, async (req, res) => {
     is_member: isMember,
     allow_member_invite: allowMemberInvite,
     can_invite: isOwner || (isMember && allowMemberInvite),
+    title: p[0].title,
+    description: p[0].description,
+    avatar_url: p[0].avatar_url,
   });
 });
 
@@ -355,16 +359,48 @@ router.delete('/:id/members/me', authRequired, async (req, res) => {
   res.json({ left: true });
 });
 
-// Team settings (owner only): whether members may invite their friends.
+// Team settings (owner only): rename, description, photo, and whether members
+// may invite their friends. Only the fields present in the body are changed.
 router.patch('/:id/settings', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ error: 'invalid id' });
   const [p] = await pool.query('SELECT owner_id FROM projects WHERE id = ?', [id]);
   if (!p.length) return res.status(404).json({ error: 'project not found' });
   if (p[0].owner_id !== req.user.id) return res.status(403).json({ error: 'owner only' });
-  const allow = req.body?.allow_member_invite ? 1 : 0;
-  await pool.query('UPDATE projects SET allow_member_invite = ? WHERE id = ?', [allow, id]);
-  res.json({ allow_member_invite: allow === 1 });
+
+  const sets = [];
+  const args = [];
+  if (req.body?.allow_member_invite !== undefined) {
+    sets.push('allow_member_invite = ?');
+    args.push(req.body.allow_member_invite ? 1 : 0);
+  }
+  if (typeof req.body?.title === 'string') {
+    const title = req.body.title.trim().slice(0, 80);
+    if (!title) return res.status(400).json({ error: 'title cannot be empty' });
+    sets.push('title = ?');
+    args.push(title);
+  }
+  if (typeof req.body?.description === 'string') {
+    sets.push('description = ?');
+    args.push(req.body.description.trim().slice(0, 600));
+  }
+  if (req.body?.avatar_url !== undefined) {
+    const av = req.body.avatar_url;
+    sets.push('avatar_url = ?');
+    args.push(typeof av === 'string' && av.length ? av : null);
+  }
+  if (!sets.length) return res.status(400).json({ error: 'nothing to update' });
+  args.push(id);
+  await pool.query(`UPDATE projects SET ${sets.join(', ')} WHERE id = ?`, args);
+
+  const [row] = await pool.query(
+    'SELECT title, description, avatar_url, allow_member_invite FROM projects WHERE id = ?', [id]);
+  res.json({
+    title: row[0].title,
+    description: row[0].description,
+    avatar_url: row[0].avatar_url,
+    allow_member_invite: row[0].allow_member_invite === 1,
+  });
 });
 
 // Invite a user (owner always; members only if allow_member_invite).

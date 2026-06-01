@@ -90,7 +90,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
       child: AppCard(
         child: Row(
           children: [
-            GradientAvatar(name: title, size: 44, imageUrl: inv['avatar_url'] as String?),
+            GradientAvatar(name: title, size: 44, imageUrl: inv['avatar_url'] as String?, isTeam: true),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -267,7 +267,7 @@ class _TeamCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GradientAvatar(name: project.title, size: 48, imageUrl: project.avatarUrl),
+              GradientAvatar(name: project.title, size: 48, imageUrl: project.avatarUrl, isTeam: true),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

@@ -23,8 +23,10 @@ import '../../models/conversation.dart';
 import '../../models/message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/projects_provider.dart';
 import '../../repositories/project_repo.dart';
 import '../../repositories/user_repo.dart';
+import '../profile/crop_avatar_screen.dart';
 import '../profile/user_profile_screen.dart';
 
 class ChatThreadScreen extends StatefulWidget {
@@ -37,8 +39,12 @@ class ChatThreadScreen extends StatefulWidget {
 
 class _ChatThreadScreenState extends State<ChatThreadScreen> {
   final _ctrl = TextEditingController();
+  final _inputFocus = FocusNode();
   final _scroll = ScrollController();
   late final ChatProvider _chat;
+
+  /// Non-null while editing an existing message (inline, in the input bar).
+  Message? _editing;
 
   final AudioRecorder _recorder = AudioRecorder();
   bool _recording = false;
@@ -57,6 +63,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
   @override
   void dispose() {
     _ctrl.dispose();
+    _inputFocus.dispose();
     _scroll.dispose();
     _recordTimer?.cancel();
     _recorder.dispose();
@@ -76,9 +83,31 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
   void _send() {
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
+    final editing = _editing;
+    if (editing != null) {
+      // Inline edit mode: update the existing message instead of sending.
+      context.read<ChatProvider>().editMessage(editing.id, text);
+      setState(() => _editing = null);
+      _ctrl.clear();
+      return;
+    }
     context.read<ChatProvider>().sendMessage(text);
     _ctrl.clear();
     _scrollToBottom();
+  }
+
+  /// Enters inline-edit mode: load the message text into the input bar and
+  /// focus it. A banner (with an ✕) appears above the field to cancel.
+  void _beginEdit(Message m) {
+    setState(() => _editing = m);
+    _ctrl.text = m.content;
+    _ctrl.selection = TextSelection.collapsed(offset: _ctrl.text.length);
+    _inputFocus.requestFocus();
+  }
+
+  void _cancelEdit() {
+    setState(() => _editing = null);
+    _ctrl.clear();
   }
 
   /// Picks an image from the gallery, compresses it and sends it as an
@@ -240,6 +269,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                             // Team owner can moderate (delete) any message.
                             canModerate: widget.conversation.type == 'project' &&
                                 widget.conversation.projectOwnerId == myId,
+                            onEdit: _beginEdit,
                           ),
                         ),
             ),
@@ -251,9 +281,12 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                   )
                 : _InputBar(
                     controller: _ctrl,
+                    focusNode: _inputFocus,
                     onSend: _send,
                     onAttach: _pickAttachment,
                     onMic: _startRecord,
+                    editing: _editing != null,
+                    onCancelEdit: _cancelEdit,
                   ),
           ],
         ),
@@ -266,7 +299,13 @@ class _Bubble extends StatelessWidget {
   final Message message;
   final bool mine;
   final bool canModerate;
-  const _Bubble({required this.message, required this.mine, this.canModerate = false});
+  final void Function(Message)? onEdit;
+  const _Bubble({
+    required this.message,
+    required this.mine,
+    this.canModerate = false,
+    this.onEdit,
+  });
 
   bool get _canEdit =>
       mine && message.attachmentType == null && message.content.trim().isNotEmpty;
@@ -297,37 +336,12 @@ class _Bubble extends StatelessWidget {
         ),
       ),
     );
-    if (action == 'edit' && context.mounted) {
-      await _edit(context);
+    if (action == 'edit') {
+      // Inline edit: hand the message back to the thread screen, which loads
+      // it into the input bar (no popup).
+      onEdit?.call(message);
     } else if (action == 'delete' && context.mounted) {
       await _delete(context);
-    }
-  }
-
-  Future<void> _edit(BuildContext context) async {
-    final ctrl = TextEditingController(text: message.content);
-    final chat = context.read<ChatProvider>();
-    final newText = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(ctx.tr('chat.edit')),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          maxLines: null,
-          maxLength: 4000,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ctx.tr('common.cancel'))),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-              child: Text(ctx.tr('common.save'))),
-        ],
-      ),
-    );
-    if (newText != null && newText.isNotEmpty && newText != message.content) {
-      await chat.editMessage(message.id, newText);
     }
   }
 
@@ -773,34 +787,72 @@ class _AudioBubbleState extends State<_AudioBubble> {
 
 class _InputBar extends StatelessWidget {
   final TextEditingController controller;
+  final FocusNode focusNode;
   final VoidCallback onSend;
   final VoidCallback onAttach;
   final VoidCallback onMic;
+  final bool editing;
+  final VoidCallback onCancelEdit;
   const _InputBar({
     required this.controller,
+    required this.focusNode,
     required this.onSend,
     required this.onAttach,
     required this.onMic,
+    this.editing = false,
+    required this.onCancelEdit,
   });
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       decoration: BoxDecoration(
         color: context.palette.surface,
         border: Border(top: BorderSide(color: context.palette.slate100)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            icon: Icon(Icons.attach_file, color: context.palette.textMuted),
-            onPressed: onAttach,
-            tooltip: context.tr('chat.attach'),
-          ),
+          // ── Inline edit banner (✕ on the left to cancel) ──────────────────
+          if (editing)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6, left: 2, right: 2),
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: onCancelEdit,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(Icons.close, size: 20, color: context.palette.textMuted),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(Icons.edit_outlined, size: 16, color: primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(context.tr('chat.editing'),
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600, color: primary),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                ],
+              ),
+            ),
+          Row(
+        children: [
+          if (!editing)
+            IconButton(
+              icon: Icon(Icons.attach_file, color: context.palette.textMuted),
+              onPressed: onAttach,
+              tooltip: context.tr('chat.attach'),
+            ),
           Expanded(
             child: TextField(
               controller: controller,
+              focusNode: focusNode,
               minLines: 1,
               maxLines: 4,
               maxLength: 4000,
@@ -813,20 +865,25 @@ class _InputBar extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.mic_none_rounded, color: context.palette.textMuted),
-            onPressed: onMic,
-            tooltip: context.tr('chat.recordVoice'),
-          ),
+          // Attaching/recording don't apply while editing an existing message.
+          if (!editing)
+            IconButton(
+              icon: Icon(Icons.mic_none_rounded, color: context.palette.textMuted),
+              onPressed: onMic,
+              tooltip: context.tr('chat.recordVoice'),
+            ),
           InkWell(
             onTap: onSend,
             borderRadius: BorderRadius.circular(14),
             child: Container(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(14)),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(14)),
+              child: Icon(editing ? Icons.check_rounded : Icons.send_rounded,
+                  color: Colors.white, size: 20),
             ),
+          ),
+        ],
           ),
         ],
       ),
@@ -860,6 +917,7 @@ class _DmHeaderTitle extends StatelessWidget {
             size: 36,
             imageUrl: conversation.avatarImageUrl,
             presenceStatus: conversation.avatarStatus,
+            isTeam: conversation.isTeam,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -949,35 +1007,50 @@ class _TeamMenuButtonState extends State<_TeamMenuButton> {
   }
 
   Future<void> _settings() async {
-    final projects = context.read<ProjectRepository>();
-    final messenger = ScaffoldMessenger.of(context);
-    final errMsg = context.tr('common.error');
-    bool allow = _m?['allow_member_invite'] == true;
-    await showDialog<void>(
+    final m = _m;
+    if (m == null) return;
+    final updated = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: Text(ctx.tr('team.settings')),
-          content: SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(ctx.tr('team.memberInvite')),
-            value: allow,
-            onChanged: (v) async {
-              setLocal(() => allow = v);
-              try {
-                await projects.setTeamSettings(widget.projectId, allowMemberInvite: v);
-                if (mounted) setState(() => _m = {...?_m, 'allow_member_invite': v});
-              } catch (_) {
-                messenger.showSnackBar(SnackBar(content: Text(errMsg)));
-              }
-            },
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ctx.tr('common.done'))),
-          ],
-        ),
+      builder: (_) => _TeamSettingsDialog(
+        projectId: widget.projectId,
+        title: m['title'] as String? ?? '',
+        description: m['description'] as String? ?? '',
+        avatarUrl: m['avatar_url'] as String?,
+        allowMemberInvite: m['allow_member_invite'] == true,
       ),
     );
+    if (updated != null && mounted) setState(() => _m = {...?_m, ...updated});
+  }
+
+  /// Owner-only: delete the whole team (the chief can't "leave", they delete).
+  Future<void> _deleteTeam() async {
+    final projects = context.read<ProjectsProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final doneMsg = context.tr('team.deleted');
+    final errMsg = context.tr('common.error');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.tr('team.delete')),
+        content: Text(ctx.tr('team.deleteConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ctx.tr('common.cancel'))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.tr('team.delete')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await projects.deleteProject(widget.projectId);
+      messenger.showSnackBar(SnackBar(content: Text(doneMsg)));
+      widget.onLeft();
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+    }
   }
 
   Future<void> _leave() async {
@@ -1018,6 +1091,7 @@ class _TeamMenuButtonState extends State<_TeamMenuButton> {
         if (v == 'invite') _invite();
         if (v == 'settings') _settings();
         if (v == 'leave') _leave();
+        if (v == 'delete') _deleteTeam();
       },
       itemBuilder: (ctx) => [
         if (m != null && m['can_invite'] == true)
@@ -1047,6 +1121,166 @@ class _TeamMenuButtonState extends State<_TeamMenuButton> {
               Text(ctx.tr('team.leave'), style: const TextStyle(color: Color(0xFFDC2626))),
             ]),
           ),
+        // The owner can't leave — they delete the whole team instead.
+        if (m != null && m['is_owner'] == true)
+          PopupMenuItem(
+            value: 'delete',
+            child: Row(children: [
+              const Icon(Icons.delete_outline, size: 18, color: Color(0xFFDC2626)),
+              const SizedBox(width: 10),
+              Text(ctx.tr('team.delete'), style: const TextStyle(color: Color(0xFFDC2626))),
+            ]),
+          ),
+      ],
+    );
+  }
+}
+
+/// Owner-only team settings: rename, edit description, change photo and toggle
+/// member-invite. Returns the updated fields ({title, description, avatar_url,
+/// allow_member_invite}) when saved, or null on cancel.
+class _TeamSettingsDialog extends StatefulWidget {
+  final int projectId;
+  final String title;
+  final String description;
+  final String? avatarUrl;
+  final bool allowMemberInvite;
+  const _TeamSettingsDialog({
+    required this.projectId,
+    required this.title,
+    required this.description,
+    required this.avatarUrl,
+    required this.allowMemberInvite,
+  });
+
+  @override
+  State<_TeamSettingsDialog> createState() => _TeamSettingsDialogState();
+}
+
+class _TeamSettingsDialogState extends State<_TeamSettingsDialog> {
+  late final TextEditingController _title = TextEditingController(text: widget.title);
+  late final TextEditingController _desc = TextEditingController(text: widget.description);
+  late String? _avatar = widget.avatarUrl;
+  late bool _allow = widget.allowMemberInvite;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _desc.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    final x = await ImagePicker().pickImage(
+      source: ImageSource.gallery, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
+    if (x == null) return;
+    final raw = await x.readAsBytes();
+    if (!mounted) return;
+    final cropped = await Navigator.of(context).push<Uint8List>(
+      MaterialPageRoute(builder: (_) => CropAvatarScreen(imageBytes: raw)));
+    if (cropped == null) return;
+    setState(() => _avatar = 'data:image/png;base64,${base64Encode(cropped)}');
+  }
+
+  Future<void> _save() async {
+    final title = _title.text.trim();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final errMsg = context.tr('common.error');
+    final projectRepo = context.read<ProjectRepository>();
+    final projectsProvider = context.read<ProjectsProvider>();
+    if (title.isEmpty) return;
+    setState(() => _saving = true);
+    try {
+      await projectRepo.updateTeam(
+            widget.projectId,
+            title: title,
+            description: _desc.text.trim(),
+            avatarUrl: _avatar ?? '',
+            allowMemberInvite: _allow,
+          );
+      // Refresh My Teams so the new name/photo show up there too.
+      await projectsProvider.loadMine();
+      navigator.pop({
+        'title': title,
+        'description': _desc.text.trim(),
+        'avatar_url': _avatar,
+        'allow_member_invite': _allow,
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+        messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(context.tr('team.settings')),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: GestureDetector(
+                onTap: _saving ? null : _pickPhoto,
+                child: Column(
+                  children: [
+                    GradientAvatar(
+                        name: _title.text.trim().isEmpty ? '?' : _title.text.trim(),
+                        size: 72,
+                        imageUrl: _avatar,
+                        isTeam: true),
+                    const SizedBox(height: 6),
+                    Text(context.tr('team.changePhoto'),
+                        style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _title,
+              maxLength: 80,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(labelText: context.tr('team.name')),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _desc,
+              maxLength: 600,
+              minLines: 2,
+              maxLines: 4,
+              decoration: InputDecoration(
+                labelText: context.tr('team.descriptionLabel'),
+                alignLabelWithHint: true,
+              ),
+            ),
+            const SizedBox(height: 4),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(context.tr('team.memberInvite'), style: const TextStyle(fontSize: 14)),
+              value: _allow,
+              onChanged: _saving ? null : (v) => setState(() => _allow = v),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: _saving ? null : () => Navigator.pop(context),
+            child: Text(context.tr('common.cancel'))),
+        FilledButton(
+          onPressed: _saving ? null : _save,
+          child: _saving
+              ? const SizedBox(
+                  height: 18, width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Text(context.tr('common.save')),
+        ),
       ],
     );
   }

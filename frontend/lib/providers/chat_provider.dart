@@ -65,11 +65,17 @@ class ChatProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// Creates a poll (team conversation). The poll message arrives via socket.
+  /// Creates a poll (team conversation). Adds the poll message optimistically
+  /// from the POST response (the socket `message:new` is de-duplicated by id),
+  /// so it shows up immediately even if the socket echo is delayed.
   Future<void> createPoll(String question, List<String> options) async {
     if (_activeConvId == null) return;
     try {
-      await _repo.createPoll(_activeConvId!, question, options);
+      final msg = await _repo.createPoll(_activeConvId!, question, options);
+      if (!messages.any((m) => m.id == msg.id)) {
+        messages = [...messages, msg];
+        notifyListeners();
+      }
     } catch (_) {}
   }
 

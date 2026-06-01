@@ -205,10 +205,16 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     final primary = Theme.of(context).colorScheme.primary;
     final palette = context.palette;
 
-    return ListView(
+    // NOTE: a SingleChildScrollView + Column (rather than a ListView) keeps
+    // every field mounted at all times, so the GlobalKeys always have a
+    // BuildContext and `Scrollable.ensureVisible` can reliably jump to the
+    // first missing field — even one far off-screen.
+    return SingleChildScrollView(
       controller: _scroll,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
         // ── Banner ──────────────────────────────────────────────────────────
         GradientBanner(
           child: Row(
@@ -445,7 +451,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
             ],
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -18,12 +18,17 @@ class GradientAvatar extends StatelessWidget {
   /// When null, no status dot is drawn.
   final String? presenceStatus;
 
+  /// When true, a small "group" badge is drawn (bottom-right) to mark this
+  /// avatar as a team — so a team chat is never confused with a 1:1 DM.
+  final bool isTeam;
+
   const GradientAvatar({
     super.key,
     required this.name,
     this.size = 44,
     this.imageUrl,
     this.presenceStatus,
+    this.isTeam = false,
   });
 
   /// Color for a presence value, or null if it should not be shown.
@@ -44,10 +49,13 @@ class GradientAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final avatar = _buildAvatar();
     final dotColor = presenceColor(presenceStatus);
-    if (dotColor == null) return avatar;
-    // Ring matches the surrounding surface so the dot reads as "on top of".
+    // Nothing to overlay → plain avatar.
+    if (dotColor == null && !isTeam) return avatar;
+    // Ring matches the surrounding surface so the badge reads as "on top of".
     final ring = context.palette.surface;
-    final dot = size * 0.30;
+    // The team badge is a touch bigger than a presence dot (it holds an icon).
+    final badge = size * (isTeam ? 0.40 : 0.30);
+    final primary = Theme.of(context).colorScheme.primary;
     return SizedBox(
       width: size,
       height: size,
@@ -59,13 +67,17 @@ class GradientAvatar extends StatelessWidget {
             right: -1,
             bottom: -1,
             child: Container(
-              width: dot,
-              height: dot,
+              width: badge,
+              height: badge,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: dotColor,
+                color: isTeam ? primary : dotColor,
                 shape: BoxShape.circle,
-                border: Border.all(color: ring, width: dot * 0.18),
+                border: Border.all(color: ring, width: badge * (isTeam ? 0.12 : 0.18)),
               ),
+              child: isTeam
+                  ? Icon(Icons.groups, size: badge * 0.62, color: Colors.white)
+                  : null,
             ),
           ),
         ],
