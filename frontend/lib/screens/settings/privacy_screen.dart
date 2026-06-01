@@ -16,11 +16,8 @@ class PrivacyScreen extends StatelessWidget {
   static const _visibility = [
     ('profilePublic', Icons.visibility_outlined, 'priv.profilePublic', 'priv.profilePublicD'),
     ('showOnlineStatus', Icons.bolt_outlined, 'priv.online', 'priv.onlineD'),
-    ('showLastSeen', Icons.schedule_outlined, 'priv.lastSeen', 'priv.lastSeenD'),
   ];
   static const _team = [
-    ('allowTeamInvites', Icons.group_add_outlined, 'priv.teamInvites', 'priv.teamInvitesD'),
-    ('showProjects', Icons.work_outline, 'priv.showProjects', 'priv.showProjectsD'),
     ('appearInSearch', Icons.search, 'priv.appearSearch', 'priv.appearSearchD'),
   ];
   static const _comm = [

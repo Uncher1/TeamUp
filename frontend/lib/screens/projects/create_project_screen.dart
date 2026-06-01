@@ -9,10 +9,13 @@ import '../../core/api_client.dart';
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
+import '../../models/conversation.dart';
 import '../../models/interest.dart';
 import '../../models/skill.dart';
 import '../../providers/lookup_provider.dart';
 import '../../providers/projects_provider.dart';
+import '../../repositories/chat_repo.dart';
+import '../chat/chat_thread_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Category options
@@ -77,15 +80,19 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   Future<void> _submit() async {
     final title = _title.text.trim();
     final description = _description.text.trim();
+    final messenger = ScaffoldMessenger.of(context);
+    final createdMsg = context.tr('proj.created');
+    final requiredMsg = context.tr('proj.required');
     if (title.isEmpty || description.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.tr('proj.required'))),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(requiredMsg)));
       return;
     }
+    final projectsProvider = context.read<ProjectsProvider>();
+    final chat = context.read<ChatRepository>();
+    final navigator = Navigator.of(context);
     setState(() => _busy = true);
     try {
-      await context.read<ProjectsProvider>().create(
+      final created = await projectsProvider.create(
             title: title,
             description: description,
             requiredSkills:
@@ -106,15 +113,29 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         _teamSize = 3;
         _busy = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.tr('proj.created'))),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(createdMsg)));
+      // Land the creator straight in the (persistent) team chat.
+      if (created != null) {
+        try {
+          final convId = await chat.projectConversationId(created.id);
+          navigator.push(MaterialPageRoute(
+            builder: (_) => ChatThreadScreen(
+              conversation: Conversation(
+                id: convId,
+                type: 'project',
+                projectId: created.id,
+                projectTitle: created.title,
+              ),
+            ),
+          ));
+        } catch (_) {
+          // Stay on the form with the success message if the chat can't open.
+        }
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiClient.messageFromError(e))),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(ApiClient.messageFromError(e))));
     }
   }
 

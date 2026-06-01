@@ -51,10 +51,4 @@ class AdminRepository {
   Future<void> deleteUser(int userId) async {
     await api.dio.delete('/admin/users/$userId');
   }
-
-  /// Admin-only: the queue of user reports (most recent first).
-  Future<List<Map<String, dynamic>>> listReports() async {
-    final res = await api.dio.get('/admin/reports');
-    return (res.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-  }
 }

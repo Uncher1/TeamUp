@@ -58,6 +58,7 @@ class _CropAvatarScreenState extends State<CropAvatarScreen> {
         withCircleUi: true,
         baseColor: Colors.black,
         maskColor: Colors.black.withAlpha(150),
+        cornerDotBuilder: (size, edge) => _CornerHandle(edge: edge),
         onCropped: (result) {
           switch (result) {
             case CropSuccess(:final croppedImage):
@@ -68,6 +69,34 @@ class _CropAvatarScreenState extends State<CropAvatarScreen> {
                   .showSnackBar(SnackBar(content: Text(context.tr('common.error'))));
           }
         },
+      ),
+    );
+  }
+}
+
+/// L-shaped corner handle (two white strokes) instead of the default round dot.
+class _CornerHandle extends StatelessWidget {
+  final EdgeAlignment edge;
+  const _CornerHandle({required this.edge});
+
+  @override
+  Widget build(BuildContext context) {
+    const color = Colors.white;
+    const w = 3.0;
+    final top = edge == EdgeAlignment.topLeft || edge == EdgeAlignment.topRight;
+    final left = edge == EdgeAlignment.topLeft || edge == EdgeAlignment.bottomLeft;
+    const side = BorderSide(color: color, width: w);
+    const none = BorderSide.none;
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        border: Border(
+          top: top ? side : none,
+          bottom: top ? none : side,
+          left: left ? side : none,
+          right: left ? none : side,
+        ),
       ),
     );
   }

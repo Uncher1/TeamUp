@@ -8,16 +8,27 @@
 // real status (online/dnd) stays private.
 const pool = require('../config/db');
 
-async function visibilityFor(ids) {
+// Per-user { visibility: 'everyone'|'friends'|'nobody', online: bool } where
+// `online` reflects the privacy-tab "show online status" toggle (default true).
+async function settingsFor(ids) {
   const map = new Map();
   if (!ids.length) return map;
   const [rows] = await pool.query(
-    `SELECT user_id, setting_value FROM user_settings
-      WHERE setting_key = 'presenceVisibility' AND user_id IN (?)`,
+    `SELECT user_id, setting_key, setting_value FROM user_settings
+      WHERE setting_key IN ('presenceVisibility', 'showOnlineStatus') AND user_id IN (?)`,
     [ids]
   );
-  for (const r of rows) map.set(r.user_id, r.setting_value);
+  for (const r of rows) {
+    const e = map.get(r.user_id) || { visibility: 'everyone', online: true };
+    if (r.setting_key === 'presenceVisibility') e.visibility = r.setting_value;
+    if (r.setting_key === 'showOnlineStatus') e.online = r.setting_value !== 'false';
+    map.set(r.user_id, e);
+  }
   return map;
+}
+
+function _cfg(map, id) {
+  return map.get(id) || { visibility: 'everyone', online: true };
 }
 
 async function friendIdsAmong(viewerId, ids) {
@@ -38,15 +49,16 @@ async function friendIdsAmong(viewerId, ids) {
 async function applyPresenceVisibility(viewerId, rows, { idKey = 'id', statusKey = 'presence_status' } = {}) {
   const targets = [...new Set(rows.map((r) => r[idKey]).filter((id) => id && id !== viewerId))];
   if (!targets.length) return rows;
-  const vis = await visibilityFor(targets);
+  const cfg = await settingsFor(targets);
   const friends = await friendIdsAmong(viewerId, targets);
   for (const r of rows) {
     const id = r[idKey];
     if (!id || id === viewerId) continue;
-    const v = vis.get(id) || 'everyone';
-    if (v === 'nobody' || (v === 'friends' && !friends.has(id))) {
-      r[statusKey] = 'offline';
-    }
+    const { visibility, online } = _cfg(cfg, id);
+    const hidden = !online ||
+        visibility === 'nobody' ||
+        (visibility === 'friends' && !friends.has(id));
+    if (hidden) r[statusKey] = 'offline';
   }
   return rows;
 }
@@ -54,10 +66,10 @@ async function applyPresenceVisibility(viewerId, rows, { idKey = 'id', statusKey
 /// Single-user variant: returns the status the [viewerId] is allowed to see.
 async function effectivePresence(viewerId, targetId, status) {
   if (!targetId || targetId === viewerId) return status;
-  const vis = await visibilityFor([targetId]);
-  const v = vis.get(targetId) || 'everyone';
-  if (v === 'everyone') return status;
-  if (v === 'nobody') return 'offline';
+  const cfg = await settingsFor([targetId]);
+  const { visibility, online } = _cfg(cfg, targetId);
+  if (!online || visibility === 'nobody') return 'offline';
+  if (visibility === 'everyone') return status;
   const friends = await friendIdsAmong(viewerId, [targetId]);
   return friends.has(targetId) ? status : 'offline';
 }

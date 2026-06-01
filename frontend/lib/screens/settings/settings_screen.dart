@@ -25,7 +25,6 @@ import 'language_screen.dart';
 import 'notifications_settings_screen.dart';
 import 'password_screen.dart';
 import 'privacy_screen.dart';
-import 'reports_screen.dart';
 import 'theme_color_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -191,11 +190,6 @@ class SettingsScreen extends StatelessWidget {
             label: context.tr('admin.manageAccounts'),
             subtitle: context.tr('role.admin'),
             onTap: () => _push(context, const AdminPanelScreen()),
-          ),
-          SettingsTile(
-            icon: Icons.flag_outlined,
-            label: context.tr('admin.reports'),
-            onTap: () => _push(context, const ReportsScreen()),
           ),
         ],
 

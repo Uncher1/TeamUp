@@ -6,6 +6,7 @@ const express = require('express');
 const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { createNotification } = require('../services/notifications');
+const { getSettings, enabled } = require('../services/settings');
 
 // True if the user may moderate others' content (moderator or admin).
 async function isPrivileged(userId) {
@@ -191,6 +192,11 @@ router.get('/:id/applications', authRequired, async (req, res) => {
       ORDER BY pa.created_at DESC`,
     [projectId]
   );
+  // Respect each applicant's "show email" privacy setting.
+  for (const r of rows) {
+    const s = await getSettings(r.user_id);
+    if (!enabled(s, 'showEmail')) r.email = null;
+  }
   res.json(rows);
 });
 

@@ -81,7 +81,7 @@ router.patch('/me', authRequired, async (req, res) => {
 });
 
 router.put('/me/skills', authRequired, async (req, res) => {
-  const items = Array.isArray(req.body) ? req.body : [];
+  const items = (Array.isArray(req.body) ? req.body : []).slice(0, 20);
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -106,7 +106,7 @@ router.put('/me/skills', authRequired, async (req, res) => {
 });
 
 router.put('/me/interests', authRequired, async (req, res) => {
-  const ids = Array.isArray(req.body) ? req.body.map(Number).filter(Boolean) : [];
+  const ids = (Array.isArray(req.body) ? req.body.map(Number).filter(Boolean) : []).slice(0, 15);
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();

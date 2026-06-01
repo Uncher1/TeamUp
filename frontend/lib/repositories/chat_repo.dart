@@ -64,4 +64,10 @@ class ChatRepository {
     final res = await api.dio.post('/conversations/direct/$otherUserId');
     return Conversation.fromJson(res.data as Map<String, dynamic>);
   }
+
+  /// Find-or-create the team (project) conversation; returns its id.
+  Future<int> projectConversationId(int projectId) async {
+    final res = await api.dio.post('/projects/$projectId/conversation');
+    return (res.data as Map)['id'] as int;
+  }
 }

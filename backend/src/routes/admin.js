@@ -39,21 +39,6 @@ router.patch('/users/:id/role', authRequired, requireRole('admin'), async (req, 
   res.json({ id, role });
 });
 
-// Review the queue of user reports — admin only.
-router.get('/reports', authRequired, requireRole('admin'), async (_req, res) => {
-  const [rows] = await pool.query(
-    `SELECT r.id, r.reason, r.details, r.created_at,
-            r.reported_user_id, ru.full_name AS reported_name, ru.avatar_url AS reported_avatar,
-            r.reporter_id, rep.full_name AS reporter_name
-       FROM reports r
-       JOIN users ru  ON ru.id  = r.reported_user_id
-       JOIN users rep ON rep.id = r.reporter_id
-      ORDER BY r.created_at DESC
-      LIMIT 200`
-  );
-  res.json(rows);
-});
-
 // Permanently delete a user account — admin only. Cascades to all their data.
 router.delete('/users/:id', authRequired, requireRole('admin'), async (req, res) => {
   const id = Number(req.params.id);

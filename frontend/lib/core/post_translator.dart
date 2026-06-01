@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 
 /// On-device (offline, free) translation of post content between the app's
@@ -16,6 +17,21 @@ class PostTranslator {
         return TranslateLanguage.french;
       default:
         return null;
+    }
+  }
+
+  /// Detects the language of [text] on-device; returns 'en'/'fr' when one of the
+  /// supported languages is identified with confidence, otherwise null.
+  static Future<String?> detectLanguage(String text) async {
+    if (text.trim().length < 3) return null;
+    final identifier = LanguageIdentifier(confidenceThreshold: 0.5);
+    try {
+      final code = await identifier.identifyLanguage(text);
+      return (code == 'en' || code == 'fr') ? code : null;
+    } catch (_) {
+      return null;
+    } finally {
+      await identifier.close();
     }
   }
 

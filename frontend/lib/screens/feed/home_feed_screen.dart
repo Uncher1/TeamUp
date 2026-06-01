@@ -44,8 +44,19 @@ class _TranslatablePostContent extends StatefulWidget {
 
 class _TranslatablePostContentState extends State<_TranslatablePostContent> {
   String? _translated;
+  String? _sourceLang; // detected language of the post content
   bool _showing = false;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Detect the post's actual language so we can offer a translation whenever
+    // it differs from the viewer's language (independent of any stored value).
+    PostTranslator.detectLanguage(widget.post.content).then((lang) {
+      if (mounted) setState(() => _sourceLang = lang);
+    });
+  }
 
   Future<void> _toggle() async {
     if (_loading) return;
@@ -60,8 +71,8 @@ class _TranslatablePostContentState extends State<_TranslatablePostContent> {
     final target = context.read<SettingsProvider>().language;
     final failMsg = context.tr('feed.translateFailed');
     setState(() => _loading = true);
-    final result =
-        await PostTranslator.translate(widget.post.content, widget.post.language, target);
+    final result = await PostTranslator.translate(
+        widget.post.content, _sourceLang ?? widget.post.language, target);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -78,7 +89,7 @@ class _TranslatablePostContentState extends State<_TranslatablePostContent> {
   @override
   Widget build(BuildContext context) {
     final viewerLang = context.watch<SettingsProvider>().language;
-    final canTranslate = PostTranslator.canTranslate(widget.post.language, viewerLang);
+    final canTranslate = _sourceLang != null && _sourceLang != viewerLang;
     final accent = Theme.of(context).colorScheme.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

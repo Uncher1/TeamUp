@@ -46,9 +46,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _twitter;
   late final TextEditingController _website;
 
+  static const _maxSkills = 20;
+  static const _maxInterests = 15;
+
   /// skillId -> level (1..5)
   final Map<int, int> _skills = {};
   final Set<int> _interests = {};
+
+  void _limitSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
   bool _busy = false;
 
   /// null = unchanged, '' = remove, 'data:...' = new image
@@ -354,7 +361,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     _SkillLevelPicker(
                       skills: lookup.skills,
                       selected: _skills,
-                      onAdd: (id) => setState(() => _skills[id] = 3),
+                      onAdd: (id) {
+                        if (_skills.length >= _maxSkills) {
+                          _limitSnack(context.tr('cp.maxSkills', {'n': '$_maxSkills'}));
+                          return;
+                        }
+                        setState(() => _skills[id] = 3);
+                      },
                       onRemove: (id) => setState(() => _skills.remove(id)),
                       onLevel: (id, lv) => setState(() => _skills[id] = lv),
                     ),
@@ -368,9 +381,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     chipBuilder: (id, name) => FilterChip(
                       label: Text(name),
                       selected: _interests.contains(id),
-                      onSelected: (_) => setState(() {
-                        if (!_interests.add(id)) _interests.remove(id);
-                      }),
+                      onSelected: (_) {
+                        if (_interests.contains(id)) {
+                          setState(() => _interests.remove(id));
+                          return;
+                        }
+                        if (_interests.length >= _maxInterests) {
+                          _limitSnack(context.tr('cp.maxInterests', {'n': '$_maxInterests'}));
+                          return;
+                        }
+                        setState(() => _interests.add(id));
+                      },
                     ),
                   ),
                 ],

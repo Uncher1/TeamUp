@@ -102,6 +102,8 @@ const Map<String, Map<String, String>> _strings = {
     'cp.school': 'School',
     'cp.skills': 'Skills',
     'cp.skillsHint': 'Tap to add; set your level (1–5).',
+    'cp.maxSkills': 'You can add up to {n} skills.',
+    'cp.maxInterests': 'You can add up to {n} interests.',
     'cp.interests': 'Interests',
     'cp.finish': 'Finish',
 
@@ -617,6 +619,8 @@ const Map<String, Map<String, String>> _strings = {
     'cp.school': 'École',
     'cp.skills': 'Compétences',
     'cp.skillsHint': 'Touche pour ajouter ; règle ton niveau (1–5).',
+    'cp.maxSkills': 'Tu peux ajouter jusqu’à {n} compétences.',
+    'cp.maxInterests': 'Tu peux ajouter jusqu’à {n} centres d’intérêt.',
     'cp.interests': "Centres d'intérêt",
     'cp.finish': 'Terminer',
 
