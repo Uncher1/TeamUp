@@ -329,32 +329,19 @@ Future<void> _pickPresenceVisibility(BuildContext context) async {
   }
 }
 
-/// GDPR data portability: e-mail a JSON copy from the TeamUp address to the
-/// user's account address. If the mail server isn't reachable, we still hand
-/// them the file via the share sheet so it's never a dead end.
+/// GDPR data portability: build a downloadable JSON copy and open the system
+/// share/save sheet. (E-mail delivery is on hold until the prod mail provider
+/// is sorted — tracked as tech debt.)
 Future<void> _exportData(BuildContext context) async {
   final repo = context.read<UserRepository>();
   final messenger = ScaffoldMessenger.of(context);
-  final email = context.read<AuthProvider>().user?.email ?? '';
-  final sendingMsg = context.tr('set.exportSending');
-  final sentMsg = context.tr('set.exportSent', {'email': email});
-  final sharedMsg = context.tr('set.exportShared');
+  final preparingMsg = context.tr('set.exportPreparing');
   final failMsg = context.tr('set.exportFail');
-  messenger.showSnackBar(SnackBar(content: Text(sendingMsg)));
+  messenger.showSnackBar(SnackBar(content: Text(preparingMsg)));
   try {
-    if (await repo.requestDataExport()) {
-      messenger.showSnackBar(SnackBar(content: Text(sentMsg)));
-      return;
-    }
     await _shareExportFile(repo);
-    messenger.showSnackBar(SnackBar(content: Text(sharedMsg)));
   } catch (_) {
-    try {
-      await _shareExportFile(repo);
-      messenger.showSnackBar(SnackBar(content: Text(sharedMsg)));
-    } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(failMsg)));
-    }
+    messenger.showSnackBar(SnackBar(content: Text(failMsg)));
   }
 }
 

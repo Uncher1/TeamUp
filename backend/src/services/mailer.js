@@ -45,47 +45,9 @@ function brandedHtml({ title, intro, note, lang = 'en' }) {
 </body></html>`;
 }
 
-// Sender identity for the HTTP provider (Brevo requires a verified sender).
-const SENDER_EMAIL = process.env.SMTP_USER || 'teamup.team28@gmail.com';
-const SENDER_NAME = 'TeamUp';
-
-/// Sends through Brevo's HTTP API (port 443) — required on hosts that block
-/// outbound SMTP (e.g. Render's free tier). Used when BREVO_API_KEY is set.
-async function sendViaBrevo({ to, subject, html, attachments }) {
-  const payload = {
-    sender: { email: SENDER_EMAIL, name: SENDER_NAME },
-    to: [{ email: to }],
-    subject,
-    htmlContent: html,
-  };
-  if (attachments && attachments.length) {
-    payload.attachment = attachments.map((a) => ({
-      name: a.filename,
-      content: Buffer.from(a.content).toString('base64'),
-    }));
-  }
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'api-key': process.env.BREVO_API_KEY,
-      'content-type': 'application/json',
-      accept: 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    throw new Error(`Brevo HTTP ${res.status}: ${await res.text()}`);
-  }
-  return { brevo: true };
-}
-
 async function sendMail({ to, subject, html, attachments }) {
-  // Prefer the HTTP API (works where SMTP ports are blocked).
-  if (process.env.BREVO_API_KEY) {
-    return sendViaBrevo({ to, subject, html, attachments });
-  }
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('[mailer] no email provider configured — skipping email to', to);
+    console.warn('[mailer] SMTP not configured — skipping email to', to);
     return { skipped: true };
   }
   return transporter.sendMail({ from: FROM, to, subject, html, attachments });
