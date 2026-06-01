@@ -50,8 +50,9 @@ function brandedHtml({ title, intro, note, lang = 'en' }) {
 /// no Brevo key is set (local dev).
 async function sendViaBrevo({ to, subject, html, attachments }) {
   const sender = process.env.BREVO_SENDER || FROM || process.env.SMTP_USER;
+  const senderName = process.env.BREVO_SENDER_NAME || 'TeamUp · Comptes & sécurité';
   const body = {
-    sender: { email: sender, name: 'TeamUp' },
+    sender: { email: sender, name: senderName },
     to: [{ email: to }],
     subject,
     htmlContent: html,
