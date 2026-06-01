@@ -22,6 +22,7 @@ import '../../design_system/ds.dart';
 import '../../models/conversation.dart';
 import '../../models/message.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/call_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/projects_provider.dart';
 import '../../repositories/project_repo.dart';
@@ -238,6 +239,22 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
 
   static String fmtSecs(int s) => '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
 
+  /// Ring the other person (1:1 DM call). [video] picks audio vs video.
+  void _startCall(bool video) {
+    final c = widget.conversation;
+    final otherId = c.otherUserId;
+    if (otherId == null) return;
+    final call = context.read<CallProvider>();
+    if (call.isBusy) return;
+    call.startCall(
+      userId: otherId,
+      name: c.otherUserName ?? '',
+      avatar: c.otherUserAvatar,
+      video: video,
+      conversationId: c.id,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ChatProvider>();
@@ -256,7 +273,20 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                         onLeft: () => Navigator.of(context).maybePop(),
                       ),
                     ]
-                  : const [],
+                  : widget.conversation.otherUserId != null
+                      ? [
+                          IconButton(
+                            icon: const Icon(Icons.call),
+                            tooltip: context.tr('call.audio'),
+                            onPressed: () => _startCall(false),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.videocam),
+                            tooltip: context.tr('call.video'),
+                            onPressed: () => _startCall(true),
+                          ),
+                        ]
+                      : const [],
             ),
             Expanded(
               child: provider.loadingMessages && provider.messages.isEmpty

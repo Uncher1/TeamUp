@@ -3,6 +3,7 @@
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
 const { Server } = require('socket.io');
+const pool = require('./config/db');
 const { verify } = require('./utils/jwt');
 const { userInConversation, createMessage } = require('./services/chat');
 const { notifyNewMessage } = require('./services/notifications');
@@ -72,6 +73,43 @@ function initSocket(server) {
         if (typeof ack === 'function') ack({ error: e.message || 'send failed' });
       }
     });
+
+    // ── 1:1 call signaling (WebRTC) ──────────────────────────────────────────
+    // All events are relayed to the target user's personal room (`user:<id>`).
+    // `from` is always set server-side to the authenticated sender (no spoofing).
+    const toUser = (id) => `user:${Number(id)}`;
+
+    // Caller rings callee: enrich with the caller's name/avatar for the popup.
+    socket.on('call:invite', async (p) => {
+      const to = Number(p?.to);
+      if (!to || to === socket.userId) return;
+      let name = '', avatar = null;
+      try {
+        const [r] = await pool.query('SELECT full_name, avatar_url FROM users WHERE id = ?', [socket.userId]);
+        if (r.length) { name = r[0].full_name; avatar = r[0].avatar_url; }
+      } catch { /* best-effort */ }
+      io.to(toUser(to)).emit('call:incoming', {
+        from: socket.userId,
+        fromName: name,
+        fromAvatar: avatar,
+        callType: p?.callType === 'audio' ? 'audio' : 'video',
+        conversationId: p?.conversationId ?? null,
+      });
+    });
+
+    // Relay the rest verbatim (with a trusted `from`).
+    const relay = (event, outEvent) => socket.on(event, (p) => {
+      const to = Number(p?.to);
+      if (!to) return;
+      io.to(toUser(to)).emit(outEvent, { ...p, to: undefined, from: socket.userId });
+    });
+    relay('call:cancel', 'call:cancelled');
+    relay('call:accept', 'call:accepted');
+    relay('call:reject', 'call:rejected');
+    relay('call:offer', 'call:offer');
+    relay('call:answer', 'call:answer');
+    relay('call:ice', 'call:ice');
+    relay('call:end', 'call:ended');
   });
 
   return io;

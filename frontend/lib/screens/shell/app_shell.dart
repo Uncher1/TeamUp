@@ -11,6 +11,7 @@ import '../../core/update_checker.dart';
 import '../../design_system/ds.dart';
 import '../../design_system/menu_drawer.dart';
 import '../../models/app_notification.dart';
+import '../../providers/call_provider.dart';
 import '../../providers/notifications_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../chat/chat_screen.dart';
@@ -117,8 +118,17 @@ class _AppShellState extends State<AppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NotificationsProvider>().refreshUnread();
       context.read<SettingsProvider>().load();
+      // Open the persistent call socket so incoming calls ring from anywhere.
+      context.read<CallProvider>().connect();
       maybePromptForUpdate(context);
     });
+  }
+
+  @override
+  void dispose() {
+    // Tear down the call socket when leaving the authenticated shell (logout).
+    context.read<CallProvider>().disconnect();
+    super.dispose();
   }
 
   String get _title {

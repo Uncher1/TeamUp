@@ -14,6 +14,7 @@ import 'core/app_info.dart';
 import 'core/storage.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/call_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/feed_provider.dart';
 import 'providers/lookup_provider.dart';
@@ -35,6 +36,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/verification_screen.dart';
 import 'screens/common/splash_screen.dart';
 import 'screens/onboarding/complete_profile_screen.dart';
+import 'screens/call/call_overlay.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/shell/app_shell.dart';
 
@@ -91,6 +93,7 @@ class _TeamUpAppState extends State<TeamUpApp> {
         ChangeNotifierProvider(create: (_) => LookupProvider(_lookupRepo)),
         ChangeNotifierProvider(create: (_) => MatchingProvider(_matchingRepo)),
         ChangeNotifierProvider(create: (_) => ChatProvider(_chatRepo, _storage)),
+        ChangeNotifierProvider(create: (_) => CallProvider(_storage)),
         ChangeNotifierProvider(create: (_) => FeedProvider(_feedRepo)),
         ChangeNotifierProvider(create: (_) => NotificationsProvider(_notificationsRepo)),
         ChangeNotifierProvider(create: (_) => SettingsProvider(_settingsRepo)),
@@ -135,7 +138,14 @@ class _Root extends StatelessWidget {
             child: ClipRect(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
-                child: child,
+                // The call overlay sits above all content so an incoming call
+                // (or the in-call screen) can appear from any screen.
+                child: Stack(
+                  children: [
+                    ?child,
+                    const CallOverlay(),
+                  ],
+                ),
               ),
             ),
           ),
