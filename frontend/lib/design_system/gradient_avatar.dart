@@ -115,59 +115,83 @@ class GradientAvatar extends StatelessWidget {
   }
 }
 
-/// Opens a full-screen, pinch-to-zoom (2-finger) viewer for a profile/team
-/// photo. No-op when there's no actual photo (gradient initials can't zoom).
+/// Opens a full-screen viewer for a profile/team photo with pinch-to-zoom
+/// (2 fingers) AND double-tap-to-zoom. No-op when there's no actual photo.
 void showZoomableImage(BuildContext context, {required String? imageUrl}) {
   if (imageUrl == null || imageUrl.isEmpty) return;
   Navigator.of(context, rootNavigator: true).push(
-    PageRouteBuilder<void>(
-      opaque: false,
-      barrierColor: Colors.black,
-      barrierDismissible: true,
-      pageBuilder: (_, _, _) => _ZoomViewer(imageUrl: imageUrl),
+    MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) => _ZoomViewer(imageUrl: imageUrl),
     ),
   );
 }
 
-class _ZoomViewer extends StatelessWidget {
+class _ZoomViewer extends StatefulWidget {
   final String imageUrl;
   const _ZoomViewer({required this.imageUrl});
 
   @override
+  State<_ZoomViewer> createState() => _ZoomViewerState();
+}
+
+class _ZoomViewerState extends State<_ZoomViewer> {
+  final TransformationController _tc = TransformationController();
+  TapDownDetails? _doubleTapDetails;
+
+  @override
+  void dispose() {
+    _tc.dispose();
+    super.dispose();
+  }
+
+  // Double-tap toggles between fit (1x) and 2.5x centered on the tap point.
+  void _handleDoubleTap() {
+    if (_tc.value != Matrix4.identity()) {
+      _tc.value = Matrix4.identity();
+      return;
+    }
+    final pos = _doubleTapDetails?.localPosition ?? Offset.zero;
+    const scale = 2.5;
+    _tc.value = Matrix4.identity()
+      ..translateByDouble(-pos.dx * (scale - 1), -pos.dy * (scale - 1), 0, 1)
+      ..scaleByDouble(scale, scale, 1, 1);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final Widget image = imageUrl.startsWith('data:')
-        ? Image.memory(base64Decode(imageUrl.split(',').last),
+    final url = widget.imageUrl;
+    final Widget image = url.startsWith('data:')
+        ? Image.memory(base64Decode(url.split(',').last),
             fit: BoxFit.contain, gaplessPlayback: true,
-            errorBuilder: (_, a, b) => const SizedBox.shrink())
-        : Image.network(imageUrl, fit: BoxFit.contain,
-            errorBuilder: (_, a, b) => const SizedBox.shrink());
+            errorBuilder: (_, _, _) => const SizedBox.shrink())
+        : Image.network(url, fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const SizedBox.shrink());
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          // InteractiveViewer owns the pinch/pan gestures across the whole
-          // screen; the inner tap (on the image) dismisses the viewer.
-          Positioned.fill(
-            child: InteractiveViewer(
-              minScale: 1,
-              maxScale: 5,
-              child: Center(
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: image,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            right: 12,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 28),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-        ],
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      // Double-tap is a separate recognizer from the pinch (scale), so they
+      // don't fight; single-finger pan stays with the InteractiveViewer.
+      body: GestureDetector(
+        onDoubleTapDown: (d) => _doubleTapDetails = d,
+        onDoubleTap: _handleDoubleTap,
+        child: InteractiveViewer(
+          transformationController: _tc,
+          panEnabled: true,
+          scaleEnabled: true,
+          minScale: 1,
+          maxScale: 5,
+          boundaryMargin: const EdgeInsets.all(double.infinity),
+          child: Center(child: image),
+        ),
       ),
     );
   }
