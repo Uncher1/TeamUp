@@ -8,9 +8,32 @@ import 'package:provider/provider.dart';
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
+import '../../models/conversation.dart';
 import '../../models/project.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/projects_provider.dart';
+import '../../repositories/chat_repo.dart';
+import '../chat/chat_thread_screen.dart';
+
+/// Opens (find-or-create) the project's team chat.
+Future<void> _openProjectChat(BuildContext context, Project p) async {
+  final chat = context.read<ChatRepository>();
+  final navigator = Navigator.of(context);
+  try {
+    final convId = await chat.projectConversationId(p.id);
+    navigator.push(MaterialPageRoute(
+      builder: (_) => ChatThreadScreen(
+        conversation: Conversation(
+          id: convId,
+          type: 'project',
+          projectId: p.id,
+          projectTitle: p.title,
+          projectAvatar: p.avatarUrl,
+        ),
+      ),
+    ));
+  } catch (_) {/* ignore — tapping again retries */}
+}
 
 class MyTeamsScreen extends StatefulWidget {
   const MyTeamsScreen({super.key});
@@ -157,14 +180,17 @@ class _TeamCard extends StatelessWidget {
             label: context.tr('timeline.${project.timeline}')),
     ];
 
-    return AppCard(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _openProjectChat(context, project),
+      child: AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GradientAvatar(name: project.title, size: 48),
+              GradientAvatar(name: project.title, size: 48, imageUrl: project.avatarUrl),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -243,6 +269,7 @@ class _TeamCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

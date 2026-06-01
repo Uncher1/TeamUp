@@ -212,12 +212,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
         child: Column(
           children: [
             ScreenHeader(
-              title: widget.conversation.type == 'project'
-                  ? widget.conversation.displayName
-                  : '',
-              titleWidget: widget.conversation.type == 'direct'
-                  ? _DmHeaderTitle(conversation: widget.conversation)
-                  : null,
+              titleWidget: _DmHeaderTitle(conversation: widget.conversation),
             ),
             Expanded(
               child: provider.loadingMessages && provider.messages.isEmpty
@@ -406,58 +401,82 @@ class _PollBubble extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.4)
         : Theme.of(context).colorScheme.primary.withValues(alpha: 0.25);
 
+    final footer = mine ? Colors.white70 : context.palette.textMuted;
     return SizedBox(
-      width: 240,
+      width: 256,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(children: [
-            Icon(Icons.poll_outlined, size: 16, color: fg),
+            Icon(Icons.bar_chart_rounded, size: 18, color: fg),
             const SizedBox(width: 6),
-            Expanded(child: Text(question, style: TextStyle(fontWeight: FontWeight.w700, color: fg))),
+            Expanded(
+              child: Text(question,
+                  style: TextStyle(fontWeight: FontWeight.w700, color: fg, height: 1.2)),
+            ),
           ]),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           for (int i = 0; i < options.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: GestureDetector(
-                onTap: () => context.read<ChatProvider>().votePoll(id, i),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Stack(children: [
-                    Container(height: 34, width: double.infinity, color: track),
-                    FractionallySizedBox(
-                      widthFactor: total > 0 ? (i < counts.length ? counts[i] : 0) / total : 0.0,
-                      child: Container(height: 34, color: fill),
+            () {
+              final count = i < counts.length ? counts[i] : 0;
+              final pct = total > 0 ? count / total : 0.0;
+              final selected = myVote == i;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: GestureDetector(
+                  onTap: () => context.read<ChatProvider>().votePoll(id, i),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: selected ? fg.withValues(alpha: 0.9) : Colors.transparent,
+                        width: 1.5,
+                      ),
                     ),
-                    Container(
-                      height: 34,
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Row(children: [
-                        if (myVote == i) ...[
-                          Icon(Icons.check_circle, size: 15, color: fg),
-                          const SizedBox(width: 6),
-                        ],
-                        Expanded(
-                          child: Text(options[i],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: fg,
-                                  fontWeight: myVote == i ? FontWeight.w700 : FontWeight.w500)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(9),
+                      child: Stack(children: [
+                        Container(height: 40, width: double.infinity, color: track),
+                        AnimatedFractionallySizedBox(
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
+                          widthFactor: pct.clamp(0.0, 1.0),
+                          child: Container(height: 40, color: fill),
                         ),
-                        Text('${i < counts.length ? counts[i] : 0}',
-                            style: TextStyle(color: fg, fontSize: 12)),
+                        Container(
+                          height: 40,
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(children: [
+                            if (selected) ...[
+                              Icon(Icons.check_circle, size: 16, color: fg),
+                              const SizedBox(width: 6),
+                            ],
+                            Expanded(
+                              child: Text(options[i],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      color: fg,
+                                      fontWeight:
+                                          selected ? FontWeight.w700 : FontWeight.w500)),
+                            ),
+                            const SizedBox(width: 8),
+                            Text('${(pct * 100).round()}%',
+                                style: TextStyle(
+                                    color: fg, fontSize: 12, fontWeight: FontWeight.w700)),
+                          ]),
+                        ),
                       ]),
                     ),
-                  ]),
+                  ),
                 ),
-              ),
-            ),
+              );
+            }(),
+          const SizedBox(height: 2),
           Text(context.tr('chat.votes', {'n': '$total'}),
-              style: TextStyle(fontSize: 11, color: mine ? Colors.white70 : context.palette.textMuted)),
+              style: TextStyle(fontSize: 11, color: footer)),
         ],
       ),
     );

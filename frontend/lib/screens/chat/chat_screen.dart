@@ -63,7 +63,7 @@ class _ChatScreenState extends State<ChatScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: provider.conversations.length,
-        separatorBuilder: (context, _) => Divider(color: context.palette.slate100, height: 1, indent: 76),
+        separatorBuilder: (context, _) => Divider(color: context.palette.slate100, height: 1, indent: 82),
         itemBuilder: (_, i) {
           final c = provider.conversations[i];
           return _ConvTile(conv: c, onTap: () => _open(c));
@@ -80,18 +80,21 @@ class _ConvTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
+    final hasMessage = (conv.lastMessage ?? '').trim().isNotEmpty;
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             GradientAvatar(
                 name: conv.displayName,
-                size: 48,
+                size: 52,
                 imageUrl: conv.avatarImageUrl,
                 presenceStatus: conv.avatarStatus),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,18 +103,39 @@ class _ConvTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(conv.displayName,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 15),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
-                      if (conv.lastMessageAt != null)
+                      if (conv.lastMessageAt != null) ...[
+                        const SizedBox(width: 8),
                         Text(timeAgo(context, conv.lastMessageAt!),
-                            style: TextStyle(fontSize: 11, color: context.palette.textMuted)),
+                            style: TextStyle(fontSize: 11, color: p.textMuted)),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(conv.lastMessage ?? context.tr('chat.start'),
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      if (conv.type == 'project')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 5),
+                          child: Icon(Icons.groups_outlined, size: 15, color: p.textMuted),
+                        ),
+                      Expanded(
+                        child: Text(
+                          hasMessage ? conv.lastMessage! : context.tr('chat.start'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: p.textMuted,
+                            fontStyle: hasMessage ? FontStyle.normal : FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -120,5 +144,4 @@ class _ConvTile extends StatelessWidget {
       ),
     );
   }
-
 }

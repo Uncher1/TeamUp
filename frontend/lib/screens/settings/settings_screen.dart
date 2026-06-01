@@ -2,8 +2,13 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/app_info.dart';
 import '../../core/app_strings.dart';
@@ -333,6 +338,7 @@ Future<void> _exportData(BuildContext context) async {
   final failMsg = context.tr('set.exportFail');
   final sendingMsg = context.tr('set.exportSending');
   final sentMsg = context.tr('set.exportSent', {'email': email});
+  final sharedMsg = context.tr('set.exportShared');
   final confirm = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -351,9 +357,31 @@ Future<void> _exportData(BuildContext context) async {
   if (confirm != true) return;
   messenger.showSnackBar(SnackBar(content: Text(sendingMsg)));
   try {
-    await repo.requestDataExport();
-    messenger.showSnackBar(SnackBar(content: Text(sentMsg)));
+    final sent = await repo.requestDataExport();
+    if (sent) {
+      messenger.showSnackBar(SnackBar(content: Text(sentMsg)));
+      return;
+    }
+    // Email unavailable → fall back to letting the user save/share the file.
+    await _shareExportFile(repo);
+    messenger.showSnackBar(SnackBar(content: Text(sharedMsg)));
   } catch (_) {
-    messenger.showSnackBar(SnackBar(content: Text(failMsg)));
+    // Last resort: try the file share; if even that fails, report the error.
+    try {
+      await _shareExportFile(repo);
+      messenger.showSnackBar(SnackBar(content: Text(sharedMsg)));
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(failMsg)));
+    }
   }
+}
+
+/// Writes the export JSON to a temp file and opens the system share sheet.
+Future<void> _shareExportFile(UserRepository repo) async {
+  final data = await repo.fetchExportJson();
+  final json = const JsonEncoder.withIndent('  ').convert(data);
+  final dir = await getTemporaryDirectory();
+  final file = File('${dir.path}/teamup-my-data.json');
+  await file.writeAsString(json);
+  await Share.shareXFiles([XFile(file.path)]);
 }

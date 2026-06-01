@@ -18,7 +18,7 @@ const router = express.Router();
 
 async function loadProject(id) {
   const [projects] = await pool.query(
-    `SELECT p.id, p.title, p.description, p.category, p.team_size, p.timeline,
+    `SELECT p.id, p.title, p.description, p.category, p.avatar_url, p.team_size, p.timeline,
             p.status, p.created_at,
             u.id AS owner_id, u.full_name AS owner_name
        FROM projects p JOIN users u ON u.id = p.owner_id
@@ -50,7 +50,7 @@ async function loadProject(id) {
 
 router.get('/', authRequired, async (_req, res) => {
   const [rows] = await pool.query(
-    `SELECT p.id, p.title, p.description, p.category, p.team_size, p.timeline,
+    `SELECT p.id, p.title, p.description, p.category, p.avatar_url, p.team_size, p.timeline,
             p.status, p.created_at,
             u.id AS owner_id, u.full_name AS owner_name
        FROM projects p JOIN users u ON u.id = p.owner_id
@@ -62,7 +62,7 @@ router.get('/', authRequired, async (_req, res) => {
 
 router.get('/mine', authRequired, async (req, res) => {
   const [rows] = await pool.query(
-    `SELECT p.id, p.title, p.description, p.category, p.team_size, p.timeline,
+    `SELECT p.id, p.title, p.description, p.category, p.avatar_url, p.team_size, p.timeline,
             p.status, p.created_at,
             u.id AS owner_id, u.full_name AS owner_name, pm.role AS my_role
        FROM project_members pm
@@ -86,19 +86,20 @@ router.get('/mine', authRequired, async (req, res) => {
 
 router.post('/', authRequired, async (req, res) => {
   const { title, description, required_skills = [], interests = [],
-          category = null, team_size = null, timeline = null } = req.body || {};
+          category = null, team_size = null, timeline = null, avatar_url = null } = req.body || {};
   if (!title || !description) {
     return res.status(400).json({ error: 'title and description are required' });
   }
   const cat = category ? String(category).slice(0, 40) : null;
+  const avatar = (typeof avatar_url === 'string' && avatar_url.length) ? avatar_url : null;
   const size = team_size != null ? Math.max(1, Math.min(50, Number(team_size) || 0)) || null : null;
   const tl = timeline ? String(timeline).slice(0, 20) : null;
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     const [r] = await conn.query(
-      'INSERT INTO projects (owner_id, title, description, category, team_size, timeline) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.user.id, title, description, cat, size, tl]
+      'INSERT INTO projects (owner_id, title, description, category, avatar_url, team_size, timeline) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [req.user.id, title, description, cat, avatar, size, tl]
     );
     const id = r.insertId;
     await conn.query(
@@ -256,12 +257,21 @@ router.post('/:id/conversation', authRequired, async (req, res) => {
   );
   if (!members.length) return res.status(403).json({ error: 'not a project member' });
 
+  // Include the team's name + photo so the chat header can render them.
+  const [proj] = await pool.query('SELECT title, avatar_url FROM projects WHERE id = ?', [projectId]);
+  const info = {
+    type: 'project',
+    project_id: projectId,
+    project_title: proj[0]?.title ?? null,
+    project_avatar: proj[0]?.avatar_url ?? null,
+  };
+
   const [existing] = await pool.query(
     "SELECT id FROM conversations WHERE type = 'project' AND project_id = ?",
     [projectId]
   );
   if (existing.length) {
-    return res.json({ id: existing[0].id, type: 'project', project_id: projectId });
+    return res.json({ id: existing[0].id, ...info });
   }
 
   const conn = await pool.getConnection();
@@ -283,7 +293,7 @@ router.post('/:id/conversation', authRequired, async (req, res) => {
       );
     }
     await conn.commit();
-    res.status(201).json({ id, type: 'project', project_id: projectId });
+    res.status(201).json({ id, ...info });
   } catch (e) {
     await conn.rollback();
     throw e;

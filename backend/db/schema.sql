@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS projects (
   title       VARCHAR(160) NOT NULL,
   description TEXT NOT NULL,
   category    VARCHAR(40) NULL,
+  avatar_url  MEDIUMTEXT NULL,
   team_size   TINYINT UNSIGNED NULL,
   timeline    VARCHAR(20) NULL,
   status      ENUM('open','in_progress','closed') NOT NULL DEFAULT 'open',

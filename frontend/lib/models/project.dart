@@ -50,6 +50,7 @@ class Project {
   final List<Interest> interests;
   final List<ProjectMember> members;
   final String? category;
+  final String? avatarUrl;
   final int? teamSize;
   final String? timeline;
 
@@ -64,6 +65,7 @@ class Project {
     this.interests = const [],
     this.members = const [],
     this.category,
+    this.avatarUrl,
     this.teamSize,
     this.timeline,
   });
@@ -75,6 +77,7 @@ class Project {
         status: json['status'] as String? ?? 'open',
         ownerId: json['owner_id'] as int,
         ownerName: json['owner_name'] as String? ?? '',
+        avatarUrl: json['avatar_url'] as String?,
         requiredSkills: (json['required_skills'] as List?)
                 ?.map((e) => RequiredSkill.fromJson(e as Map<String, dynamic>))
                 .toList() ??

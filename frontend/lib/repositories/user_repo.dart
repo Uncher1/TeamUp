@@ -127,11 +127,18 @@ class UserRepository {
     await api.dio.delete('/users/me');
   }
 
-  /// GDPR data portability: ask the backend to e-mail a JSON copy of the
-  /// user's data to their account address. Returns the address it was sent to.
-  Future<String> requestDataExport() async {
+  /// GDPR data portability: ask the backend to e-mail a JSON copy of the user's
+  /// data. Returns true only if the email was actually sent (false → caller
+  /// should fall back to sharing the file).
+  Future<bool> requestDataExport() async {
     final res = await api.dio.post('/users/me/export/email');
-    return (res.data as Map)['to'] as String? ?? '';
+    return (res.data as Map)['sent'] == true;
+  }
+
+  /// Fetches the full export as JSON (used for the share/save fallback).
+  Future<Map<String, dynamic>> fetchExportJson() async {
+    final res = await api.dio.get('/users/me/export');
+    return Map<String, dynamic>.from(res.data as Map);
   }
 
   /// [skills] is a list of {skill_id, level}.

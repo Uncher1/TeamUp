@@ -145,7 +145,9 @@ class _AppShellState extends State<AppShell> {
       case AppSection.home:
         return const HomeFeedScreen();
       case AppSection.createProject:
-        return const CreateProjectScreen();
+        return CreateProjectScreen(
+          onCreated: () => setState(() => _section = AppSection.myTeams),
+        );
       case AppSection.findTeammates:
         return const FindTeammatesScreen();
       case AppSection.myTeams:

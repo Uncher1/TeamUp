@@ -69,6 +69,7 @@ class ProjectsProvider extends ChangeNotifier {
     String? category,
     int? teamSize,
     String? timeline,
+    String? avatarUrl,
   }) async {
     final created = await repo.create(
       title: title,
@@ -78,6 +79,7 @@ class ProjectsProvider extends ChangeNotifier {
       category: category,
       teamSize: teamSize,
       timeline: timeline,
+      avatarUrl: avatarUrl,
     );
     projects = [created, ...projects];
     notifyListeners();

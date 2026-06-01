@@ -360,19 +360,23 @@ router.post('/me/export/email', authRequired, async (req, res) => {
   const [u] = await pool.query('SELECT email, full_name FROM users WHERE id = ?', [req.user.id]);
   if (!u.length) return res.status(404).json({ error: 'user not found' });
   const lang = await getUserLanguage(req.user.id);
+  // Report the REAL outcome: false when SMTP is unconfigured (skipped) or fails,
+  // so the app can fall back to letting the user save/share the file instead.
+  let sent = false;
   try {
-    await sendDataExport({
+    const info = await sendDataExport({
       to: u[0].email,
       name: u[0].full_name,
       json: JSON.stringify(data, null, 2),
       counts,
       lang,
     });
+    sent = !(info && info.skipped === true);
   } catch (e) {
     console.error('[mail] data-export failed:', e.message);
-    return res.status(502).json({ error: 'could not send the export email' });
+    sent = false;
   }
-  res.json({ sent: true, to: u[0].email });
+  res.json({ sent, to: u[0].email });
 });
 
 router.get('/:id', authRequired, async (req, res) => {

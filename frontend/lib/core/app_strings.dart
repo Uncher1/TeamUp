@@ -145,6 +145,7 @@ const Map<String, Map<String, String>> _strings = {
     'set.exportConfirm': "We'll email a copy of your data to {email}.",
     'set.exportSending': 'Sending your data…',
     'set.exportSent': 'Sent! Check your inbox at {email}.',
+    'set.exportShared': 'Email unavailable — sharing the file instead.',
     'presence.title': 'Status',
     'presence.sub': 'What others see next to your avatar',
     'presence.online': 'Online',
@@ -419,6 +420,7 @@ const Map<String, Map<String, String>> _strings = {
     // Create project
     'proj.bannerTitle': 'New project',
     'proj.bannerSub': 'Build something with your team',
+    'proj.photo': 'Add a team photo (optional)',
     'proj.info': 'Details',
     'proj.titleLabel': 'Project title',
     'proj.description': 'Description',
@@ -662,6 +664,7 @@ const Map<String, Map<String, String>> _strings = {
     'set.exportConfirm': 'Nous enverrons une copie de tes données à {email}.',
     'set.exportSending': 'Envoi de tes données…',
     'set.exportSent': 'Envoyé ! Vérifie ta boîte mail : {email}.',
+    'set.exportShared': 'E-mail indisponible — partage du fichier à la place.',
     'presence.title': 'Statut',
     'presence.sub': 'Ce que les autres voient à côté de ton avatar',
     'presence.online': 'En ligne',
@@ -936,6 +939,7 @@ const Map<String, Map<String, String>> _strings = {
     // Create project
     'proj.bannerTitle': 'Nouveau projet',
     'proj.bannerSub': 'Construis quelque chose avec ton équipe',
+    'proj.photo': 'Ajouter une photo d’équipe (facultatif)',
     'proj.info': 'Informations',
     'proj.titleLabel': 'Titre du projet',
     'proj.description': 'Description',

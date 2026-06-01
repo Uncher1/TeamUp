@@ -7,6 +7,7 @@ class Conversation {
   final String type;
   final int? projectId;
   final String? projectTitle;
+  final String? projectAvatar;
   final String? otherUserName;
   final String? otherUserAvatar;
   final String? otherUserStatus;
@@ -19,6 +20,7 @@ class Conversation {
     required this.type,
     this.projectId,
     this.projectTitle,
+    this.projectAvatar,
     this.otherUserName,
     this.otherUserAvatar,
     this.otherUserStatus,
@@ -33,9 +35,9 @@ class Conversation {
     return 'Conversation #$id';
   }
 
-  /// Avatar photo for the conversation row — only direct chats have a person's
-  /// photo; project conversations fall back to the gradient initial.
-  String? get avatarImageUrl => type == 'direct' ? otherUserAvatar : null;
+  /// Avatar photo for the conversation row — the team photo for project chats,
+  /// the other person's photo for direct chats.
+  String? get avatarImageUrl => type == 'direct' ? otherUserAvatar : projectAvatar;
 
   /// Presence dot for the row — only meaningful for direct (1:1) chats.
   String? get avatarStatus => type == 'direct' ? otherUserStatus : null;
@@ -45,6 +47,7 @@ class Conversation {
         type: j['type'] as String? ?? 'direct',
         projectId: j['project_id'] as int?,
         projectTitle: j['project_title'] as String?,
+        projectAvatar: j['project_avatar'] as String?,
         otherUserName: j['other_user_name'] as String?,
         otherUserAvatar: j['other_user_avatar'] as String?,
         otherUserStatus: j['other_user_status'] as String?,

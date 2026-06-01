@@ -18,6 +18,7 @@ router.get('/', authRequired, async (req, res) => {
   const [rows] = await pool.query(
     `SELECT c.id, c.type, c.project_id, c.created_at,
             p.title AS project_title,
+            p.avatar_url AS project_avatar,
             other.id AS other_user_id,
             other.full_name AS other_user_name,
             other.avatar_url AS other_user_avatar,

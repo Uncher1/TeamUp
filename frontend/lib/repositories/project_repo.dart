@@ -38,6 +38,7 @@ class ProjectRepository {
     String? category,
     int? teamSize,
     String? timeline,
+    String? avatarUrl,
   }) async {
     final res = await api.dio.post('/projects', data: {
       'title': title,
@@ -47,6 +48,7 @@ class ProjectRepository {
       'category': category,
       'team_size': teamSize,
       'timeline': timeline,
+      'avatar_url': ?avatarUrl,
     });
     return Project.fromJson(res.data as Map<String, dynamic>);
   }

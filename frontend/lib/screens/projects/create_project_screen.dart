@@ -2,13 +2,18 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_client.dart';
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
+import '../profile/crop_avatar_screen.dart';
 import '../../models/conversation.dart';
 import '../../models/interest.dart';
 import '../../models/skill.dart';
@@ -42,7 +47,11 @@ const _kTimelines = [
 ];
 
 class CreateProjectScreen extends StatefulWidget {
-  const CreateProjectScreen({super.key});
+  /// Called right after a successful creation so the shell can switch the
+  /// underlying section to "My Teams" — then the team chat is pushed on top,
+  /// so backing out of the chat lands on My Teams (not this form).
+  final VoidCallback? onCreated;
+  const CreateProjectScreen({super.key, this.onCreated});
 
   @override
   State<CreateProjectScreen> createState() => _CreateProjectScreenState();
@@ -59,8 +68,26 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   String? _category;
   int _teamSize = 3;
   String? _timeline;
+  String? _avatarDataUrl; // team photo (base64 data URL)
 
   bool _busy = false;
+
+  Future<void> _pickPhoto() async {
+    final x = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
+    if (x == null) return;
+    final raw = await x.readAsBytes();
+    if (!mounted) return;
+    final cropped = await Navigator.of(context).push<Uint8List>(
+      MaterialPageRoute(builder: (_) => CropAvatarScreen(imageBytes: raw)),
+    );
+    if (cropped == null) return;
+    setState(() => _avatarDataUrl = 'data:image/png;base64,${base64Encode(cropped)}');
+  }
 
   @override
   void initState() {
@@ -101,6 +128,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
             category: _category,
             teamSize: _teamSize,
             timeline: _timeline,
+            avatarUrl: _avatarDataUrl,
           );
       if (!mounted) return;
       _title.clear();
@@ -111,9 +139,12 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         _category = null;
         _timeline = null;
         _teamSize = 3;
+        _avatarDataUrl = null;
         _busy = false;
       });
       messenger.showSnackBar(SnackBar(content: Text(createdMsg)));
+      // Switch the shell to My Teams so backing out of the chat lands there.
+      widget.onCreated?.call();
       // Land the creator straight in the (persistent) team chat.
       if (created != null) {
         try {
@@ -177,6 +208,43 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // ── Team photo (optional) ────────────────────────────────────────────
+        Center(
+          child: GestureDetector(
+            onTap: _busy ? null : _pickPhoto,
+            child: Column(
+              children: [
+                Stack(
+                  children: [
+                    GradientAvatar(
+                      name: _title.text.trim().isEmpty ? '?' : _title.text.trim(),
+                      size: 84,
+                      imageUrl: _avatarDataUrl,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: palette.surface, width: 2),
+                        ),
+                        child: const Icon(Icons.photo_camera, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(context.tr('proj.photo'),
+                    style: TextStyle(fontSize: 12, color: palette.textMuted)),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 20),
