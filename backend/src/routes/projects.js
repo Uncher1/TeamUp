@@ -316,4 +316,132 @@ router.delete('/:id', authRequired, async (req, res) => {
   res.json({ deleted: true });
 });
 
+// ── Team membership / settings / invites ────────────────────────────────────
+
+// Viewer's relationship to the team (drives the chat header menu).
+router.get('/:id/membership', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid id' });
+  const [p] = await pool.query('SELECT owner_id, allow_member_invite FROM projects WHERE id = ?', [id]);
+  if (!p.length) return res.status(404).json({ error: 'project not found' });
+  const [m] = await pool.query(
+    'SELECT 1 AS x FROM project_members WHERE project_id = ? AND user_id = ?', [id, req.user.id]);
+  const isOwner = p[0].owner_id === req.user.id;
+  const isMember = isOwner || m.length > 0;
+  const allowMemberInvite = p[0].allow_member_invite === 1;
+  res.json({
+    is_owner: isOwner,
+    is_member: isMember,
+    allow_member_invite: allowMemberInvite,
+    can_invite: isOwner || (isMember && allowMemberInvite),
+  });
+});
+
+// Leave a team (non-owner members). The owner deletes the project instead.
+router.delete('/:id/members/me', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid id' });
+  const [p] = await pool.query('SELECT owner_id FROM projects WHERE id = ?', [id]);
+  if (!p.length) return res.status(404).json({ error: 'project not found' });
+  if (p[0].owner_id === req.user.id) {
+    return res.status(400).json({ error: 'the owner cannot leave; delete the project instead' });
+  }
+  await pool.query('DELETE FROM project_members WHERE project_id = ? AND user_id = ?', [id, req.user.id]);
+  await pool.query(
+    `DELETE cm FROM conversation_members cm
+       JOIN conversations c ON c.id = cm.conversation_id
+      WHERE c.type = 'project' AND c.project_id = ? AND cm.user_id = ?`,
+    [id, req.user.id]);
+  res.json({ left: true });
+});
+
+// Team settings (owner only): whether members may invite their friends.
+router.patch('/:id/settings', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid id' });
+  const [p] = await pool.query('SELECT owner_id FROM projects WHERE id = ?', [id]);
+  if (!p.length) return res.status(404).json({ error: 'project not found' });
+  if (p[0].owner_id !== req.user.id) return res.status(403).json({ error: 'owner only' });
+  const allow = req.body?.allow_member_invite ? 1 : 0;
+  await pool.query('UPDATE projects SET allow_member_invite = ? WHERE id = ?', [allow, id]);
+  res.json({ allow_member_invite: allow === 1 });
+});
+
+// Invite a user (owner always; members only if allow_member_invite).
+router.post('/:id/invite', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  const invitee = Number(req.body?.user_id);
+  if (!id || !invitee) return res.status(400).json({ error: 'invalid ids' });
+  const [p] = await pool.query(
+    'SELECT owner_id, title, allow_member_invite FROM projects WHERE id = ?', [id]);
+  if (!p.length) return res.status(404).json({ error: 'project not found' });
+  const isOwner = p[0].owner_id === req.user.id;
+  const [mine] = await pool.query(
+    'SELECT 1 AS x FROM project_members WHERE project_id = ? AND user_id = ?', [id, req.user.id]);
+  if (!isOwner && !mine.length) return res.status(403).json({ error: 'not a team member' });
+  if (!isOwner && p[0].allow_member_invite !== 1) {
+    return res.status(403).json({ error: 'members cannot invite in this team' });
+  }
+  const [already] = await pool.query(
+    'SELECT 1 AS x FROM project_members WHERE project_id = ? AND user_id = ?', [id, invitee]);
+  if (already.length) return res.status(400).json({ error: 'already a member' });
+  const s = await getSettings(invitee);
+  if (!enabled(s, 'allowTeamInvites')) {
+    return res.status(403).json({ error: "Cet utilisateur n'accepte pas les invitations d'équipe." });
+  }
+  await pool.query(
+    `INSERT INTO team_invites (project_id, invitee_id, inviter_id, status) VALUES (?, ?, ?, 'pending')
+       ON DUPLICATE KEY UPDATE inviter_id = VALUES(inviter_id), status = 'pending'`,
+    [id, invitee, req.user.id]);
+  const [me] = await pool.query('SELECT full_name FROM users WHERE id = ?', [req.user.id]);
+  createNotification(req.app.get('io'), {
+    userId: invitee,
+    type: 'team_invite',
+    title: `${me[0]?.full_name ?? 'Quelqu’un'} t'invite à rejoindre « ${p[0].title} »`,
+    linkType: 'team_invite',
+    linkId: id,
+  }).catch((e) => console.error('[notif] team_invite failed:', e.message));
+  res.status(201).json({ invited: true });
+});
+
+// My pending team invites.
+router.get('/me/invites', authRequired, async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT ti.project_id, p.title, p.avatar_url,
+            ti.inviter_id, u.full_name AS inviter_name, ti.created_at
+       FROM team_invites ti
+       JOIN projects p ON p.id = ti.project_id
+       JOIN users u    ON u.id = ti.inviter_id
+      WHERE ti.invitee_id = ? AND ti.status = 'pending'
+      ORDER BY ti.created_at DESC`,
+    [req.user.id]);
+  res.json(rows);
+});
+
+// Accept an invite → join the team + its conversation.
+router.post('/:id/invite/accept', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid id' });
+  const [inv] = await pool.query(
+    "SELECT id FROM team_invites WHERE project_id = ? AND invitee_id = ? AND status = 'pending'",
+    [id, req.user.id]);
+  if (!inv.length) return res.status(404).json({ error: 'no pending invite' });
+  await pool.query(
+    "INSERT IGNORE INTO project_members (project_id, user_id, role) VALUES (?, ?, 'member')",
+    [id, req.user.id]);
+  await pool.query(
+    `INSERT IGNORE INTO conversation_members (conversation_id, user_id)
+       SELECT c.id, ? FROM conversations c WHERE c.type = 'project' AND c.project_id = ?`,
+    [req.user.id, id]);
+  await pool.query("UPDATE team_invites SET status = 'accepted' WHERE id = ?", [inv[0].id]);
+  res.json({ joined: true });
+});
+
+router.post('/:id/invite/decline', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'invalid id' });
+  await pool.query('DELETE FROM team_invites WHERE project_id = ? AND invitee_id = ?', [id, req.user.id]);
+  res.json({ declined: true });
+});
+
 module.exports = router;

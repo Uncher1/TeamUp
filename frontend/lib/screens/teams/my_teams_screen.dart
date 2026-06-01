@@ -13,6 +13,7 @@ import '../../models/project.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/projects_provider.dart';
 import '../../repositories/chat_repo.dart';
+import '../../repositories/project_repo.dart';
 import '../chat/chat_thread_screen.dart';
 
 /// Opens (find-or-create) the project's team chat.
@@ -44,12 +45,81 @@ class MyTeamsScreen extends StatefulWidget {
 }
 
 class _MyTeamsScreenState extends State<MyTeamsScreen> {
+  List<Map<String, dynamic>> _invites = [];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectsProvider>().loadMine();
+      _loadInvites();
     });
+  }
+
+  Future<void> _loadInvites() async {
+    try {
+      final inv = await context.read<ProjectRepository>().myTeamInvites();
+      if (mounted) setState(() => _invites = inv);
+    } catch (_) {}
+  }
+
+  Future<void> _acceptInvite(int projectId) async {
+    final projects = context.read<ProjectRepository>();
+    final provider = context.read<ProjectsProvider>();
+    try {
+      await projects.acceptTeamInvite(projectId);
+    } catch (_) {}
+    await provider.loadMine();
+    await _loadInvites();
+  }
+
+  Future<void> _declineInvite(int projectId) async {
+    try {
+      await context.read<ProjectRepository>().declineTeamInvite(projectId);
+    } catch (_) {}
+    await _loadInvites();
+  }
+
+  Widget _inviteCard(BuildContext context, Map<String, dynamic> inv) {
+    final projectId = inv['project_id'] as int;
+    final title = inv['title'] as String? ?? '';
+    final inviter = inv['inviter_name'] as String? ?? '';
+    final p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: AppCard(
+        child: Row(
+          children: [
+            GradientAvatar(name: title, size: 44, imageUrl: inv['avatar_url'] as String?),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(context.tr('team.invitedYou', {'name': inviter}),
+                      style: TextStyle(fontSize: 12, color: p.textMuted),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
+              tooltip: context.tr('team.accept'),
+              onPressed: () => _acceptInvite(projectId),
+            ),
+            IconButton(
+              icon: const Icon(Icons.cancel_outlined),
+              tooltip: context.tr('team.decline'),
+              onPressed: () => _declineInvite(projectId),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _confirmDelete(BuildContext context, Project p) async {
@@ -113,6 +183,12 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          if (_invites.isNotEmpty) ...[
+            SectionLabel(context.tr('team.invitesTitle')),
+            const SizedBox(height: 8),
+            for (final inv in _invites) _inviteCard(context, inv),
+            const SizedBox(height: 16),
+          ],
           if (provider.myProjects.isEmpty)
             EmptyState(
               icon: Icons.groups_2_outlined,

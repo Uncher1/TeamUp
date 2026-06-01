@@ -18,6 +18,7 @@ class PrivacyScreen extends StatelessWidget {
     ('showOnlineStatus', Icons.bolt_outlined, 'priv.online', 'priv.onlineD'),
   ];
   static const _team = [
+    ('allowTeamInvites', Icons.group_add_outlined, 'priv.teamInvites', 'priv.teamInvitesD'),
     ('appearInSearch', Icons.search, 'priv.appearSearch', 'priv.appearSearchD'),
   ];
   static const _comm = [

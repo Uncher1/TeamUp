@@ -23,6 +23,8 @@ import '../../models/conversation.dart';
 import '../../models/message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../repositories/project_repo.dart';
+import '../../repositories/user_repo.dart';
 import '../profile/user_profile_screen.dart';
 
 class ChatThreadScreen extends StatefulWidget {
@@ -213,6 +215,15 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
           children: [
             ScreenHeader(
               titleWidget: _DmHeaderTitle(conversation: widget.conversation),
+              actions: (widget.conversation.type == 'project' &&
+                      widget.conversation.projectId != null)
+                  ? [
+                      _TeamMenuButton(
+                        projectId: widget.conversation.projectId!,
+                        onLeft: () => Navigator.of(context).maybePop(),
+                      ),
+                    ]
+                  : const [],
             ),
             Expanded(
               child: provider.loadingMessages && provider.messages.isEmpty
@@ -860,6 +871,183 @@ class _DmHeaderTitle extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 3-dot menu in a team chat header: invite a friend, owner settings, leave.
+class _TeamMenuButton extends StatefulWidget {
+  final int projectId;
+  final VoidCallback onLeft;
+  const _TeamMenuButton({required this.projectId, required this.onLeft});
+
+  @override
+  State<_TeamMenuButton> createState() => _TeamMenuButtonState();
+}
+
+class _TeamMenuButtonState extends State<_TeamMenuButton> {
+  Map<String, dynamic>? _m;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final m = await context.read<ProjectRepository>().teamMembership(widget.projectId);
+      if (mounted) setState(() => _m = m);
+    } catch (_) {}
+  }
+
+  Future<void> _invite() async {
+    final users = context.read<UserRepository>();
+    final projects = context.read<ProjectRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+    final invitedMsg = context.tr('team.invited');
+    final errMsg = context.tr('common.error');
+    final noneMsg = context.tr('team.noFriends');
+    List<Map<String, dynamic>> friends;
+    try {
+      friends = await users.friends();
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+      return;
+    }
+    if (!mounted) return;
+    if (friends.isEmpty) {
+      messenger.showSnackBar(SnackBar(content: Text(noneMsg)));
+      return;
+    }
+    final chosen = await showModalBottomSheet<int>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final f in friends)
+              ListTile(
+                leading: GradientAvatar(
+                    name: f['full_name'] as String? ?? '?',
+                    size: 40,
+                    imageUrl: f['avatar_url'] as String?),
+                title: Text(f['full_name'] as String? ?? ''),
+                onTap: () => Navigator.pop(ctx, f['id'] as int),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (chosen == null) return;
+    try {
+      await projects.inviteToTeam(widget.projectId, chosen);
+      messenger.showSnackBar(SnackBar(content: Text(invitedMsg)));
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+    }
+  }
+
+  Future<void> _settings() async {
+    final projects = context.read<ProjectRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+    final errMsg = context.tr('common.error');
+    bool allow = _m?['allow_member_invite'] == true;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text(ctx.tr('team.settings')),
+          content: SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(ctx.tr('team.memberInvite')),
+            value: allow,
+            onChanged: (v) async {
+              setLocal(() => allow = v);
+              try {
+                await projects.setTeamSettings(widget.projectId, allowMemberInvite: v);
+                if (mounted) setState(() => _m = {...?_m, 'allow_member_invite': v});
+              } catch (_) {
+                messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+              }
+            },
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ctx.tr('common.done'))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _leave() async {
+    final projects = context.read<ProjectRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+    final leftMsg = context.tr('team.left');
+    final errMsg = context.tr('common.error');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(ctx.tr('team.leaveConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ctx.tr('common.cancel'))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.tr('team.leave')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await projects.leaveTeam(widget.projectId);
+      messenger.showSnackBar(SnackBar(content: Text(leftMsg)));
+      widget.onLeft();
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final m = _m;
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      onSelected: (v) {
+        if (v == 'invite') _invite();
+        if (v == 'settings') _settings();
+        if (v == 'leave') _leave();
+      },
+      itemBuilder: (ctx) => [
+        if (m != null && m['can_invite'] == true)
+          PopupMenuItem(
+            value: 'invite',
+            child: Row(children: [
+              const Icon(Icons.person_add_alt_1, size: 18),
+              const SizedBox(width: 10),
+              Text(ctx.tr('team.invite')),
+            ]),
+          ),
+        if (m != null && m['is_owner'] == true)
+          PopupMenuItem(
+            value: 'settings',
+            child: Row(children: [
+              const Icon(Icons.settings_outlined, size: 18),
+              const SizedBox(width: 10),
+              Text(ctx.tr('team.settings')),
+            ]),
+          ),
+        if (m != null && m['is_member'] == true && m['is_owner'] != true)
+          PopupMenuItem(
+            value: 'leave',
+            child: Row(children: [
+              const Icon(Icons.logout, size: 18, color: Color(0xFFDC2626)),
+              const SizedBox(width: 10),
+              Text(ctx.tr('team.leave'), style: const TextStyle(color: Color(0xFFDC2626))),
+            ]),
+          ),
+      ],
     );
   }
 }

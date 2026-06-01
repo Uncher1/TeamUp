@@ -74,4 +74,38 @@ class ProjectRepository {
   Future<void> decideApplication(int projectId, int appId, String action) async {
     await api.dio.post('/projects/$projectId/applications/$appId', data: {'action': action});
   }
+
+  // ── Team membership / settings / invites ───────────────────────────────────
+
+  /// {is_owner, is_member, allow_member_invite, can_invite}
+  Future<Map<String, dynamic>> teamMembership(int projectId) async {
+    final res = await api.dio.get('/projects/$projectId/membership');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<void> leaveTeam(int projectId) async {
+    await api.dio.delete('/projects/$projectId/members/me');
+  }
+
+  Future<void> setTeamSettings(int projectId, {required bool allowMemberInvite}) async {
+    await api.dio.patch('/projects/$projectId/settings',
+        data: {'allow_member_invite': allowMemberInvite});
+  }
+
+  Future<void> inviteToTeam(int projectId, int userId) async {
+    await api.dio.post('/projects/$projectId/invite', data: {'user_id': userId});
+  }
+
+  Future<List<Map<String, dynamic>>> myTeamInvites() async {
+    final res = await api.dio.get('/projects/me/invites');
+    return (res.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<void> acceptTeamInvite(int projectId) async {
+    await api.dio.post('/projects/$projectId/invite/accept');
+  }
+
+  Future<void> declineTeamInvite(int projectId) async {
+    await api.dio.post('/projects/$projectId/invite/decline');
+  }
 }

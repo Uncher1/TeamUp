@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS projects (
   description TEXT NOT NULL,
   category    VARCHAR(40) NULL,
   avatar_url  MEDIUMTEXT NULL,
+  allow_member_invite TINYINT(1) NOT NULL DEFAULT 0,
   team_size   TINYINT UNSIGNED NULL,
   timeline    VARCHAR(20) NULL,
   status      ENUM('open','in_progress','closed') NOT NULL DEFAULT 'open',
@@ -292,4 +293,17 @@ CREATE TABLE IF NOT EXISTS reports (
   created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (reporter_id)      REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS team_invites (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  project_id  INT UNSIGNED NOT NULL,
+  invitee_id  INT UNSIGNED NOT NULL,
+  inviter_id  INT UNSIGNED NOT NULL,
+  status      VARCHAR(10) NOT NULL DEFAULT 'pending',
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_invite (project_id, invitee_id),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (invitee_id) REFERENCES users(id)    ON DELETE CASCADE,
+  FOREIGN KEY (inviter_id) REFERENCES users(id)    ON DELETE CASCADE
 ) ENGINE=InnoDB;
