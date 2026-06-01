@@ -17,7 +17,7 @@ async function isPrivileged(userId) {
 }
 
 const FEED_SELECT = `
-  SELECT p.id, p.type, p.content, p.language, p.comment_count, p.created_at,
+  SELECT p.id, p.type, p.content, p.language, p.image, p.comment_count, p.created_at,
          p.author_id, u.full_name AS author_name, u.avatar_url AS author_avatar, u.role AS author_role,
          p.project_id, pr.title AS project_title,
          (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) AS like_count,
@@ -42,14 +42,21 @@ router.post('/', authRequired, async (req, res) => {
   const type = POST_TYPES.includes(req.body?.type) ? req.body.type : 'general';
   const content = (req.body?.content ?? '').trim();
   const projectId = req.body?.project_id ? Number(req.body.project_id) : null;
-  if (!content) return res.status(400).json({ error: 'content is required' });
+  // Optional image: a base64 data URL (capped ~7 MB to stay under the 8 MB JSON limit).
+  let image = typeof req.body?.image === 'string' && req.body.image.startsWith('data:')
+    ? req.body.image : null;
+  if (image && image.length > 7 * 1024 * 1024) {
+    return res.status(400).json({ error: 'image too large' });
+  }
+  // A post needs text OR an image.
+  if (!content && !image) return res.status(400).json({ error: 'content is required' });
   if (content.length > 4000) return res.status(400).json({ error: 'content too long' });
 
   // Tag the post with the author's language so viewers can translate it.
   const lang = await getUserLanguage(req.user.id);
   const [r] = await pool.query(
-    'INSERT INTO posts (author_id, type, content, language, project_id) VALUES (?, ?, ?, ?, ?)',
-    [req.user.id, type, content, lang === 'fr' ? 'fr' : 'en', projectId]
+    'INSERT INTO posts (author_id, type, content, language, image, project_id) VALUES (?, ?, ?, ?, ?, ?)',
+    [req.user.id, type, content, lang === 'fr' ? 'fr' : 'en', image, projectId]
   );
   const [rows] = await pool.query(
     `${FEED_SELECT} WHERE p.id = ?`,

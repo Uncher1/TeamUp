@@ -17,11 +17,13 @@ class FeedRepository {
     return (res.data as List).map((e) => Post.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<Post> create({required String type, required String content, int? projectId}) async {
+  Future<Post> create(
+      {required String type, required String content, int? projectId, String? image}) async {
     final res = await api.dio.post('/posts', data: {
       'type': type,
       'content': content,
       'project_id': projectId,
+      'image': ?image,
     });
     return Post.fromJson(res.data as Map<String, dynamic>);
   }

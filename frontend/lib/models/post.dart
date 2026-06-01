@@ -7,6 +7,7 @@ class Post {
   final String type;
   final String content;
   final String language;
+  final String? image; // optional base64 data URL
   int commentCount;
   final DateTime createdAt;
   final int authorId;
@@ -23,6 +24,7 @@ class Post {
     required this.type,
     required this.content,
     this.language = 'en',
+    this.image,
     required this.commentCount,
     required this.createdAt,
     required this.authorId,
@@ -40,6 +42,7 @@ class Post {
         type: j['type'] as String? ?? 'general',
         content: j['content'] as String? ?? '',
         language: j['language'] as String? ?? 'en',
+        image: j['image'] as String?,
         commentCount: (j['comment_count'] as num?)?.toInt() ?? 0,
         createdAt: DateTime.parse(j['created_at'] as String),
         authorId: j['author_id'] as int,

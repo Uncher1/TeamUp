@@ -56,6 +56,10 @@ class _CropAvatarScreenState extends State<CropAvatarScreen> {
         controller: _controller,
         aspectRatio: 1,
         withCircleUi: true,
+        // Pinch-to-zoom + pan the photo; the circular crop frame stays fixed
+        // so the user frames the shot by moving/zooming the image itself.
+        interactive: true,
+        fixCropRect: true,
         baseColor: Colors.black,
         maskColor: Colors.black.withAlpha(150),
         cornerDotBuilder: (size, edge) => _CornerHandle(edge: edge),

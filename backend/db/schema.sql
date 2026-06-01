@@ -178,6 +178,7 @@ CREATE TABLE IF NOT EXISTS posts (
                   NOT NULL DEFAULT 'general',
   content       TEXT NOT NULL,
   language      VARCHAR(5) NOT NULL DEFAULT 'en',
+  image         MEDIUMTEXT NULL,
   project_id    INT UNSIGNED NULL,
   comment_count INT UNSIGNED NOT NULL DEFAULT 0,
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

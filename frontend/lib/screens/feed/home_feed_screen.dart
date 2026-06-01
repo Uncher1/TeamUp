@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -435,6 +437,22 @@ class _PostCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _TranslatablePostContent(post: post),
+          if (post.image != null && post.image!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => showZoomableImage(context, imageUrl: post.image),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.memory(
+                  base64Decode(post.image!.split(',').last),
+                  width: double.infinity,
+                  fit: BoxFit.fitWidth,
+                  gaplessPlayback: true,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ],
           if (post.projectTitle != null) ...[
             const SizedBox(height: 12),
             Container(
