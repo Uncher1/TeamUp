@@ -164,7 +164,14 @@ class _OtaProgressDialogState extends State<_OtaProgressDialog> {
   void _start() {
     try {
       OtaUpdate()
-          .execute(widget.apkUrl, destinationFilename: 'teamup-update.apk')
+          .execute(
+            widget.apkUrl,
+            destinationFilename: 'teamup-update.apk',
+            // Use Android's modern PackageInstaller session instead of the
+            // legacy ACTION_VIEW intent, which on recent Android exits the app,
+            // re-prompts and can crash. The session installs cleanly in place.
+            usePackageInstaller: true,
+          )
           .listen(
         (OtaEvent event) {
           switch (event.status) {
