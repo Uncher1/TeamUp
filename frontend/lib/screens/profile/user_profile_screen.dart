@@ -17,6 +17,7 @@ import '../../providers/auth_provider.dart';
 import '../../repositories/chat_repo.dart';
 import '../../repositories/user_repo.dart';
 import '../chat/chat_thread_screen.dart';
+import 'edit_profile_screen.dart';
 import 'report_user_screen.dart';
 
 /// Read-only profile of another user, with friend / block / report actions and
@@ -214,7 +215,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           children: [
             ScreenHeader(
               title: headerName,
-              actions: p == null || p.blockedBy || isSelf
+              actions: isSelf
+                  // Own profile: offer the same "edit profile" as Settings → Profile.
+                  ? [
+                      IconButton(
+                        tooltip: context.tr('uprof.edit'),
+                        icon: const Icon(Icons.edit_outlined),
+                        onPressed: () async {
+                          await Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const EditProfileScreen()));
+                          if (mounted) _load(); // refresh after editing
+                        },
+                      ),
+                    ]
+                  : p == null || p.blockedBy
                   ? const []
                   : [
                       IconButton(

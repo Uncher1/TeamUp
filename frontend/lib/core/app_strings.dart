@@ -173,6 +173,7 @@ const Map<String, Map<String, String>> _strings = {
     'uprof.blockedByThem': "You can't interact with this user.",
     'uprof.private': 'This profile is private.',
     'uprof.report': 'Report',
+    'uprof.edit': 'Edit profile',
     // Report flow
     'report.title': 'Report account',
     'report.subtitle': 'Help keep TeamUp safe. Your report is confidential and reviewed by our team.',
@@ -728,6 +729,7 @@ const Map<String, Map<String, String>> _strings = {
     'uprof.blockedByThem': "Tu ne peux pas interagir avec cet utilisateur.",
     'uprof.private': 'Ce profil est privé.',
     'uprof.report': 'Signaler',
+    'uprof.edit': 'Modifier le profil',
     // Flux de signalement
     'report.title': 'Signaler le compte',
     'report.subtitle': 'Aide à garder TeamUp sûr. Ton signalement est confidentiel et examiné par notre équipe.',

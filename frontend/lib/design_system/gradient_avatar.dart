@@ -119,42 +119,58 @@ class GradientAvatar extends StatelessWidget {
 /// photo. No-op when there's no actual photo (gradient initials can't zoom).
 void showZoomableImage(BuildContext context, {required String? imageUrl}) {
   if (imageUrl == null || imageUrl.isEmpty) return;
-  Widget image;
-  if (imageUrl.startsWith('data:')) {
-    image = Image.memory(base64Decode(imageUrl.split(',').last),
-        fit: BoxFit.contain, gaplessPlayback: true,
-        errorBuilder: (_, a, b) => const SizedBox.shrink());
-  } else {
-    image = Image.network(imageUrl, fit: BoxFit.contain,
-        errorBuilder: (_, a, b) => const SizedBox.shrink());
-  }
-  showDialog<void>(
-    context: context,
-    barrierColor: Colors.black,
-    builder: (ctx) => Stack(
-      children: [
-        // Tap the backdrop to dismiss; pinch to zoom the photo.
-        GestureDetector(
-          onTap: () => Navigator.of(ctx).pop(),
-          child: SizedBox.expand(
+  Navigator.of(context, rootNavigator: true).push(
+    PageRouteBuilder<void>(
+      opaque: false,
+      barrierColor: Colors.black,
+      barrierDismissible: true,
+      pageBuilder: (_, _, _) => _ZoomViewer(imageUrl: imageUrl),
+    ),
+  );
+}
+
+class _ZoomViewer extends StatelessWidget {
+  final String imageUrl;
+  const _ZoomViewer({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget image = imageUrl.startsWith('data:')
+        ? Image.memory(base64Decode(imageUrl.split(',').last),
+            fit: BoxFit.contain, gaplessPlayback: true,
+            errorBuilder: (_, a, b) => const SizedBox.shrink())
+        : Image.network(imageUrl, fit: BoxFit.contain,
+            errorBuilder: (_, a, b) => const SizedBox.shrink());
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // InteractiveViewer owns the pinch/pan gestures across the whole
+          // screen; the inner tap (on the image) dismisses the viewer.
+          Positioned.fill(
             child: InteractiveViewer(
               minScale: 1,
               maxScale: 5,
-              child: Center(child: image),
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: image,
+                ),
+              ),
             ),
           ),
-        ),
-        Positioned(
-          top: 40,
-          right: 12,
-          child: IconButton(
-            icon: const Icon(Icons.close, color: Colors.white, size: 28),
-            onPressed: () => Navigator.of(ctx).pop(),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 12,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 28),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 /// Private helper — gradient circle with white initial. Extracted so both the
