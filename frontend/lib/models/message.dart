@@ -34,13 +34,13 @@ class Message {
   bool get hasAudio => attachmentType == 'audio' && (attachmentData?.isNotEmpty ?? false);
   bool get hasPoll => attachmentType == 'poll' && poll != null;
 
-  Message copyWith({Map<String, dynamic>? poll}) => Message(
+  Message copyWith({Map<String, dynamic>? poll, String? content}) => Message(
         id: id,
         conversationId: conversationId,
         senderId: senderId,
         senderName: senderName,
         senderRole: senderRole,
-        content: content,
+        content: content ?? this.content,
         attachmentType: attachmentType,
         attachmentName: attachmentName,
         attachmentData: attachmentData,

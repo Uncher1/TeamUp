@@ -6,6 +6,7 @@ class Conversation {
   final int id;
   final String type;
   final int? projectId;
+  final int? projectOwnerId;
   final String? projectTitle;
   final String? projectAvatar;
   final String? otherUserName;
@@ -19,6 +20,7 @@ class Conversation {
     required this.id,
     required this.type,
     this.projectId,
+    this.projectOwnerId,
     this.projectTitle,
     this.projectAvatar,
     this.otherUserName,
@@ -46,6 +48,7 @@ class Conversation {
         id: j['id'] as int,
         type: j['type'] as String? ?? 'direct',
         projectId: j['project_id'] as int?,
+        projectOwnerId: j['project_owner_id'] as int?,
         projectTitle: j['project_title'] as String?,
         projectAvatar: j['project_avatar'] as String?,
         otherUserName: j['other_user_name'] as String?,

@@ -273,6 +273,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
             child: TextField(
               controller: _textController,
               focusNode: _focusNode,
+              maxLength: 2000,
+              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
               decoration: InputDecoration(
                 hintText: context.tr('feed.commentHint'),
                 hintStyle: TextStyle(color: context.palette.textMuted),

@@ -250,12 +250,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   SectionLabel(context.tr('prof.info')),
                   const SizedBox(height: 10),
-                  TextField(controller: _name, decoration: InputDecoration(labelText: context.tr('register.fullName'))),
+                  TextField(
+                    controller: _name,
+                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
+                    decoration: InputDecoration(labelText: context.tr('register.fullName')),
+                  ),
                   const SizedBox(height: 14),
                   TextField(
                     controller: _bio,
                     minLines: 3,
                     maxLines: 6,
+                    inputFormatters: [LengthLimitingTextInputFormatter(500)],
                     decoration: InputDecoration(labelText: context.tr('cp.bio'), alignLabelWithHint: true),
                   ),
                   const SizedBox(height: 20),
@@ -268,6 +273,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     keyboardType: TextInputType.phone,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s().\-]')),
+                      LengthLimitingTextInputFormatter(40),
                     ],
                     decoration: InputDecoration(
                       labelText: context.tr('ep.phone'),
@@ -277,6 +283,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _location,
+                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
                     decoration: InputDecoration(
                       labelText: context.tr('ep.location'),
                       prefixIcon: const Icon(Icons.location_on_outlined),
@@ -289,6 +296,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 10),
                   TextField(
                     controller: _school,
+                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
                     decoration: InputDecoration(
                       labelText: context.tr('cp.school'),
                       prefixIcon: const Icon(Icons.school_outlined),
@@ -297,6 +305,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _department,
+                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
                     decoration: InputDecoration(
                       labelText: context.tr('ep.department'),
                       prefixIcon: const Icon(Icons.account_tree_outlined),
@@ -305,6 +314,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _studyYear,
+                    inputFormatters: [LengthLimitingTextInputFormatter(40)],
                     decoration: InputDecoration(
                       labelText: context.tr('ep.year'),
                       prefixIcon: const Icon(Icons.calendar_today_outlined),
@@ -317,6 +327,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 10),
                   TextField(
                     controller: _github,
+                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
                     decoration: const InputDecoration(
                       labelText: 'GitHub',
                       prefixIcon: Icon(Icons.code),
@@ -325,6 +336,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _linkedin,
+                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
                     decoration: const InputDecoration(
                       labelText: 'LinkedIn',
                       prefixIcon: Icon(Icons.business_center_outlined),
@@ -333,6 +345,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _twitter,
+                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
                     decoration: const InputDecoration(
                       labelText: 'Twitter / X',
                       prefixIcon: Icon(Icons.alternate_email),
@@ -342,6 +355,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   TextField(
                     controller: _website,
                     keyboardType: TextInputType.url,
+                    inputFormatters: [LengthLimitingTextInputFormatter(200)],
                     decoration: InputDecoration(
                       labelText: context.tr('help.website'),
                       prefixIcon: const Icon(Icons.link),

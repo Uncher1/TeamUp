@@ -183,6 +183,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 id: convId,
                 type: 'project',
                 projectId: created.id,
+                projectOwnerId: created.ownerId,
                 projectTitle: created.title,
               ),
             ),

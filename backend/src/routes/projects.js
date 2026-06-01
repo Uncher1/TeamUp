@@ -258,12 +258,13 @@ router.post('/:id/conversation', authRequired, async (req, res) => {
   if (!members.length) return res.status(403).json({ error: 'not a project member' });
 
   // Include the team's name + photo so the chat header can render them.
-  const [proj] = await pool.query('SELECT title, avatar_url FROM projects WHERE id = ?', [projectId]);
+  const [proj] = await pool.query('SELECT title, avatar_url, owner_id FROM projects WHERE id = ?', [projectId]);
   const info = {
     type: 'project',
     project_id: projectId,
     project_title: proj[0]?.title ?? null,
     project_avatar: proj[0]?.avatar_url ?? null,
+    project_owner_id: proj[0]?.owner_id ?? null,
   };
 
   const [existing] = await pool.query(

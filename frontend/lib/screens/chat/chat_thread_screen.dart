@@ -223,7 +223,13 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                           controller: _scroll,
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                           itemCount: provider.messages.length,
-                          itemBuilder: (_, i) => _Bubble(message: provider.messages[i], mine: provider.messages[i].senderId == myId),
+                          itemBuilder: (_, i) => _Bubble(
+                            message: provider.messages[i],
+                            mine: provider.messages[i].senderId == myId,
+                            // Team owner can moderate (delete) any message.
+                            canModerate: widget.conversation.type == 'project' &&
+                                widget.conversation.projectOwnerId == myId,
+                          ),
                         ),
             ),
             _recording
@@ -248,13 +254,98 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
 class _Bubble extends StatelessWidget {
   final Message message;
   final bool mine;
-  const _Bubble({required this.message, required this.mine});
+  final bool canModerate;
+  const _Bubble({required this.message, required this.mine, this.canModerate = false});
+
+  bool get _canEdit =>
+      mine && message.attachmentType == null && message.content.trim().isNotEmpty;
+  bool get _canDelete => mine || canModerate;
+
+  Future<void> _showMenu(BuildContext context) async {
+    if (!_canEdit && !_canDelete) return;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_canEdit)
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: Text(ctx.tr('chat.edit')),
+                onTap: () => Navigator.pop(ctx, 'edit'),
+              ),
+            if (_canDelete)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Color(0xFFDC2626)),
+                title: Text(ctx.tr('common.delete'),
+                    style: const TextStyle(color: Color(0xFFDC2626))),
+                onTap: () => Navigator.pop(ctx, 'delete'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (action == 'edit' && context.mounted) {
+      await _edit(context);
+    } else if (action == 'delete' && context.mounted) {
+      await _delete(context);
+    }
+  }
+
+  Future<void> _edit(BuildContext context) async {
+    final ctrl = TextEditingController(text: message.content);
+    final chat = context.read<ChatProvider>();
+    final newText = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.tr('chat.edit')),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLines: null,
+          maxLength: 4000,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ctx.tr('common.cancel'))),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+              child: Text(ctx.tr('common.save'))),
+        ],
+      ),
+    );
+    if (newText != null && newText.isNotEmpty && newText != message.content) {
+      await chat.editMessage(message.id, newText);
+    }
+  }
+
+  Future<void> _delete(BuildContext context) async {
+    final chat = context.read<ChatProvider>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(ctx.tr('chat.deleteConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ctx.tr('common.cancel'))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.tr('common.delete')),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await chat.deleteMessage(message.id);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
+      child: GestureDetector(
+        onLongPress: () => _showMenu(context),
+        child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
@@ -301,6 +392,7 @@ class _Bubble extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
@@ -408,15 +500,16 @@ class _PollBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Icon(Icons.bar_chart_rounded, size: 18, color: fg),
             const SizedBox(width: 6),
             Expanded(
               child: Text(question,
-                  style: TextStyle(fontWeight: FontWeight.w700, color: fg, height: 1.2)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 15, color: fg, height: 1.3)),
             ),
           ]),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           for (int i = 0; i < options.length; i++)
             () {
               final count = i < counts.length ? counts[i] : 0;
@@ -437,17 +530,17 @@ class _PollBubble extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(9),
                       child: Stack(children: [
-                        Container(height: 40, width: double.infinity, color: track),
+                        Container(height: 32, width: double.infinity, color: track),
                         AnimatedFractionallySizedBox(
                           duration: const Duration(milliseconds: 350),
                           curve: Curves.easeOutCubic,
                           widthFactor: pct.clamp(0.0, 1.0),
-                          child: Container(height: 40, color: fill),
+                          child: Container(height: 32, color: fill),
                         ),
                         Container(
-                          height: 40,
+                          height: 32,
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Row(children: [
                             if (selected) ...[
                               Icon(Icons.check_circle, size: 16, color: fg),
@@ -515,12 +608,19 @@ class _PollComposerState extends State<_PollComposer> {
       title: Text(context.tr('chat.newPoll')),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: _question, decoration: InputDecoration(labelText: context.tr('chat.question'))),
+          TextField(
+            controller: _question,
+            maxLength: 150,
+            maxLines: 2,
+            minLines: 1,
+            decoration: InputDecoration(labelText: context.tr('chat.question')),
+          ),
           for (int i = 0; i < _options.length; i++)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: TextField(
                 controller: _options[i],
+                maxLength: 40,
                 decoration: InputDecoration(labelText: '${context.tr('chat.option')} ${i + 1}'),
               ),
             ),
@@ -692,6 +792,8 @@ class _InputBar extends StatelessWidget {
               controller: controller,
               minLines: 1,
               maxLines: 4,
+              maxLength: 4000,
+              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
               decoration: InputDecoration(

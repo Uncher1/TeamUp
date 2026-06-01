@@ -73,6 +73,37 @@ class ChatProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<void> editMessage(int messageId, String content) async {
+    if (_activeConvId == null) return;
+    try {
+      await _repo.editMessage(_activeConvId!, messageId, content);
+      _applyEdit(messageId, content);
+    } catch (_) {}
+  }
+
+  Future<void> deleteMessage(int messageId) async {
+    if (_activeConvId == null) return;
+    try {
+      await _repo.deleteMessage(_activeConvId!, messageId);
+      _applyDelete(messageId);
+    } catch (_) {}
+  }
+
+  void _applyEdit(int messageId, String content) {
+    final i = messages.indexWhere((m) => m.id == messageId);
+    if (i >= 0) {
+      messages = [...messages]..[i] = messages[i].copyWith(content: content);
+      notifyListeners();
+    }
+  }
+
+  void _applyDelete(int messageId) {
+    if (messages.any((m) => m.id == messageId)) {
+      messages = messages.where((m) => m.id != messageId).toList();
+      notifyListeners();
+    }
+  }
+
   Future<void> votePoll(int pollId, int option) async {
     try {
       _applyPollUpdate(await _repo.votePoll(pollId, option));
@@ -112,6 +143,14 @@ class ChatProvider extends ChangeNotifier {
     });
     _socket!.on('poll:update', (data) {
       if (data is Map) _applyPollUpdate(Map<String, dynamic>.from(data));
+    });
+    _socket!.on('message:update', (data) {
+      if (data is Map && data['id'] is int) {
+        _applyEdit(data['id'] as int, data['content'] as String? ?? '');
+      }
+    });
+    _socket!.on('message:delete', (data) {
+      if (data is Map && data['id'] is int) _applyDelete(data['id'] as int);
     });
   }
 

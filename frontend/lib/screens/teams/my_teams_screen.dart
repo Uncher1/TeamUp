@@ -27,6 +27,7 @@ Future<void> _openProjectChat(BuildContext context, Project p) async {
           id: convId,
           type: 'project',
           projectId: p.id,
+          projectOwnerId: p.ownerId,
           projectTitle: p.title,
           projectAvatar: p.avatarUrl,
         ),

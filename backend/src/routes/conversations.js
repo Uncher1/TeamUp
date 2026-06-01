@@ -19,6 +19,7 @@ router.get('/', authRequired, async (req, res) => {
     `SELECT c.id, c.type, c.project_id, c.created_at,
             p.title AS project_title,
             p.avatar_url AS project_avatar,
+            p.owner_id AS project_owner_id,
             other.id AS other_user_id,
             other.full_name AS other_user_name,
             other.avatar_url AS other_user_avatar,
@@ -208,6 +209,50 @@ router.post('/:id/messages', authRequired, async (req, res) => {
     if (e.status) return res.status(e.status).json({ error: e.message });
     throw e;
   }
+});
+
+// Edit your own (text) message.
+router.patch('/:id/messages/:mid', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  const mid = Number(req.params.mid);
+  const content = String(req.body?.content ?? '').trim().slice(0, 4000);
+  if (!id || !mid) return res.status(400).json({ error: 'invalid id' });
+  if (!content) return res.status(400).json({ error: 'content is required' });
+  const [rows] = await pool.query(
+    'SELECT sender_id, attachment_type FROM messages WHERE id = ? AND conversation_id = ?',
+    [mid, id]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'message not found' });
+  if (rows[0].sender_id !== req.user.id) return res.status(403).json({ error: 'not your message' });
+  if (rows[0].attachment_type) return res.status(400).json({ error: 'only text messages can be edited' });
+  await pool.query('UPDATE messages SET content = ? WHERE id = ?', [content, mid]);
+  req.app.get('io')?.to(`conversation:${id}`).emit('message:update', {
+    id: mid, conversation_id: id, content,
+  });
+  res.json({ id: mid, content });
+});
+
+// Delete a message: the author, or — in a team (project) chat — the team owner.
+router.delete('/:id/messages/:mid', authRequired, async (req, res) => {
+  const id = Number(req.params.id);
+  const mid = Number(req.params.mid);
+  if (!id || !mid) return res.status(400).json({ error: 'invalid id' });
+  const [rows] = await pool.query(
+    'SELECT sender_id FROM messages WHERE id = ? AND conversation_id = ?', [mid, id]);
+  if (!rows.length) return res.status(404).json({ error: 'message not found' });
+  let allowed = rows[0].sender_id === req.user.id;
+  if (!allowed) {
+    const [c] = await pool.query(
+      `SELECT p.owner_id FROM conversations c JOIN projects p ON p.id = c.project_id
+        WHERE c.id = ? AND c.type = 'project'`, [id]);
+    if (c.length && c[0].owner_id === req.user.id) allowed = true;
+  }
+  if (!allowed) return res.status(403).json({ error: 'not allowed' });
+  await pool.query('DELETE FROM messages WHERE id = ?', [mid]);
+  req.app.get('io')?.to(`conversation:${id}`).emit('message:delete', {
+    id: mid, conversation_id: id,
+  });
+  res.json({ deleted: true });
 });
 
 module.exports = router;

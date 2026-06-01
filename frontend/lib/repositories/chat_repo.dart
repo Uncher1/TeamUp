@@ -65,6 +65,17 @@ class ChatRepository {
     return Conversation.fromJson(res.data as Map<String, dynamic>);
   }
 
+  /// Edits a (text) message you sent.
+  Future<void> editMessage(int conversationId, int messageId, String content) async {
+    await api.dio.patch('/conversations/$conversationId/messages/$messageId',
+        data: {'content': content});
+  }
+
+  /// Deletes a message (yours, or any message if you're the team owner).
+  Future<void> deleteMessage(int conversationId, int messageId) async {
+    await api.dio.delete('/conversations/$conversationId/messages/$messageId');
+  }
+
   /// Find-or-create the team (project) conversation; returns its id.
   Future<int> projectConversationId(int projectId) async {
     final res = await api.dio.post('/projects/$projectId/conversation');
