@@ -55,4 +55,37 @@ router.get('/turn', authRequired, async (req, res) => {
   }
 });
 
+// ── TEMPORARY diagnostic (no auth, secret-gated) ────────────────────────────
+// Returns ONLY the minted TURN urls (never username/credential) so we can
+// confirm which transports Cloudflare hands out (udp vs tcp/tls). REMOVE after.
+router.get('/turn-debug', async (req, res) => {
+  if (req.query.k !== 'teamup-turn-diag-9f3a') return res.status(404).end();
+  const keyId = process.env.CF_TURN_KEY_ID;
+  const token = process.env.CF_TURN_API_TOKEN;
+  if (!keyId || !token) return res.json({ configured: false });
+  try {
+    const r = await fetch(
+      `https://rtc.live.cloudflare.com/v1/turn/keys/${keyId}/credentials/generate`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ttl: 86400 }),
+      }
+    );
+    const status = r.status;
+    if (!r.ok) return res.json({ ok: false, status, body: (await r.text()).slice(0, 400) });
+    const data = await r.json();
+    const ice = data && data.iceServers;
+    res.json({
+      ok: true,
+      status,
+      urls: ice ? ice.urls : null,
+      hasUsername: !!(ice && ice.username),
+      hasCredential: !!(ice && ice.credential),
+    });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 module.exports = router;
