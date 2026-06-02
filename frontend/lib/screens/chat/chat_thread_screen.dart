@@ -460,16 +460,8 @@ class _Bubble extends StatelessWidget {
   Widget _imageAttachment(BuildContext context) {
     final bytes = base64Decode(message.attachmentData!.split(',').last);
     return GestureDetector(
-      onTap: () => showDialog<void>(
-        context: context,
-        builder: (_) => Dialog(
-          backgroundColor: Colors.black,
-          insetPadding: const EdgeInsets.all(12),
-          child: InteractiveViewer(
-            child: Image.memory(bytes, errorBuilder: (_, _, _) => const SizedBox.shrink()),
-          ),
-        ),
-      ),
+      // Same full-screen viewer as profiles/posts → pinch AND double-tap zoom.
+      onTap: () => showZoomableImage(context, imageUrl: message.attachmentData),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.memory(
