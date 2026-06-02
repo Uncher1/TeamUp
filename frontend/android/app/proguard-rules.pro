@@ -1,4 +1,4 @@
-# TeamUp — R8/ProGuard keep rules for libraries that use JNI/reflection and
+# TeamUp - R8/ProGuard keep rules for libraries that use JNI/reflection and
 # would otherwise be stripped or renamed by the release shrinker.
 
 # flutter_webrtc (native WebRTC accessed via JNI)
@@ -12,7 +12,7 @@
 -dontwarn com.google.mlkit.**
 -dontwarn com.google.android.gms.**
 
-# ota_update — receiver/provider are referenced from AndroidManifest
+# ota_update - receiver/provider are referenced from AndroidManifest
 -keep class sk.fourq.otaupdate.** { *; }
 
 # Audio record / playback (defensive; some use reflection)

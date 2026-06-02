@@ -13,7 +13,7 @@ import '../../providers/settings_provider.dart';
 class LanguageScreen extends StatelessWidget {
   const LanguageScreen({super.key});
 
-  // (code, labelKey, flagAsset) — the app ships in French + English.
+  // (code, labelKey, flagAsset) - the app ships in French + English.
   static const _languages = [
     ('en', 'lang.en', 'assets/flag_en.png'),
     ('fr', 'lang.fr', 'assets/flag_fr.png'),

@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_strings.dart';
 
 /// Opens [raw] in the matching native app when installed (e.g. the GitHub or
-/// LinkedIn app), otherwise falls back to the browser — Instagram-style.
+/// LinkedIn app), otherwise falls back to the browser - Instagram-style.
 /// Shows a snackbar if the link can't be opened.
 Future<void> openExternalLink(BuildContext context, String raw) async {
   final messenger = ScaffoldMessenger.of(context);

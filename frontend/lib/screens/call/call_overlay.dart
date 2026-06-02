@@ -165,7 +165,7 @@ class _CallScreen extends StatelessWidget {
                 ),
               ),
             ),
-          // Controls — exact order: mute · camera · screen share · hang up.
+          // Controls - exact order: mute · camera · screen share · hang up.
           Align(
             alignment: Alignment.bottomCenter,
             child: SafeArea(

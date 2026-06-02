@@ -51,7 +51,7 @@ router.get('/me', authRequired, async (req, res) => {
 });
 
 router.patch('/me', authRequired, async (req, res) => {
-  // NOTE: e-mail is intentionally NOT editable here — it goes through the
+  // NOTE: e-mail is intentionally NOT editable here - it goes through the
   // confirm-by-code flow (POST /me/email/request + /me/change/confirm).
   const { full_name, bio, avatar_url,
           phone, school, department, study_year, location,

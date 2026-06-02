@@ -10,7 +10,7 @@ const mysql = require('mysql2/promise');
 
 (async () => {
   const sql = fs.readFileSync(path.join(__dirname, '..', 'db', 'schema.sql'), 'utf8')
-    // drop the `CREATE DATABASE ...;` and `USE ...;` statements — the hosted DB
+    // drop the `CREATE DATABASE ...;` and `USE ...;` statements - the hosted DB
     // already exists and is selected via the connection config.
     .replace(/CREATE DATABASE[\s\S]*?;/i, '')
     .replace(/USE\s+\w+\s*;/i, '');

@@ -65,7 +65,7 @@ android {
             // NOTE: R8 minify/shrink was tried (v1.19.0) but it broke ML Kit
             // translation at runtime (stripped despite keep rules), and the APK
             // size is dominated by flutter_webrtc native libs anyway (minify
-            // can't shrink those). Reverted — not worth the risk for ~no gain.
+            // can't shrink those). Reverted - not worth the risk for ~no gain.
             isMinifyEnabled = false
             isShrinkResources = false
         }

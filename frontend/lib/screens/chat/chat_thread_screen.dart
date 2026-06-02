@@ -238,7 +238,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _recordSecs++);
-      // Hard cap: a voice message can't exceed 10 minutes — auto-send at 10:00.
+      // Hard cap: a voice message can't exceed 10 minutes - auto-send at 10:00.
       if (_recordSecs >= 600) _stopRecord(send: true);
     });
   }
@@ -872,7 +872,7 @@ class _AudioBubbleState extends State<_AudioBubble> {
       if (mounted) setState(() { _playing = false; _pos = Duration.zero; });
     });
     // Preload the clip (without playing) so the TOTAL duration is known and
-    // shown right away — instead of 0:00 until the user hits play.
+    // shown right away - instead of 0:00 until the user hits play.
     _player.setReleaseMode(ReleaseMode.stop);
     _player.setSource(BytesSource(_bytes));
   }
@@ -1320,7 +1320,7 @@ class _TeamMenuButtonState extends State<_TeamMenuButton> {
               Text(ctx.tr('team.leave'), style: const TextStyle(color: Color(0xFFDC2626))),
             ]),
           ),
-        // The owner can't leave — they delete the whole team instead.
+        // The owner can't leave - they delete the whole team instead.
         if (m != null && m['is_owner'] == true)
           PopupMenuItem(
             value: 'delete',

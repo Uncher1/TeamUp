@@ -331,7 +331,7 @@ Future<void> _pickPresenceVisibility(BuildContext context) async {
 
 /// GDPR data portability: build a downloadable JSON copy and open the system
 /// share/save sheet. (E-mail delivery is on hold until the prod mail provider
-/// is sorted — tracked as tech debt.)
+/// is sorted - tracked as tech debt.)
 Future<void> _exportData(BuildContext context) async {
   final repo = context.read<UserRepository>();
   final messenger = ScaffoldMessenger.of(context);

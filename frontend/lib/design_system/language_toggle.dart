@@ -9,7 +9,7 @@ import '../core/theme.dart';
 import '../providers/settings_provider.dart';
 
 /// Compact EN | FR switcher for the pre-auth screens (onboarding, login,
-/// register, verification, complete-profile) — the only place the user can
+/// register, verification, complete-profile) - the only place the user can
 /// pick a language before reaching Settings. The choice persists app-wide.
 class LanguageToggle extends StatelessWidget {
   const LanguageToggle({super.key});

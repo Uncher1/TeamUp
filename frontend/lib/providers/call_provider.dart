@@ -326,7 +326,7 @@ class CallProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Turn our camera on/off (instant — the track is already in the connection).
+  /// Turn our camera on/off (instant - the track is already in the connection).
   void toggleCamera() {
     if (sharingScreen) return; // stop screen-sharing first
     cameraOff = !cameraOff;
@@ -339,7 +339,7 @@ class CallProvider extends ChangeNotifier {
   /// Replace the outgoing camera track with the device screen (and back).
   ///
   /// NOTE: on Android 14+ screen capture needs a media-projection foreground
-  /// service (not shipped by flutter_webrtc) — that requires native code and is
+  /// service (not shipped by flutter_webrtc) - that requires native code and is
   /// tracked as a separate task. We fail gracefully here so a capture error
   /// never crashes the call.
   Future<void> toggleScreenShare() async {

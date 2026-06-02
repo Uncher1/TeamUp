@@ -1,5 +1,5 @@
 // One-off idempotent migration: add a moderation role to users.
-// role ∈ {'user','moderator','admin'} — default 'user'. Safe to re-run.
+// role ∈ {'user','moderator','admin'} - default 'user'. Safe to re-run.
 require('dotenv').config();
 const pool = require('../src/config/db');
 

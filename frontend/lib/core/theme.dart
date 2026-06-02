@@ -105,7 +105,7 @@ extension PaletteX on BuildContext {
 }
 
 /// Pushed routes fade in while sliding up a few pixels, and the outgoing
-/// route fades out — a calm "modern app" page transition on every platform.
+/// route fades out - a calm "modern app" page transition on every platform.
 class _FadeSlideTransitionsBuilder extends PageTransitionsBuilder {
   const _FadeSlideTransitionsBuilder();
 
@@ -151,7 +151,7 @@ class AppTheme {
     'Slate': Color(0xFF64748B),
   };
 
-  // Gradient used by avatars (indigo-400 -> purple-500) — brand, fixed in both modes.
+  // Gradient used by avatars (indigo-400 -> purple-500) - brand, fixed in both modes.
   // Keep for back-compat; prefer gradientFor(context.colorScheme.primary) in widgets.
   static const List<Color> avatarGradient = [Color(0xFF818CF8), Color(0xFFA855F7)];
 

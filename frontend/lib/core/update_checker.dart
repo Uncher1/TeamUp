@@ -15,7 +15,7 @@ import 'app_strings.dart';
 ///
 /// On Android, looks at the latest GitHub Release; if its version is newer than
 /// the installed one, prompts the user to download the new APK (opened in the
-/// browser, which then installs it over the current app — no uninstall needed).
+/// browser, which then installs it over the current app - no uninstall needed).
 /// Any failure is swallowed: this must never block or crash the app.
 
 const String _repo = 'Uncher1/TeamUp';
@@ -97,7 +97,7 @@ bool _isNewer(String remote, String current) {
 
 Future<void> _showUpdateDialog(BuildContext context, _Release latest) async {
   // Mandatory: no "Later", can't dismiss (no barrier tap, no back button). The
-  // only way out is to update. The CTA does NOT pop this gate — it launches the
+  // only way out is to update. The CTA does NOT pop this gate - it launches the
   // download on top, so if the OTA fails the user lands back on this dialog.
   await showDialog<void>(
     context: context,

@@ -19,7 +19,7 @@ class GradientAvatar extends StatelessWidget {
   final String? presenceStatus;
 
   /// When true, a small "group" badge is drawn (bottom-right) to mark this
-  /// avatar as a team — so a team chat is never confused with a 1:1 DM.
+  /// avatar as a team - so a team chat is never confused with a 1:1 DM.
   final bool isTeam;
 
   const GradientAvatar({
@@ -182,7 +182,7 @@ class _ZoomBodyState extends State<_ZoomBody> {
   }
 }
 
-/// Private helper — gradient circle with white initial. Extracted so both the
+/// Private helper - gradient circle with white initial. Extracted so both the
 /// no-image path and error-fallback paths reuse identical rendering.
 class _GradientInitial extends StatelessWidget {
   final String name;

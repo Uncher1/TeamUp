@@ -4,7 +4,7 @@
 require('dotenv').config();
 const pool = require('../src/config/db');
 
-// [name, category] — names are UNIQUE across the table.
+// [name, category] - names are UNIQUE across the table.
 const SKILLS = [
   // Programming
   ['Python', 'Programming'], ['JavaScript', 'Programming'], ['TypeScript', 'Programming'],
@@ -110,7 +110,7 @@ const SKILLS = [
   ['Adaptability', 'Soft Skills'], ['Creativity', 'Soft Skills'], ['Negotiation', 'Soft Skills'],
 ];
 
-// [name, category] — names are UNIQUE across the table.
+// [name, category] - names are UNIQUE across the table.
 const INTERESTS = [
   // Tech
   ['Web Development', 'Tech'], ['Mobile Apps', 'Tech'], ['Artificial Intelligence', 'Tech'], ['Cybersecurity', 'Tech'],

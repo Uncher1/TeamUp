@@ -131,7 +131,7 @@ router.get('/:id/messages', authRequired, async (req, res) => {
   res.json(rows.reverse());
 });
 
-// Create a poll — TEAM (project) conversations only.
+// Create a poll - TEAM (project) conversations only.
 router.post('/:id/polls', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   const question = String(req.body?.question ?? '').trim().slice(0, 300);
@@ -258,7 +258,7 @@ router.patch('/:id/messages/:mid', authRequired, async (req, res) => {
   res.json({ id: mid, content });
 });
 
-// Delete a message: the author, or — in a team (project) chat — the team owner.
+// Delete a message: the author, or - in a team (project) chat - the team owner.
 router.delete('/:id/messages/:mid', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   const mid = Number(req.params.mid);

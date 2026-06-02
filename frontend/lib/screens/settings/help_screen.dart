@@ -17,7 +17,7 @@ class HelpScreen extends StatefulWidget {
 }
 
 class _HelpScreenState extends State<HelpScreen> {
-  // (questionKey, answerKey) — resolved via context.tr at build time.
+  // (questionKey, answerKey) - resolved via context.tr at build time.
   static const _faqKeys = [
     ('help.q1', 'help.a1'),
     ('help.q2', 'help.a2'),

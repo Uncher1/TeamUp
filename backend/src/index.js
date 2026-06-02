@@ -31,7 +31,7 @@ app.use(express.json({ limit: '8mb' })); // room for base64 chat attachments
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.get('/',           (_req, res) => res.json({ name: 'TeamUp API', version: '0.1.0' }));
-// Health check that also touches the DB — doubles as a keep-alive ping to stop
+// Health check that also touches the DB - doubles as a keep-alive ping to stop
 // the free host + managed DB from idling to sleep.
 app.get('/api/health', async (_req, res) => {
   try {

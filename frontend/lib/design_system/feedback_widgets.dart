@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/theme.dart';
 
 // ---------------------------------------------------------------------------
-// SkeletonBox — pulsing placeholder block
+// SkeletonBox - pulsing placeholder block
 // ---------------------------------------------------------------------------
 
 class SkeletonBox extends StatefulWidget {
@@ -64,7 +64,7 @@ class _SkeletonBoxState extends State<SkeletonBox>
 }
 
 // ---------------------------------------------------------------------------
-// SkeletonCard — one card-shaped skeleton row mimicking a feed/list item
+// SkeletonCard - one card-shaped skeleton row mimicking a feed/list item
 // ---------------------------------------------------------------------------
 
 class SkeletonCard extends StatelessWidget {
@@ -111,7 +111,7 @@ class SkeletonCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// SkeletonList — column of SkeletonCards
+// SkeletonList - column of SkeletonCards
 // ---------------------------------------------------------------------------
 
 class SkeletonList extends StatelessWidget {
@@ -136,7 +136,7 @@ class SkeletonList extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// EmptyState — centered empty/illustration message
+// EmptyState - centered empty/illustration message
 // ---------------------------------------------------------------------------
 
 class EmptyState extends StatelessWidget {

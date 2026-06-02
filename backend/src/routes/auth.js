@@ -119,7 +119,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Sign in / sign up with Google. The client sends the GIS ID token; we verify
-// it, then log the user in — or create the account if it's a new Google user.
+// it, then log the user in - or create the account if it's a new Google user.
 router.post('/google', async (req, res) => {
   const idToken = req.body?.id_token ?? '';
   if (!idToken) return res.status(400).json({ error: 'id_token is required' });
@@ -150,7 +150,7 @@ router.post('/google', async (req, res) => {
   const isNew = !user;
   if (!user) {
     // New Google account → sign up (random password; the account uses Google).
-    // Marked verified immediately — no code step for Google sign-ups.
+    // Marked verified immediately - no code step for Google sign-ups.
     const password_hash = await hash(crypto.randomBytes(24).toString('hex'));
     const [result] = await pool.query(
       'INSERT INTO users (email, password_hash, full_name, email_verified) VALUES (?, ?, ?, 1)',

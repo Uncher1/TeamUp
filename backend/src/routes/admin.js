@@ -10,7 +10,7 @@ const { deleteUserAndCleanup } = require('../services/accountDeletion');
 const router = express.Router();
 const ROLES = ['user', 'moderator', 'admin'];
 
-// List users (optionally filtered by name/email) — admin only.
+// List users (optionally filtered by name/email) - admin only.
 router.get('/users', authRequired, requireRole('admin'), async (req, res) => {
   const q = `%${String(req.query.q ?? '').trim()}%`;
   const [rows] = await pool.query(
@@ -24,7 +24,7 @@ router.get('/users', authRequired, requireRole('admin'), async (req, res) => {
   res.json(rows);
 });
 
-// Promote / demote a user — admin only.
+// Promote / demote a user - admin only.
 router.patch('/users/:id/role', authRequired, requireRole('admin'), async (req, res) => {
   const id = Number(req.params.id);
   const role = String(req.body?.role ?? '');
@@ -40,7 +40,7 @@ router.patch('/users/:id/role', authRequired, requireRole('admin'), async (req, 
   res.json({ id, role });
 });
 
-// Permanently delete a user account — admin only. Cascades to all their data.
+// Permanently delete a user account - admin only. Cascades to all their data.
 router.delete('/users/:id', authRequired, requireRole('admin'), async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ error: 'valid id required' });

@@ -34,7 +34,7 @@ Future<void> _openProjectChat(BuildContext context, Project p) async {
         ),
       ),
     ));
-  } catch (_) {/* ignore — tapping again retries */}
+  } catch (_) {/* ignore - tapping again retries */}
 }
 
 class MyTeamsScreen extends StatefulWidget {

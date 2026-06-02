@@ -96,20 +96,20 @@ class UserRepository {
     return User.fromJson(res.data as Map<String, dynamic>);
   }
 
-  /// Step 1 — request a password change: validates current/new and e-mails a
+  /// Step 1 - request a password change: validates current/new and e-mails a
   /// confirmation code. The password changes only after [confirmChange].
   Future<void> requestPasswordChange(String current, String next) async {
     await api.dio.put('/users/me/password',
         data: {'current_password': current, 'new_password': next});
   }
 
-  /// Step 1 — request an e-mail change: stores it as pending and e-mails a
+  /// Step 1 - request an e-mail change: stores it as pending and e-mails a
   /// code to the CURRENT address. The e-mail changes only after [confirmChange].
   Future<void> requestEmailChange(String newEmail) async {
     await api.dio.post('/users/me/email/request', data: {'email': newEmail});
   }
 
-  /// Step 2 — confirm the pending e-mail/password change with the code.
+  /// Step 2 - confirm the pending e-mail/password change with the code.
   /// Returns the refreshed profile (e-mail updated for an e-mail change).
   Future<User> confirmChange(String code) async {
     final res =

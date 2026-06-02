@@ -48,7 +48,7 @@ const _kTimelines = [
 
 class CreateProjectScreen extends StatefulWidget {
   /// Called right after a successful creation so the shell can switch the
-  /// underlying section to "My Teams" — then the team chat is pushed on top,
+  /// underlying section to "My Teams" - then the team chat is pushed on top,
   /// so backing out of the chat lands on My Teams (not this form).
   final VoidCallback? onCreated;
   const CreateProjectScreen({super.key, this.onCreated});
@@ -208,7 +208,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     // NOTE: a SingleChildScrollView + Column (rather than a ListView) keeps
     // every field mounted at all times, so the GlobalKeys always have a
     // BuildContext and `Scrollable.ensureVisible` can reliably jump to the
-    // first missing field — even one far off-screen.
+    // first missing field - even one far off-screen.
     return SingleChildScrollView(
       controller: _scroll,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),

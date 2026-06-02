@@ -122,7 +122,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   /// Reactive password-strength checklist (✗ red → ✓ green), shown only once
-  /// the user starts typing — mirrors the change-password screen.
+  /// the user starts typing - mirrors the change-password screen.
   List<Widget> _passwordRules() {
     final p = context.palette;
     final pwd = _password.text;

@@ -45,11 +45,11 @@ class Conversation {
     return 'Conversation #$id';
   }
 
-  /// Avatar photo for the conversation row — the team photo for project chats,
+  /// Avatar photo for the conversation row - the team photo for project chats,
   /// the other person's photo for direct chats.
   String? get avatarImageUrl => type == 'direct' ? otherUserAvatar : projectAvatar;
 
-  /// Presence dot for the row — only meaningful for direct (1:1) chats.
+  /// Presence dot for the row - only meaningful for direct (1:1) chats.
   String? get avatarStatus => type == 'direct' ? otherUserStatus : null;
 
   factory Conversation.fromJson(Map<String, dynamic> j) => Conversation(

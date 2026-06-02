@@ -1,4 +1,4 @@
-# TeamUp — Matching Algorithm (v0)
+# TeamUp - Matching Algorithm (v0)
 
 > Detailed explanation of the ranking algorithm implemented in
 > [`backend/src/services/matching.js`](../backend/src/services/matching.js).
@@ -26,7 +26,7 @@ score = 0.7 · skill_match  +  0.3 · interest_match              ∈ [0, 1]
 
 Two components, computed independently and then combined.
 
-### 2.1 `skill_match` — weighted, normalized overlap
+### 2.1 `skill_match` - weighted, normalized overlap
 
 ```
                 Σ_{s ∈ P.skills}  weight_p(s) · level_u(s)
@@ -50,7 +50,7 @@ a beginner (level 1) for the same skill.
 skills would have larger raw sums and unfair advantages. Normalization makes
 scores comparable across projects.
 
-### 2.2 `interest_match` — Jaccard similarity
+### 2.2 `interest_match` - Jaccard similarity
 
 ```
 interest_match = |I_u ∩ I_p|  /  |I_u ∪ I_p|
@@ -60,7 +60,7 @@ This is the standard **Jaccard index**, the canonical similarity measure for
 two sets.
 
 **Why Jaccard?** Interests don't have proficiency levels (you either have an
-interest or you don't — binary). Jaccard is symmetric, in `[0, 1]`, and
+interest or you don't - binary). Jaccard is symmetric, in `[0, 1]`, and
 trivial to explain.
 
 ### 2.3 The 70/30 split
@@ -71,7 +71,7 @@ trivial to explain.
 
 Hence: skills weighted `0.7`, interests weighted `0.3`.
 
-## 3. Worked example — Chloé Lefèvre for "StudyMate"
+## 3. Worked example - Chloé Lefèvre for "StudyMate"
 
 This reproduces the actual response in
 [`backend/demo-output/04-matching-algorithm.json`](../backend/demo-output/04-matching-algorithm.json).
@@ -96,31 +96,31 @@ Tagged interests: `{Mobile Apps, EdTech}`.
 
 Interests: `{Mobile Apps, Design, EdTech}`.
 
-### Step 1 — Compute `skill_match`
+### Step 1 - Compute `skill_match`
 
 Walk over the project's required skills and check Chloé's profile:
 
 | Required        | Chloé's level | Contribution (`weight × level`) |
 |-----------------|---------------|---------------------------------|
 | Flutter         | 3             | 5 × 3 = **15**                  |
-| Node.js         | —             | **0**                           |
+| Node.js         | -             | **0**                           |
 | UI/UX Design    | 5             | 3 × 5 = **15**                  |
 
 - Raw sum: `15 + 0 + 15 = 30`
 - Max possible: `5×5 + 4×5 + 3×5 = 25 + 20 + 15 = 60`
 - **`skill_match = 30 / 60 = 0.5`**
 
-> Note: Chloé's Figma skill is **not** counted — StudyMate doesn't require it.
+> Note: Chloé's Figma skill is **not** counted - StudyMate doesn't require it.
 > We score the candidate against the project's needs, not against everything
 > they happen to know.
 
-### Step 2 — Compute `interest_match`
+### Step 2 - Compute `interest_match`
 
 - `I_p ∩ I_u = {Mobile Apps, EdTech}` → **2** elements
 - `I_p ∪ I_u = {Mobile Apps, Design, EdTech}` → **3** elements
 - **`interest_match = 2 / 3 ≈ 0.667`**
 
-### Step 3 — Combine
+### Step 3 - Combine
 
 ```
 score = 0.7 × 0.5 + 0.3 × 0.667
@@ -144,7 +144,7 @@ Compared to the other top candidates for StudyMate:
   fewer interests with StudyMate.
 - **Bob** has Node.js but no Flutter and no shared interests.
 - **Chloé** brings *both* Flutter and UI/UX Design (the latter at the max level)
-  and shares more interests — her balance wins.
+  and shares more interests - her balance wins.
 
 This matches what a human recruiter would intuitively pick for a mobile + UX
 education project.
@@ -178,7 +178,7 @@ the join fast.
 ## 6. Edge cases & known limits
 
 - **Cold-start users** (no skills declared) are absent from the candidate set.
-  Accepted limitation in v0 — they need to fill their profile to be matched.
+  Accepted limitation in v0 - they need to fill their profile to be matched.
 - **Profile text is ignored.** Free-form bio / project description is not
   used yet.
 - **No history.** Past project participations or successes don't influence

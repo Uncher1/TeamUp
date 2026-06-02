@@ -4,7 +4,7 @@
 
 /// ICE configuration for 1:1 WebRTC calls.
 ///
-/// STUN (Google) is free and effectively unlimited — most calls connect
+/// STUN (Google) is free and effectively unlimited - most calls connect
 /// peer-to-peer through it and use ZERO relay bandwidth. TURN is only a
 /// fallback for networks where direct P2P fails (symmetric NAT, some 4G).
 /// The TURN endpoint/credentials are overridable at build time

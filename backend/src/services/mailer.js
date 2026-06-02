@@ -45,7 +45,7 @@ function brandedHtml({ title, intro, note, lang = 'en' }) {
 </body></html>`;
 }
 
-/// Sends via the Brevo transactional HTTP API (port 443) — used in production
+/// Sends via the Brevo transactional HTTP API (port 443) - used in production
 /// because Render's free tier BLOCKS outbound SMTP. Falls through to SMTP when
 /// no Brevo key is set (local dev).
 // Brevo wants a BARE email in sender.email (no "Name <addr>" form). Extract the
@@ -93,7 +93,7 @@ async function sendMail({ to, subject, html, attachments }) {
   }
   // Local/dev fallback: classic SMTP.
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('[mailer] no BREVO_API_KEY and SMTP not configured — skipping email to', to);
+    console.warn('[mailer] no BREVO_API_KEY and SMTP not configured - skipping email to', to);
     return { skipped: true };
   }
   return transporter.sendMail({ from: FROM, to, subject, html, attachments });

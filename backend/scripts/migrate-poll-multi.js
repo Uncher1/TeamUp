@@ -22,7 +22,7 @@ const pool = require('../src/config/db');
       'ALTER TABLE poll_votes DROP PRIMARY KEY, ADD PRIMARY KEY (poll_id, user_id, option_index)');
     console.log('ok: poll_votes PK -> (poll_id, user_id, option_index)');
   } catch (e) {
-    // Already the triple PK (re-run) or table shape differs — non-fatal.
+    // Already the triple PK (re-run) or table shape differs - non-fatal.
     console.log('skip: poll_votes PK change (', e.code || e.message, ')');
   }
 

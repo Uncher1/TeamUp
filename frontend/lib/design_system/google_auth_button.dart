@@ -21,7 +21,7 @@ import 'pressable.dart';
 const _kServerClientId =
     '785441494453-nf5sfmd6osimkub3j4edrdrg6563568k.apps.googleusercontent.com';
 
-/// The official Google "G" logo (Google brand asset — 4 official colours).
+/// The official Google "G" logo (Google brand asset - 4 official colours).
 const String _googleGSvg = '''
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -86,7 +86,7 @@ Future<GoogleOutcome> handleGoogleSignIn(BuildContext context) async {
     }
     return GoogleOutcome(signedIn: true, isNew: auth.isNewAccount);
   } on GoogleSignInException catch (e) {
-    // User dismissed the picker — not an error worth surfacing.
+    // User dismissed the picker - not an error worth surfacing.
     if (e.code == GoogleSignInExceptionCode.canceled) return GoogleOutcome.failed;
     messenger.showSnackBar(SnackBar(content: Text('Google : ${e.code.name}')));
     return GoogleOutcome.failed;

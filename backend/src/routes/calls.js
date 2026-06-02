@@ -16,7 +16,7 @@ const STUN = [
 // TURN key is configured (CF_TURN_KEY_ID + CF_TURN_API_TOKEN), short-lived TURN
 // credentials are minted server-side so calls work on ANY network/country
 // (NAT traversal via relay). Falls back to STUN-only if TURN isn't configured
-// or the mint fails — the call still works on same-network/simple NATs.
+// or the mint fails - the call still works on same-network/simple NATs.
 router.get('/turn', authRequired, async (req, res) => {
   const keyId = process.env.CF_TURN_KEY_ID;
   const token = process.env.CF_TURN_API_TOKEN;

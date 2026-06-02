@@ -22,7 +22,7 @@ Content-Type: application/json
 }
 
 
-### Login as Alice (seeded — frontend / design)
+### Login as Alice (seeded - frontend / design)
 # @name loginAlice
 POST {{host}}/api/auth/login
 Content-Type: application/json
@@ -36,7 +36,7 @@ Content-Type: application/json
 @aliceId    = {{loginAlice.response.body.user.id}}
 
 
-### Login as Bob (seeded — backend / DB)
+### Login as Bob (seeded - backend / DB)
 # @name loginBob
 POST {{host}}/api/auth/login
 Content-Type: application/json
@@ -65,7 +65,7 @@ Authorization: Bearer {{aliceToken}}
 Content-Type: application/json
 
 {
-  "bio": "Frontend dev — currently building TeamUp."
+  "bio": "Frontend dev - currently building TeamUp."
 }
 
 
@@ -150,7 +150,7 @@ Content-Type: application/json
 }
 
 
-### Alice (owner) accepts the application — replace :aid with the actual id
+### Alice (owner) accepts the application - replace :aid with the actual id
 POST {{host}}/api/projects/1/applications/1
 Authorization: Bearer {{aliceToken}}
 Content-Type: application/json

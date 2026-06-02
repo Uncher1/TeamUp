@@ -321,7 +321,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
             child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
           );
         }
-        // !hasMore — minimal end marker
+        // !hasMore - minimal end marker
         return const SizedBox.shrink();
       },
     );

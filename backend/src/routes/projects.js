@@ -303,7 +303,7 @@ router.post('/:id/conversation', authRequired, async (req, res) => {
   }
 });
 
-// Delete a project — its owner, or a moderator/admin (content moderation).
+// Delete a project - its owner, or a moderator/admin (content moderation).
 router.delete('/:id', authRequired, async (req, res) => {
   const projectId = Number(req.params.id);
   if (!projectId) return res.status(400).json({ error: 'invalid id' });

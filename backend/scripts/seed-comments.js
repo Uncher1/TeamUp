@@ -3,7 +3,7 @@
 require('dotenv').config();
 const pool = require('../src/config/db');
 
-// (postId, authorId, content) — authors are the seed users (1..6).
+// (postId, authorId, content) - authors are the seed users (1..6).
 const COMMENTS = [
   [1, 2, 'Super idée ! Je suis dispo pour aider côté backend.'],
   [1, 3, 'Le concept de révision entre pairs est top, je veux participer.'],
@@ -30,7 +30,7 @@ const COMMENTS = [
     }
     console.log('inserted demo comments');
   } else {
-    console.log(`post_comments already has ${n} rows — skipping insert`);
+    console.log(`post_comments already has ${n} rows - skipping insert`);
   }
   // Reconcile every post's comment_count with the real count.
   await pool.query(
