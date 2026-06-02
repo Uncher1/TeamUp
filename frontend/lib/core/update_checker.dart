@@ -96,24 +96,24 @@ bool _isNewer(String remote, String current) {
 }
 
 Future<void> _showUpdateDialog(BuildContext context, _Release latest) async {
+  // Mandatory: no "Later", can't dismiss (no barrier tap, no back button). The
+  // only way out is to update. The CTA does NOT pop this gate — it launches the
+  // download on top, so if the OTA fails the user lands back on this dialog.
   await showDialog<void>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(ctx.tr('update.title')),
-      content: Text(ctx.tr('update.body', {'version': latest.version})),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(ctx.tr('update.later')),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.pop(ctx);
-            _runOtaUpdate(context, latest);
-          },
-          child: Text(ctx.tr('update.cta')),
-        ),
-      ],
+    barrierDismissible: false,
+    builder: (ctx) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        title: Text(ctx.tr('update.title')),
+        content: Text(ctx.tr('update.body', {'version': latest.version})),
+        actions: [
+          TextButton(
+            onPressed: () => _runOtaUpdate(ctx, latest),
+            child: Text(ctx.tr('update.cta')),
+          ),
+        ],
+      ),
     ),
   );
 }
