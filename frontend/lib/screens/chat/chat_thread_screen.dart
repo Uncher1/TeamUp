@@ -47,6 +47,12 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
   /// Non-null while editing an existing message (inline, in the input bar).
   Message? _editing;
 
+  /// A picked attachment staged for sending WITH an optional caption (instead
+  /// of firing off immediately). Sent when the user presses send.
+  Map<String, dynamic>? _pendingAttachment;
+  Uint8List? _pendingImageBytes; // thumbnail preview for a staged image
+  String? _pendingFileName; // label for a staged file
+
   final AudioRecorder _recorder = AudioRecorder();
   bool _recording = false;
   int _recordSecs = 0;
@@ -83,18 +89,40 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
 
   void _send() {
     final text = _ctrl.text.trim();
-    if (text.isEmpty) return;
     final editing = _editing;
     if (editing != null) {
       // Inline edit mode: update the existing message instead of sending.
+      if (text.isEmpty) return;
       context.read<ChatProvider>().editMessage(editing.id, text);
       setState(() => _editing = null);
       _ctrl.clear();
       return;
     }
+    final pending = _pendingAttachment;
+    if (pending != null) {
+      // Send the staged image/file WITH the typed caption (text may be empty).
+      context.read<ChatProvider>().sendMessage(text, attachment: pending);
+      setState(() {
+        _pendingAttachment = null;
+        _pendingImageBytes = null;
+        _pendingFileName = null;
+      });
+      _ctrl.clear();
+      _scrollToBottom();
+      return;
+    }
+    if (text.isEmpty) return;
     context.read<ChatProvider>().sendMessage(text);
     _ctrl.clear();
     _scrollToBottom();
+  }
+
+  void _cancelPending() {
+    setState(() {
+      _pendingAttachment = null;
+      _pendingImageBytes = null;
+      _pendingFileName = null;
+    });
   }
 
   /// Enters inline-edit mode: load the message text into the input bar and
@@ -111,8 +139,8 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     _ctrl.clear();
   }
 
-  /// Picks an image from the gallery, compresses it and sends it as an
-  /// attachment (base64 data URL).
+  /// Picks an image and STAGES it (preview above the input) so the user can add
+  /// a caption before sending — it is not sent until they press send.
   Future<void> _attachImage() async {
     final x = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -124,12 +152,12 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     final bytes = await x.readAsBytes();
     final dataUrl = 'data:${x.mimeType ?? 'image/jpeg'};base64,${base64Encode(bytes)}';
     if (!mounted) return;
-    await context.read<ChatProvider>().sendMessage('', attachment: {
-      'type': 'image',
-      'name': x.name,
-      'data': dataUrl,
+    setState(() {
+      _pendingImageBytes = bytes;
+      _pendingFileName = null;
+      _pendingAttachment = {'type': 'image', 'name': x.name, 'data': dataUrl};
     });
-    _scrollToBottom();
+    _inputFocus.requestFocus();
   }
 
   /// Picks an arbitrary file (<= 5 MB) and sends it as a base64 attachment.
@@ -147,12 +175,13 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     }
     final dataUrl = 'data:application/octet-stream;base64,${base64Encode(bytes)}';
     if (!mounted) return;
-    await context.read<ChatProvider>().sendMessage('', attachment: {
-      'type': 'file',
-      'name': f.name,
-      'data': dataUrl,
+    // Stage it (with the file name shown) so a caption can be added first.
+    setState(() {
+      _pendingImageBytes = null;
+      _pendingFileName = f.name;
+      _pendingAttachment = {'type': 'file', 'name': f.name, 'data': dataUrl};
     });
-    _scrollToBottom();
+    _inputFocus.requestFocus();
   }
 
   /// Bottom sheet: send a photo or a file.
@@ -321,6 +350,9 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                     onMic: _startRecord,
                     editing: _editing != null,
                     onCancelEdit: _cancelEdit,
+                    pendingImageBytes: _pendingImageBytes,
+                    pendingFileName: _pendingFileName,
+                    onCancelPending: _cancelPending,
                   ),
           ],
         ),
@@ -848,6 +880,9 @@ class _InputBar extends StatelessWidget {
   final VoidCallback onMic;
   final bool editing;
   final VoidCallback onCancelEdit;
+  final Uint8List? pendingImageBytes;
+  final String? pendingFileName;
+  final VoidCallback onCancelPending;
   const _InputBar({
     required this.controller,
     required this.focusNode,
@@ -856,6 +891,9 @@ class _InputBar extends StatelessWidget {
     required this.onMic,
     this.editing = false,
     required this.onCancelEdit,
+    this.pendingImageBytes,
+    this.pendingFileName,
+    required this.onCancelPending,
   });
 
   @override
@@ -892,6 +930,37 @@ class _InputBar extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 12, fontWeight: FontWeight.w600, color: primary),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                ],
+              ),
+            ),
+          // ── Staged attachment preview (image thumbnail or file chip) ───────
+          if (pendingImageBytes != null || pendingFileName != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8, top: 2),
+              child: Row(
+                children: [
+                  if (pendingImageBytes != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(pendingImageBytes!,
+                          width: 48, height: 48, fit: BoxFit.cover),
+                    )
+                  else
+                    Icon(Icons.insert_drive_file_outlined, color: context.palette.textMuted),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(pendingFileName ?? context.tr('chat.photo'),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
+                  ),
+                  InkWell(
+                    onTap: onCancelPending,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(Icons.close, size: 20, color: context.palette.textMuted),
+                    ),
                   ),
                 ],
               ),

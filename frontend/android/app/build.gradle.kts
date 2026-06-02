@@ -62,14 +62,12 @@ android {
                 signingConfigs.getByName("release")
             else
                 signingConfigs.getByName("debug")
-            // Shrink + obfuscate to cut APK size → faster download/install/update.
-            // Keep rules for native/reflection libs live in proguard-rules.pro.
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // NOTE: R8 minify/shrink was tried (v1.19.0) but it broke ML Kit
+            // translation at runtime (stripped despite keep rules), and the APK
+            // size is dominated by flutter_webrtc native libs anyway (minify
+            // can't shrink those). Reverted — not worth the risk for ~no gain.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
