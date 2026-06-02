@@ -149,8 +149,10 @@ class _CallScreen extends StatelessWidget {
           // Controls.
           Align(
             alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 40, left: 16, right: 16),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+              padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
               child: Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 22,
@@ -182,6 +184,7 @@ class _CallScreen extends StatelessWidget {
                 ],
               ),
             ),
+            ),
           ),
         ],
       ),
@@ -198,7 +201,7 @@ class _CtrlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkResponse(
+    return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 58,
@@ -227,7 +230,7 @@ class _RoundAction extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        InkResponse(
+        GestureDetector(
           onTap: onTap,
           child: Container(
             width: 72,
