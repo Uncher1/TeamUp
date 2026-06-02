@@ -54,10 +54,12 @@ class ChatProvider extends ChangeNotifier {
     _joinSocket(convId);
   }
 
-  Future<void> sendMessage(String content, {Map<String, dynamic>? attachment}) async {
+  Future<void> sendMessage(String content,
+      {Map<String, dynamic>? attachment, List<Map<String, dynamic>>? attachments}) async {
     if (_activeConvId == null) return;
     try {
-      final msg = await _repo.sendMessage(_activeConvId!, content, attachment: attachment);
+      final msg = await _repo.sendMessage(_activeConvId!, content,
+          attachment: attachment, attachments: attachments);
       if (!messages.any((m) => m.id == msg.id)) {
         messages = [...messages, msg];
         notifyListeners();

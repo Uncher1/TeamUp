@@ -64,7 +64,8 @@ function initSocket(server) {
           payload?.conversationId,
           socket.userId,
           payload?.content,
-          payload?.attachment
+          payload?.attachment,
+          payload?.attachments
         );
         io.to(`conversation:${msg.conversation_id}`).emit('message:new', msg);
         await notifyNewMessage(io, msg, socket.userId);

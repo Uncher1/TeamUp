@@ -47,11 +47,10 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
   /// Non-null while editing an existing message (inline, in the input bar).
   Message? _editing;
 
-  /// A picked attachment staged for sending WITH an optional caption (instead
-  /// of firing off immediately). Sent when the user presses send.
-  Map<String, dynamic>? _pendingAttachment;
-  Uint8List? _pendingImageBytes; // thumbnail preview for a staged image
-  String? _pendingFileName; // label for a staged file
+  /// Attachments staged for sending WITH an optional caption (up to 10). They
+  /// are not sent until the user presses send.
+  final List<_Staged> _pending = [];
+  static const _maxAttachments = 10;
 
   final AudioRecorder _recorder = AudioRecorder();
   bool _recording = false;
@@ -98,15 +97,13 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
       _ctrl.clear();
       return;
     }
-    final pending = _pendingAttachment;
-    if (pending != null) {
-      // Send the staged image/file WITH the typed caption (text may be empty).
-      context.read<ChatProvider>().sendMessage(text, attachment: pending);
-      setState(() {
-        _pendingAttachment = null;
-        _pendingImageBytes = null;
-        _pendingFileName = null;
-      });
+    if (_pending.isNotEmpty) {
+      // Send the staged images/files WITH the typed caption (text may be empty).
+      final attachments = _pending
+          .map((s) => {'type': s.type, 'name': s.name, 'data': s.dataUrl})
+          .toList();
+      context.read<ChatProvider>().sendMessage(text, attachments: attachments);
+      setState(_pending.clear);
       _ctrl.clear();
       _scrollToBottom();
       return;
@@ -117,12 +114,8 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     _scrollToBottom();
   }
 
-  void _cancelPending() {
-    setState(() {
-      _pendingAttachment = null;
-      _pendingImageBytes = null;
-      _pendingFileName = null;
-    });
+  void _removeStaged(int index) {
+    if (index >= 0 && index < _pending.length) setState(() => _pending.removeAt(index));
   }
 
   /// Enters inline-edit mode: load the message text into the input bar and
@@ -139,48 +132,49 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     _ctrl.clear();
   }
 
-  /// Picks an image and STAGES it (preview above the input) so the user can add
-  /// a caption before sending — it is not sent until they press send.
+  /// Picks one or more images and STAGES them (previews above the input) so the
+  /// user can add a caption before sending. Capped at [_maxAttachments] total.
   Future<void> _attachImage() async {
-    final x = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1280,
-      maxHeight: 1280,
-      imageQuality: 70,
-    );
-    if (x == null) return;
-    final bytes = await x.readAsBytes();
-    final dataUrl = 'data:${x.mimeType ?? 'image/jpeg'};base64,${base64Encode(bytes)}';
+    final messenger = ScaffoldMessenger.of(context);
+    final maxMsg = context.tr('chat.maxAttachments', {'n': '$_maxAttachments'});
+    final xs = await ImagePicker().pickMultiImage(
+      maxWidth: 1280, maxHeight: 1280, imageQuality: 70);
+    if (xs.isEmpty || !mounted) return;
+    var hitMax = false;
+    for (final x in xs) {
+      if (_pending.length >= _maxAttachments) { hitMax = true; break; }
+      final bytes = await x.readAsBytes();
+      final dataUrl = 'data:${x.mimeType ?? 'image/jpeg'};base64,${base64Encode(bytes)}';
+      _pending.add(_Staged(type: 'image', name: x.name, dataUrl: dataUrl, bytes: bytes));
+    }
     if (!mounted) return;
-    setState(() {
-      _pendingImageBytes = bytes;
-      _pendingFileName = null;
-      _pendingAttachment = {'type': 'image', 'name': x.name, 'data': dataUrl};
-    });
+    if (hitMax) messenger.showSnackBar(SnackBar(content: Text(maxMsg)));
+    setState(() {});
     _inputFocus.requestFocus();
   }
 
-  /// Picks an arbitrary file (<= 5 MB) and sends it as a base64 attachment.
+  /// Picks one or more files (<= 5 MB each) and STAGES them. Capped at
+  /// [_maxAttachments] total (shared with images).
   Future<void> _attachFile() async {
-    final result = await FilePicker.pickFiles(withData: true);
-    final f = (result?.files.isNotEmpty ?? false) ? result!.files.first : null;
-    final bytes = f?.bytes;
-    if (f == null || bytes == null) return;
-    if (bytes.length > 5 * 1024 * 1024) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(context.tr('chat.fileTooLarge'))));
-      }
-      return;
+    final messenger = ScaffoldMessenger.of(context);
+    final tooLargeMsg = context.tr('chat.fileTooLarge');
+    final maxMsg = context.tr('chat.maxAttachments', {'n': '$_maxAttachments'});
+    final result = await FilePicker.pickFiles(withData: true, allowMultiple: true);
+    final files = result?.files ?? const [];
+    if (files.isEmpty || !mounted) return;
+    var hitMax = false, hadTooLarge = false;
+    for (final f in files) {
+      final bytes = f.bytes;
+      if (bytes == null) continue;
+      if (_pending.length >= _maxAttachments) { hitMax = true; break; }
+      if (bytes.length > 5 * 1024 * 1024) { hadTooLarge = true; continue; }
+      final dataUrl = 'data:application/octet-stream;base64,${base64Encode(bytes)}';
+      _pending.add(_Staged(type: 'file', name: f.name, dataUrl: dataUrl, bytes: null));
     }
-    final dataUrl = 'data:application/octet-stream;base64,${base64Encode(bytes)}';
     if (!mounted) return;
-    // Stage it (with the file name shown) so a caption can be added first.
-    setState(() {
-      _pendingImageBytes = null;
-      _pendingFileName = f.name;
-      _pendingAttachment = {'type': 'file', 'name': f.name, 'data': dataUrl};
-    });
+    if (hadTooLarge) messenger.showSnackBar(SnackBar(content: Text(tooLargeMsg)));
+    if (hitMax) messenger.showSnackBar(SnackBar(content: Text(maxMsg)));
+    setState(() {});
     _inputFocus.requestFocus();
   }
 
@@ -350,9 +344,8 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                     onMic: _startRecord,
                     editing: _editing != null,
                     onCancelEdit: _cancelEdit,
-                    pendingImageBytes: _pendingImageBytes,
-                    pendingFileName: _pendingFileName,
-                    onCancelPending: _cancelPending,
+                    staged: _pending,
+                    onRemoveStaged: _removeStaged,
                   ),
           ],
         ),
@@ -467,6 +460,7 @@ class _Bubble extends StatelessWidget {
             if (message.hasImage) _imageAttachment(context),
             if (message.hasAudio) _AudioBubble(dataUrl: message.attachmentData!, mine: mine),
             if (message.hasFile) _fileAttachment(context),
+            if (message.hasAttachments) _multiAttachments(context),
             if (message.hasPoll) _PollBubble(poll: message.poll!, mine: mine),
             if (message.content.isNotEmpty && !message.hasPoll)
               Padding(
@@ -485,6 +479,56 @@ class _Bubble extends StatelessWidget {
           ],
         ),
         ),
+      ),
+    );
+  }
+
+  /// Renders up to 10 attachments (images as a thumbnail grid, files as chips).
+  Widget _multiAttachments(BuildContext context) {
+    final fg = mine ? Colors.white : context.palette.textPrimary;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final a in message.attachments)
+            if (a['type'] == 'image' && (a['data'] as String?)?.isNotEmpty == true)
+              GestureDetector(
+                onTap: () => showZoomableImage(context, imageUrl: a['data'] as String?),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.memory(
+                    base64Decode((a['data'] as String).split(',').last),
+                    width: 108, height: 108, fit: BoxFit.cover, gaplessPlayback: true,
+                    errorBuilder: (_, _, _) => const SizedBox(width: 108, height: 108),
+                  ),
+                ),
+              )
+            else
+              GestureDetector(
+                onTap: () => _openAttachmentData(a['data'] as String?, a['name'] as String?),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: mine ? Colors.white24 : context.palette.surface,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.insert_drive_file_outlined, size: 18, color: fg),
+                    const SizedBox(width: 6),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 160),
+                      child: Text(a['name'] as String? ?? 'fichier',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, color: fg)),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(Icons.download_rounded, size: 16, color: fg),
+                  ]),
+                ),
+              ),
+        ],
       ),
     );
   }
@@ -542,19 +586,31 @@ class _Bubble extends StatelessWidget {
 
 /// Writes a received base64 file to a temp path and opens the system share
 /// sheet so the user can save or open it.
-Future<void> _openFileAttachment(Message m) async {
-  final data = m.attachmentData;
+Future<void> _openFileAttachment(Message m) =>
+    _openAttachmentData(m.attachmentData, m.attachmentName);
+
+/// Writes a base64 data URL to a temp file and opens the system share sheet.
+Future<void> _openAttachmentData(String? data, String? name) async {
   if (data == null || data.isEmpty) return;
   try {
     final bytes = base64Decode(data.split(',').last);
     final dir = await getTemporaryDirectory();
-    final safe = (m.attachmentName ?? 'file').replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final safe = (name ?? 'file').replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
     final path = '${dir.path}/$safe';
     await File(path).writeAsBytes(bytes);
     await Share.shareXFiles([XFile(path)]);
   } catch (_) {
     // best-effort open; ignore failures
   }
+}
+
+/// A picked attachment staged in the composer before sending.
+class _Staged {
+  final String type; // 'image' | 'file'
+  final String name;
+  final String dataUrl; // base64 data URL sent to the backend
+  final Uint8List? bytes; // image preview (null for files)
+  const _Staged({required this.type, required this.name, required this.dataUrl, this.bytes});
 }
 
 class _PollBubble extends StatelessWidget {
@@ -880,9 +936,8 @@ class _InputBar extends StatelessWidget {
   final VoidCallback onMic;
   final bool editing;
   final VoidCallback onCancelEdit;
-  final Uint8List? pendingImageBytes;
-  final String? pendingFileName;
-  final VoidCallback onCancelPending;
+  final List<_Staged> staged;
+  final void Function(int) onRemoveStaged;
   const _InputBar({
     required this.controller,
     required this.focusNode,
@@ -891,9 +946,8 @@ class _InputBar extends StatelessWidget {
     required this.onMic,
     this.editing = false,
     required this.onCancelEdit,
-    this.pendingImageBytes,
-    this.pendingFileName,
-    required this.onCancelPending,
+    this.staged = const [],
+    required this.onRemoveStaged,
   });
 
   @override
@@ -934,35 +988,54 @@ class _InputBar extends StatelessWidget {
                 ],
               ),
             ),
-          // ── Staged attachment preview (image thumbnail or file chip) ───────
-          if (pendingImageBytes != null || pendingFileName != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8, top: 2),
-              child: Row(
-                children: [
-                  if (pendingImageBytes != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.memory(pendingImageBytes!,
-                          width: 48, height: 48, fit: BoxFit.cover),
-                    )
-                  else
-                    Icon(Icons.insert_drive_file_outlined, color: context.palette.textMuted),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(pendingFileName ?? context.tr('chat.photo'),
-                        maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: context.palette.textMuted)),
-                  ),
-                  InkWell(
-                    onTap: onCancelPending,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Icon(Icons.close, size: 20, color: context.palette.textMuted),
-                    ),
-                  ),
-                ],
+          // ── Staged attachments preview (horizontal; tap an image to zoom) ──
+          if (staged.isNotEmpty)
+            SizedBox(
+              height: 72,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: staged.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (_, i) {
+                  final s = staged[i];
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      GestureDetector(
+                        onTap: s.type == 'image'
+                            ? () => showZoomableImage(context, imageUrl: s.dataUrl)
+                            : null,
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: context.palette.slate100,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: s.type == 'image' && s.bytes != null
+                              ? Image.memory(s.bytes!, fit: BoxFit.cover)
+                              : Icon(Icons.insert_drive_file_outlined,
+                                  color: context.palette.textMuted),
+                        ),
+                      ),
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: GestureDetector(
+                          onTap: () => onRemoveStaged(i),
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                                color: Colors.black54, shape: BoxShape.circle),
+                            child: const Icon(Icons.close, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           Row(

@@ -27,15 +27,31 @@ async function userInConversation(conversationId, userId) {
 // payloads sane on a phone-first, free-tier app.
 const MAX_ATTACHMENT_CHARS = 7_500_000;
 
-async function createMessage(conversationId, senderId, rawContent, attachment) {
+async function createMessage(conversationId, senderId, rawContent, attachment, attachmentsInput) {
   const id = Number(conversationId);
   if (!id) throw httpError(400, 'invalid conversation id');
 
   const content = (typeof rawContent === 'string' ? rawContent : '').trim();
 
-  // Optional attachment: { type: 'image'|'file', name, data (base64 data URL) }.
+  // Multi-attachment (images/files): up to 10, total payload capped.
+  let attachments = null;
+  if (Array.isArray(attachmentsInput) && attachmentsInput.length) {
+    const list = [];
+    let total = 0;
+    for (const a of attachmentsInput.slice(0, 10)) {
+      const type = ['image', 'file'].includes(a?.type) ? a.type : null;
+      const data = typeof a?.data === 'string' ? a.data : '';
+      if (!type || !data) continue;
+      total += data.length;
+      list.push({ type, name: String(a.name || '').slice(0, 255) || null, data });
+    }
+    if (total > MAX_ATTACHMENT_CHARS) throw httpError(413, 'attachments too large');
+    if (list.length) attachments = list;
+  }
+
+  // Single attachment: audio (voice notes), or legacy single image/file.
   let att = null;
-  if (attachment && typeof attachment === 'object') {
+  if (!attachments && attachment && typeof attachment === 'object') {
     const type = ['image', 'file', 'audio'].includes(attachment.type) ? attachment.type : null;
     const data = typeof attachment.data === 'string' ? attachment.data : '';
     if (type && data) {
@@ -44,7 +60,7 @@ async function createMessage(conversationId, senderId, rawContent, attachment) {
     }
   }
 
-  if (!content && !att) throw httpError(400, 'content or attachment is required');
+  if (!content && !att && !attachments) throw httpError(400, 'content or attachment is required');
   if (content.length > 4000) throw httpError(400, 'content too long');
 
   if (!(await userInConversation(id, senderId))) {
@@ -53,14 +69,15 @@ async function createMessage(conversationId, senderId, rawContent, attachment) {
 
   const [r] = await pool.query(
     `INSERT INTO messages (conversation_id, sender_id, content,
-        attachment_type, attachment_name, attachment_data)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, senderId, content, att?.type ?? null, att?.name ?? null, att?.data ?? null]
+        attachment_type, attachment_name, attachment_data, attachments)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [id, senderId, content, att?.type ?? null, att?.name ?? null, att?.data ?? null,
+     attachments ? JSON.stringify(attachments) : null]
   );
   const [rows] = await pool.query(
     `SELECT m.id, m.conversation_id, m.sender_id, u.full_name AS sender_name,
             u.role AS sender_role, m.content,
-            m.attachment_type, m.attachment_name, m.attachment_data, m.created_at
+            m.attachment_type, m.attachment_name, m.attachment_data, m.attachments, m.created_at
        FROM messages m JOIN users u ON u.id = m.sender_id
       WHERE m.id = ?`,
     [r.insertId]

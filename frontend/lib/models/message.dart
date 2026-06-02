@@ -13,6 +13,8 @@ class Message {
   final String? attachmentName;
   final String? attachmentData; // base64 data URL, or poll id for polls
   final Map<String, dynamic>? poll; // present on poll messages
+  /// Multi-attachment messages: list of {type:'image'|'file', name, data}.
+  final List<Map<String, dynamic>> attachments;
   final DateTime createdAt;
 
   const Message({
@@ -26,6 +28,7 @@ class Message {
     this.attachmentName,
     this.attachmentData,
     this.poll,
+    this.attachments = const [],
     required this.createdAt,
   });
 
@@ -33,6 +36,7 @@ class Message {
   bool get hasFile => attachmentType == 'file' && (attachmentData?.isNotEmpty ?? false);
   bool get hasAudio => attachmentType == 'audio' && (attachmentData?.isNotEmpty ?? false);
   bool get hasPoll => attachmentType == 'poll' && poll != null;
+  bool get hasAttachments => attachments.isNotEmpty;
 
   Message copyWith({Map<String, dynamic>? poll, String? content}) => Message(
         id: id,
@@ -45,6 +49,7 @@ class Message {
         attachmentName: attachmentName,
         attachmentData: attachmentData,
         poll: poll ?? this.poll,
+        attachments: attachments,
         createdAt: createdAt,
       );
 
@@ -59,6 +64,12 @@ class Message {
         attachmentName: j['attachment_name'] as String?,
         attachmentData: j['attachment_data'] as String?,
         poll: j['poll'] is Map ? Map<String, dynamic>.from(j['poll'] as Map) : null,
+        attachments: j['attachments'] is List
+            ? (j['attachments'] as List)
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList()
+            : const [],
         createdAt: DateTime.parse(j['created_at'] as String),
       );
 }

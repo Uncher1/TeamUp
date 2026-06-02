@@ -31,12 +31,14 @@ class ChatRepository {
     int conversationId,
     String content, {
     Map<String, dynamic>? attachment,
+    List<Map<String, dynamic>>? attachments,
   }) async {
     final res = await api.dio.post(
       '/conversations/$conversationId/messages',
       data: {
         'content': content,
         'attachment': ?attachment,
+        'attachments': ?attachments,
       },
     );
     return Message.fromJson(res.data as Map<String, dynamic>, fallbackConvId: conversationId);
