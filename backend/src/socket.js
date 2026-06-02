@@ -103,7 +103,12 @@ function initSocket(server) {
     const relay = (event, outEvent) => socket.on(event, (p) => {
       const to = Number(p?.to);
       if (!to) return;
-      console.log(`[call] ${event} ${socket.userId} → ${to}`);
+      let extra = '';
+      if (event === 'call:ice') {
+        const m = (p?.candidate?.candidate || '').match(/ typ (\w+)/);
+        extra = m ? ` [${m[1]}]` : ' [?]'; // host / srflx / relay(=TURN) / prflx
+      }
+      console.log(`[call] ${event} ${socket.userId} → ${to}${extra}`);
       io.to(toUser(to)).emit(outEvent, { ...p, to: undefined, from: socket.userId });
     });
     relay('call:cancel', 'call:cancelled');
