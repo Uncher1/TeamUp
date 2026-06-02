@@ -89,6 +89,7 @@ function initSocket(server) {
         const [r] = await pool.query('SELECT full_name, avatar_url FROM users WHERE id = ?', [socket.userId]);
         if (r.length) { name = r[0].full_name; avatar = r[0].avatar_url; }
       } catch { /* best-effort */ }
+      console.log(`[call] invite ${socket.userId} → ${to} (${p?.callType})`);
       io.to(toUser(to)).emit('call:incoming', {
         from: socket.userId,
         fromName: name,
@@ -102,6 +103,7 @@ function initSocket(server) {
     const relay = (event, outEvent) => socket.on(event, (p) => {
       const to = Number(p?.to);
       if (!to) return;
+      console.log(`[call] ${event} ${socket.userId} → ${to}`);
       io.to(toUser(to)).emit(outEvent, { ...p, to: undefined, from: socket.userId });
     });
     relay('call:cancel', 'call:cancelled');
