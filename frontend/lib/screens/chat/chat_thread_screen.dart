@@ -262,8 +262,9 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
 
   static String fmtSecs(int s) => '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
 
-  /// Ring the other person (1:1 DM call). [video] picks audio vs video.
-  void _startCall(bool video) {
+  /// Ring the other person (1:1 DM call). Calls start as audio; the camera and
+  /// screen share are turned on from inside the call.
+  void _startCall() {
     final c = widget.conversation;
     final otherId = c.otherUserId;
     if (otherId == null) return;
@@ -273,7 +274,6 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
       userId: otherId,
       name: c.otherUserName ?? '',
       avatar: c.otherUserAvatar,
-      video: video,
       conversationId: c.id,
     );
   }
@@ -301,12 +301,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                           IconButton(
                             icon: const Icon(Icons.call),
                             tooltip: context.tr('call.audio'),
-                            onPressed: () => _startCall(false),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.videocam),
-                            tooltip: context.tr('call.video'),
-                            onPressed: () => _startCall(true),
+                            onPressed: _startCall,
                           ),
                         ]
                       : const [],

@@ -117,6 +117,7 @@ function initSocket(server) {
     relay('call:offer', 'call:offer');
     relay('call:answer', 'call:answer');
     relay('call:ice', 'call:ice');
+    relay('call:media', 'call:media');
     relay('call:end', 'call:ended');
   });
 

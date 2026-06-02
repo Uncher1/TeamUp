@@ -52,7 +52,7 @@ class _IncomingCall extends StatelessWidget {
                 Text(call.peerName,
                     style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
-                Text(context.tr(call.videoCall ? 'call.incomingVideo' : 'call.incoming'),
+                Text(context.tr('call.incoming'),
                     style: const TextStyle(color: Colors.white70, fontSize: 15)),
               ],
             ),
@@ -70,7 +70,7 @@ class _IncomingCall extends StatelessWidget {
                   ),
                   _RoundAction(
                     color: const Color(0xFF22C55E),
-                    icon: call.videoCall ? Icons.videocam : Icons.call,
+                    icon: Icons.call,
                     label: context.tr('call.accept'),
                     onTap: call.acceptIncoming,
                   ),
@@ -101,7 +101,9 @@ class _CallScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showRemoteVideo = call.videoCall && call.phase == CallPhase.active;
+    final active = call.phase == CallPhase.active;
+    final showRemoteVideo = active && call.remoteVideoOn;
+    final sendingVideo = !call.cameraOff || call.sharingScreen;
     return Material(
       color: Colors.black,
       child: Stack(
@@ -124,14 +126,31 @@ class _CallScreen extends StatelessWidget {
                         style: const TextStyle(
                             color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
-                    Text(_status(context),
+                    Text(active ? call.durationLabel : _status(context),
                         style: const TextStyle(color: Colors.white70, fontSize: 15)),
                   ],
                 ),
               ),
             ),
-          // Local preview (PiP) while video is on.
-          if (call.videoCall && !call.cameraOff)
+          // Name + timer at the top while the remote video fills the screen.
+          if (showRemoteVideo)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 12,
+              left: 0,
+              right: 0,
+              child: Column(
+                children: [
+                  Text(call.peerName,
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text(call.durationLabel,
+                      style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                ],
+              ),
+            ),
+          // Local preview (PiP) while we're sending video (camera or screen).
+          if (sendingVideo)
             Positioned(
               top: MediaQuery.of(context).padding.top + 12,
               right: 12,
@@ -146,44 +165,41 @@ class _CallScreen extends StatelessWidget {
                 ),
               ),
             ),
-          // Controls.
+          // Controls — exact order: mute · camera · screen share · hang up.
           Align(
             alignment: Alignment.bottomCenter,
             child: SafeArea(
               top: false,
               child: Padding(
-              padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 22,
-                runSpacing: 16,
-                children: [
-                  _CtrlButton(
-                    icon: call.muted ? Icons.mic_off : Icons.mic,
-                    active: call.muted,
-                    onTap: call.toggleMute,
-                  ),
-                  if (call.videoCall) ...[
+                padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 22,
+                  runSpacing: 16,
+                  children: [
+                    _CtrlButton(
+                      icon: call.muted ? Icons.mic_off : Icons.mic,
+                      active: call.muted,
+                      onTap: call.toggleMute,
+                    ),
                     _CtrlButton(
                       icon: call.cameraOff ? Icons.videocam_off : Icons.videocam,
-                      active: call.cameraOff,
+                      active: !call.cameraOff,
                       onTap: call.toggleCamera,
                     ),
-                    _CtrlButton(icon: Icons.cameraswitch, onTap: call.switchCamera),
                     _CtrlButton(
                       icon: Icons.screen_share,
                       active: call.sharingScreen,
                       onTap: call.toggleScreenShare,
                     ),
+                    _CtrlButton(
+                      icon: Icons.call_end,
+                      bg: const Color(0xFFEF4444),
+                      onTap: call.hangUp,
+                    ),
                   ],
-                  _CtrlButton(
-                    icon: Icons.call_end,
-                    bg: const Color(0xFFEF4444),
-                    onTap: call.hangUp,
-                  ),
-                ],
+                ),
               ),
-            ),
             ),
           ),
         ],

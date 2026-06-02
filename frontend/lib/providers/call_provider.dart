@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:socket_io_client/socket_io_client.dart' as sio;
@@ -15,10 +17,17 @@ enum CallPhase { idle, outgoing, incoming, connecting, active }
 
 /// Drives 1:1 WebRTC calls over a persistent Socket.IO connection.
 ///
+/// Calls always start as AUDIO (one phone button). Audio+video media is opened
+/// up front but the camera track starts DISABLED, so the camera/screen-share
+/// can be turned on mid-call instantly (no renegotiation). Each side announces
+/// its outgoing video state with `call:media` so the other can show the avatar
+/// vs. the live video.
+///
 /// Signaling events (relayed by the server to `user:<id>` rooms):
 /// call:invite → call:incoming, call:accept → call:accepted, call:reject →
-/// call:rejected, call:cancel → call:cancelled, call:offer/answer/ice, call:end
-/// → call:ended. The CALLER creates the offer once the callee accepts.
+/// call:rejected, call:cancel → call:cancelled, call:offer/answer/ice,
+/// call:media (video on/off), call:end → call:ended. The CALLER creates the
+/// offer once the callee accepts.
 class CallProvider extends ChangeNotifier {
   final TokenStorage _storage;
   final ApiClient _api;
@@ -37,21 +46,39 @@ class CallProvider extends ChangeNotifier {
   int? peerId;
   String peerName = '';
   String? peerAvatar;
-  bool videoCall = true;
+  int? conversationId;
 
   RTCPeerConnection? _pc;
   MediaStream? _localStream;
+  MediaStream? _screenStream;
   final RTCVideoRenderer localRenderer = RTCVideoRenderer();
   final RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
   bool _renderersReady = false;
 
   bool muted = false;
-  bool cameraOff = false;
+  bool cameraOff = true; // calls start as audio → camera disabled
   bool sharingScreen = false;
-  MediaStreamTrack? _cameraTrack; // kept while screen-sharing so we can restore
+  bool remoteVideoOn = false; // peer announced their camera/screen is on
+  MediaStreamTrack? _cameraTrack; // our camera track (kept while screen-sharing)
 
   bool _remoteDescSet = false;
   final List<RTCIceCandidate> _pendingCandidates = [];
+
+  // ── Anti-spam ──────────────────────────────────────────────────────────────
+  // Earliest time we're allowed to ring a given user again. `isBusy` already
+  // blocks while ringing/in a call; this adds a cooldown afterwards.
+  final Map<int, DateTime> _cooldownUntil = {};
+  static const _cooldown = Duration(seconds: 15);
+
+  // ── Call timer ───────────────────────────────────────────────────────────
+  DateTime? _callStart;
+  Timer? _ticker;
+  int callSeconds = 0;
+  String get durationLabel {
+    final m = (callSeconds ~/ 60).toString().padLeft(2, '0');
+    final s = (callSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
 
   // ── Connection lifecycle ───────────────────────────────────────────────────
 
@@ -111,7 +138,7 @@ class CallProvider extends ChangeNotifier {
       peerId = (data['from'] as num?)?.toInt();
       peerName = data['fromName'] as String? ?? '';
       peerAvatar = data['fromAvatar'] as String?;
-      videoCall = data['callType'] != 'audio';
+      conversationId = (data['conversationId'] as num?)?.toInt();
       phase = CallPhase.incoming;
       notifyListeners();
     });
@@ -163,6 +190,13 @@ class CallProvider extends ChangeNotifier {
         _pendingCandidates.add(cand);
       }
     });
+
+    // Peer toggled their camera / screen share.
+    s.on('call:media', (d) {
+      final data = Map<String, dynamic>.from(d as Map);
+      remoteVideoOn = data['video'] == true;
+      notifyListeners();
+    });
   }
 
   Future<void> _flushCandidates() async {
@@ -179,14 +213,16 @@ class CallProvider extends ChangeNotifier {
     required int userId,
     required String name,
     String? avatar,
-    required bool video,
     int? conversationId,
   }) async {
     if (isBusy || _socket == null) return;
+    // Anti-spam: respect the per-user cooldown after a recent call.
+    final until = _cooldownUntil[userId];
+    if (until != null && until.isAfter(DateTime.now())) return;
     peerId = userId;
     peerName = name;
     peerAvatar = avatar;
-    videoCall = video;
+    this.conversationId = conversationId;
     phase = CallPhase.outgoing;
     notifyListeners();
     await _ensureRenderers();
@@ -194,7 +230,7 @@ class CallProvider extends ChangeNotifier {
     await _createPc();
     _socket!.emit('call:invite', {
       'to': userId,
-      'callType': video ? 'video' : 'audio',
+      'callType': 'audio',
       'conversationId': conversationId,
     });
   }
@@ -203,6 +239,7 @@ class CallProvider extends ChangeNotifier {
     if (phase != CallPhase.incoming || _socket == null) return;
     phase = CallPhase.connecting;
     notifyListeners();
+    await _ensureRenderers();
     await _openMedia();
     await _createPc();
     _socket!.emit('call:accept', {'to': peerId});
@@ -226,14 +263,17 @@ class CallProvider extends ChangeNotifier {
   // ── Media + peer connection ────────────────────────────────────────────────
 
   Future<void> _openMedia() async {
+    // Open audio + camera up front; camera starts DISABLED (audio call). This
+    // lets us turn the camera/screen-share on later without renegotiating.
     _localStream = await navigator.mediaDevices.getUserMedia({
       'audio': true,
-      'video': videoCall ? {'facingMode': 'user'} : false,
+      'video': {'facingMode': 'user'},
     });
     localRenderer.srcObject = _localStream;
-    if (videoCall) {
-      final v = _localStream!.getVideoTracks();
-      if (v.isNotEmpty) _cameraTrack = v.first;
+    final v = _localStream!.getVideoTracks();
+    if (v.isNotEmpty) {
+      _cameraTrack = v.first;
+      _cameraTrack!.enabled = false;
     }
     notifyListeners();
   }
@@ -258,12 +298,17 @@ class CallProvider extends ChangeNotifier {
     pc.onTrack = (RTCTrackEvent e) {
       if (e.streams.isNotEmpty) {
         remoteRenderer.srcObject = e.streams.first;
-        phase = CallPhase.active;
         notifyListeners();
       }
     };
     pc.onConnectionState = (RTCPeerConnectionState st) {
-      if (st == RTCPeerConnectionState.RTCPeerConnectionStateFailed ||
+      if (st == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+        if (phase != CallPhase.active) {
+          phase = CallPhase.active;
+          _startTimer();
+          notifyListeners();
+        }
+      } else if (st == RTCPeerConnectionState.RTCPeerConnectionStateFailed ||
           st == RTCPeerConnectionState.RTCPeerConnectionStateClosed ||
           st == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
         _cleanupCall();
@@ -281,20 +326,22 @@ class CallProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Turn our camera on/off (instant — the track is already in the connection).
   void toggleCamera() {
+    if (sharingScreen) return; // stop screen-sharing first
     cameraOff = !cameraOff;
-    for (final t in _localStream?.getVideoTracks() ?? const []) {
-      t.enabled = !cameraOff;
-    }
+    _cameraTrack?.enabled = !cameraOff;
+    if (!cameraOff) localRenderer.srcObject = _localStream;
+    _socket?.emit('call:media', {'to': peerId, 'video': !cameraOff});
     notifyListeners();
   }
 
-  Future<void> switchCamera() async {
-    final v = _localStream?.getVideoTracks() ?? const [];
-    if (v.isNotEmpty) await Helper.switchCamera(v.first);
-  }
-
   /// Replace the outgoing camera track with the device screen (and back).
+  ///
+  /// NOTE: on Android 14+ screen capture needs a media-projection foreground
+  /// service (not shipped by flutter_webrtc) — that requires native code and is
+  /// tracked as a separate task. We fail gracefully here so a capture error
+  /// never crashes the call.
   Future<void> toggleScreenShare() async {
     if (_pc == null) return;
     final senders = await _pc!.getSenders();
@@ -304,29 +351,62 @@ class CallProvider extends ChangeNotifier {
     }
     if (videoSender == null) return;
     if (!sharingScreen) {
-      final screen = await navigator.mediaDevices.getDisplayMedia({'video': true, 'audio': false});
-      final screenTrack = screen.getVideoTracks().first;
-      await videoSender.replaceTrack(screenTrack);
-      localRenderer.srcObject = screen;
-      sharingScreen = true;
-    } else {
-      if (_cameraTrack != null) {
-        await videoSender.replaceTrack(_cameraTrack);
-        localRenderer.srcObject = _localStream;
+      try {
+        final screen = await navigator.mediaDevices.getDisplayMedia({'video': true, 'audio': false});
+        final screenTrack = screen.getVideoTracks().first;
+        await videoSender.replaceTrack(screenTrack);
+        localRenderer.srcObject = screen;
+        _screenStream = screen;
+        sharingScreen = true;
+        cameraOff = true; // camera unused while sharing
+        _socket?.emit('call:media', {'to': peerId, 'video': true});
+      } catch (_) {
+        sharingScreen = false; // capture refused / unsupported → no-op
       }
+    } else {
+      await videoSender.replaceTrack(_cameraTrack);
+      _screenStream?.getTracks().forEach((t) => t.stop());
+      _screenStream?.dispose();
+      _screenStream = null;
+      localRenderer.srcObject = _localStream;
       sharingScreen = false;
+      _cameraTrack?.enabled = !cameraOff; // camera stays off after sharing
+      _socket?.emit('call:media', {'to': peerId, 'video': !cameraOff});
     }
     notifyListeners();
+  }
+
+  // ── Timer ────────────────────────────────────────────────────────────────
+
+  void _startTimer() {
+    _callStart = DateTime.now();
+    callSeconds = 0;
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      callSeconds = DateTime.now().difference(_callStart!).inSeconds;
+      notifyListeners();
+    });
   }
 
   // ── Teardown ───────────────────────────────────────────────────────────────
 
   void _cleanupCall({bool notify = true}) {
+    // Anti-spam: start the cooldown for the person we just called/were calling.
+    if (peerId != null) _cooldownUntil[peerId!] = DateTime.now().add(_cooldown);
+    _ticker?.cancel();
+    _ticker = null;
+    _callStart = null;
+    callSeconds = 0;
     try {
       _localStream?.getTracks().forEach((t) => t.stop());
       _localStream?.dispose();
     } catch (_) {}
     _localStream = null;
+    try {
+      _screenStream?.getTracks().forEach((t) => t.stop());
+      _screenStream?.dispose();
+    } catch (_) {}
+    _screenStream = null;
     _cameraTrack = null;
     _pc?.close();
     _pc = null;
@@ -340,9 +420,11 @@ class CallProvider extends ChangeNotifier {
     peerId = null;
     peerName = '';
     peerAvatar = null;
+    conversationId = null;
     muted = false;
-    cameraOff = false;
+    cameraOff = true;
     sharingScreen = false;
+    remoteVideoOn = false;
     if (notify) notifyListeners();
   }
 
