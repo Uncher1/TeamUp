@@ -263,12 +263,18 @@ class CallProvider extends ChangeNotifier {
   // ── Media + peer connection ────────────────────────────────────────────────
 
   Future<void> _openMedia() async {
-    // Open audio + camera up front; camera starts DISABLED (audio call). This
-    // lets us turn the camera/screen-share on later without renegotiating.
-    _localStream = await navigator.mediaDevices.getUserMedia({
-      'audio': true,
-      'video': {'facingMode': 'user'},
-    });
+    // Open audio + camera up front; camera starts DISABLED (audio call) so it
+    // can be toggled on later without renegotiating. If the camera is missing
+    // or its permission is denied, fall back to AUDIO-ONLY: a call must never
+    // fail (and never block `call:accept`) just because there's no camera.
+    try {
+      _localStream = await navigator.mediaDevices.getUserMedia({
+        'audio': true,
+        'video': {'facingMode': 'user'},
+      });
+    } catch (_) {
+      _localStream = await navigator.mediaDevices.getUserMedia({'audio': true, 'video': false});
+    }
     localRenderer.srcObject = _localStream;
     final v = _localStream!.getVideoTracks();
     if (v.isNotEmpty) {
@@ -328,7 +334,8 @@ class CallProvider extends ChangeNotifier {
 
   /// Turn our camera on/off (instant - the track is already in the connection).
   void toggleCamera() {
-    if (sharingScreen) return; // stop screen-sharing first
+    // Only act once connected, and only if a camera is actually available.
+    if (phase != CallPhase.active || sharingScreen || _cameraTrack == null) return;
     cameraOff = !cameraOff;
     _cameraTrack?.enabled = !cameraOff;
     if (!cameraOff) localRenderer.srcObject = _localStream;
@@ -343,7 +350,7 @@ class CallProvider extends ChangeNotifier {
   /// tracked as a separate task. We fail gracefully here so a capture error
   /// never crashes the call.
   Future<void> toggleScreenShare() async {
-    if (_pc == null) return;
+    if (phase != CallPhase.active || _pc == null) return;
     final senders = await _pc!.getSenders();
     RTCRtpSender? videoSender;
     for (final sn in senders) {
