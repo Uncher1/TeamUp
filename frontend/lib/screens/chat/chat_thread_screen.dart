@@ -56,6 +56,12 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
   bool _recording = false;
   int _recordSecs = 0;
   Timer? _recordTimer;
+  // Live mic amplitudes (normalized 0..1) feeding the recording waveform.
+  final List<double> _amps = [];
+  StreamSubscription<Amplitude>? _ampSub;
+  // True while a finished voice note is being encoded/uploaded, so the thread
+  // shows an optimistic "loading voice" bubble until the real message lands.
+  bool _sendingVoice = false;
 
   @override
   void initState() {
@@ -72,6 +78,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     _inputFocus.dispose();
     _scroll.dispose();
     _recordTimer?.cancel();
+    _ampSub?.cancel();
     _recorder.dispose();
     _chat.closeConversation();
     super.dispose();
@@ -234,7 +241,19 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     final path = '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
     await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
     if (!mounted) return;
-    setState(() { _recording = true; _recordSecs = 0; });
+    setState(() { _recording = true; _recordSecs = 0; _amps.clear(); });
+    _ampSub?.cancel();
+    _ampSub = _recorder
+        .onAmplitudeChanged(const Duration(milliseconds: 100))
+        .listen((amp) {
+      if (!mounted) return;
+      // amp.current is dBFS (~ -45 silence .. 0 loudest); map to 0..1.
+      final norm = ((amp.current + 45) / 45).clamp(0.0, 1.0);
+      setState(() {
+        _amps.add(norm);
+        if (_amps.length > 48) _amps.removeAt(0);
+      });
+    });
     _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _recordSecs++);
@@ -245,18 +264,26 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
 
   Future<void> _stopRecord({required bool send}) async {
     _recordTimer?.cancel();
+    _ampSub?.cancel();
     final path = await _recorder.stop();
     if (mounted) setState(() => _recording = false);
     if (!send || path == null) return;
     final bytes = await File(path).readAsBytes();
     if (bytes.isEmpty || bytes.length > 5 * 1024 * 1024) return;
-    final dataUrl = 'data:audio/mp4;base64,${base64Encode(bytes)}';
+    // Show the optimistic "loading voice" bubble immediately, then encode+send.
     if (!mounted) return;
-    await context.read<ChatProvider>().sendMessage('', attachment: {
-      'type': 'audio',
-      'name': 'voice.m4a',
-      'data': dataUrl,
-    });
+    setState(() => _sendingVoice = true);
+    _scrollToBottom();
+    try {
+      final dataUrl = 'data:audio/mp4;base64,${base64Encode(bytes)}';
+      await context.read<ChatProvider>().sendMessage('', attachment: {
+        'type': 'audio',
+        'name': 'voice.m4a',
+        'data': dataUrl,
+      });
+    } finally {
+      if (mounted) setState(() => _sendingVoice = false);
+    }
     _scrollToBottom();
   }
 
@@ -309,25 +336,32 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
             Expanded(
               child: provider.loadingMessages && provider.messages.isEmpty
                   ? const Center(child: CircularProgressIndicator())
-                  : provider.messages.isEmpty
+                  : (provider.messages.isEmpty && !_sendingVoice)
                       ? Center(child: Text(context.tr('chat.noMessages'), style: TextStyle(color: context.palette.textMuted)))
                       : ListView.builder(
                           controller: _scroll,
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                          itemCount: provider.messages.length,
-                          itemBuilder: (_, i) => _Bubble(
-                            message: provider.messages[i],
-                            mine: provider.messages[i].senderId == myId,
-                            // Team owner can moderate (delete) any message.
-                            canModerate: widget.conversation.type == 'project' &&
-                                widget.conversation.projectOwnerId == myId,
-                            onEdit: _beginEdit,
-                          ),
+                          itemCount: provider.messages.length + (_sendingVoice ? 1 : 0),
+                          itemBuilder: (_, i) {
+                            // Trailing optimistic bubble while a voice note uploads.
+                            if (i >= provider.messages.length) {
+                              return const _VoiceLoadingBubble();
+                            }
+                            return _Bubble(
+                              message: provider.messages[i],
+                              mine: provider.messages[i].senderId == myId,
+                              // Team owner can moderate (delete) any message.
+                              canModerate: widget.conversation.type == 'project' &&
+                                  widget.conversation.projectOwnerId == myId,
+                              onEdit: _beginEdit,
+                            );
+                          },
                         ),
             ),
             _recording
                 ? _RecordingBar(
                     seconds: _recordSecs,
+                    amps: _amps,
                     onCancel: () => _stopRecord(send: false),
                     onSend: () => _stopRecord(send: true),
                   )
@@ -824,9 +858,10 @@ class _PollComposerState extends State<_PollComposer> {
 
 class _RecordingBar extends StatelessWidget {
   final int seconds;
+  final List<double> amps;
   final VoidCallback onCancel;
   final VoidCallback onSend;
-  const _RecordingBar({required this.seconds, required this.onCancel, required this.onSend});
+  const _RecordingBar({required this.seconds, required this.amps, required this.onCancel, required this.onSend});
 
   @override
   Widget build(BuildContext context) {
@@ -846,9 +881,9 @@ class _RecordingBar extends StatelessWidget {
         Text(_ChatThreadScreenState.fmtSecs(seconds),
             style: TextStyle(color: context.palette.textPrimary, fontWeight: FontWeight.w600)),
         const SizedBox(width: 10),
-        Text(context.tr('chat.recording'),
-            style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
-        const Spacer(),
+        // Live voice waveform (replaces the old "Recording..." text).
+        Expanded(child: _Waveform(amps: amps, color: Theme.of(context).colorScheme.primary)),
+        const SizedBox(width: 10),
         InkWell(
           onTap: onSend,
           borderRadius: BorderRadius.circular(14),
@@ -861,6 +896,74 @@ class _RecordingBar extends StatelessWidget {
           ),
         ),
       ]),
+    );
+  }
+}
+
+/// Animated bars showing live mic amplitude while recording a voice note.
+/// Newest bars on the right; older ones scroll off the left.
+class _Waveform extends StatelessWidget {
+  final List<double> amps;
+  final Color color;
+  const _Waveform({required this.amps, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 28,
+      child: SingleChildScrollView(
+        reverse: true, // keep the latest bars visible at the right edge
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (final a in amps)
+              Container(
+                width: 3,
+                height: (4 + a * 24).clamp(4.0, 28.0),
+                margin: const EdgeInsets.symmetric(horizontal: 1),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Optimistic placeholder shown in the thread while a just-recorded voice note
+/// is being encoded and uploaded, so it appears instantly instead of after a lag.
+class _VoiceLoadingBubble extends StatelessWidget {
+  const _VoiceLoadingBubble();
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: primary.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 16, height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+            const SizedBox(width: 10),
+            Icon(Icons.mic, size: 18, color: Colors.white.withValues(alpha: 0.9)),
+          ],
+        ),
+      ),
     );
   }
 }
