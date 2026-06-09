@@ -68,6 +68,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   String? _category;
   int _teamSize = 3;
   String? _timeline;
+  /// Chief-chosen importance of skills vs interests in matching (0..1).
+  /// 0.70 = the classic 70% skills / 30% interests.
+  double _skillWeight = 0.70;
   String? _avatarDataUrl; // team photo (base64 data URL)
 
   bool _busy = false;
@@ -157,6 +160,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
             teamSize: _teamSize,
             timeline: _timeline,
             avatarUrl: _avatarDataUrl,
+            skillWeight: _skillWeight,
           );
       if (!mounted) return;
       _title.clear();
@@ -166,6 +170,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         _interests.clear();
         _category = null;
         _timeline = null;
+        _skillWeight = 0.70;
         _teamSize = 3;
         _avatarDataUrl = null;
         _busy = false;
@@ -399,6 +404,37 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 onTap: () => setState(() => _timeline = code),
               ),
           ],
+        ),
+        const SizedBox(height: 20),
+
+        // ── Importance compétences vs intérêts (matching) ────────────────────
+        SectionLabel(context.tr('proj.matchWeight')),
+        const SizedBox(height: 4),
+        Text(context.tr('proj.matchWeightHint'),
+            style: TextStyle(fontSize: 12, color: palette.textMuted)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${context.tr('proj.skillsShort')} ${(_skillWeight * 100).round()}%',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            Text(
+              '${(100 - _skillWeight * 100).round()}% ${context.tr('proj.interestsShort')}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        Slider(
+          // Left end = all skills, right end = all interests.
+          value: 1 - _skillWeight,
+          divisions: 20,
+          label: '${(_skillWeight * 100).round()}% / ${(100 - _skillWeight * 100).round()}%',
+          onChanged: (v) => setState(() {
+            _skillWeight = double.parse((1 - v).toStringAsFixed(2));
+          }),
         ),
         const SizedBox(height: 20),
 

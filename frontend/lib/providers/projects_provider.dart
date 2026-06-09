@@ -70,6 +70,7 @@ class ProjectsProvider extends ChangeNotifier {
     int? teamSize,
     String? timeline,
     String? avatarUrl,
+    double skillWeight = 0.70,
   }) async {
     final created = await repo.create(
       title: title,
@@ -80,6 +81,7 @@ class ProjectsProvider extends ChangeNotifier {
       teamSize: teamSize,
       timeline: timeline,
       avatarUrl: avatarUrl,
+      skillWeight: skillWeight,
     );
     projects = [created, ...projects];
     notifyListeners();

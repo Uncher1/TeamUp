@@ -20,7 +20,7 @@ const router = express.Router();
 async function loadProject(id, viewerId) {
   const [projects] = await pool.query(
     `SELECT p.id, p.title, p.description, p.category, p.avatar_url, p.team_size, p.timeline,
-            p.status, p.created_at,
+            p.skill_weight, p.status, p.created_at,
             u.id AS owner_id, u.full_name AS owner_name
        FROM projects p JOIN users u ON u.id = p.owner_id
       WHERE p.id = ?`,
@@ -88,7 +88,8 @@ router.get('/mine', authRequired, async (req, res) => {
 
 router.post('/', authRequired, async (req, res) => {
   const { title, description, required_skills = [], interests = [],
-          category = null, team_size = null, timeline = null, avatar_url = null } = req.body || {};
+          category = null, team_size = null, timeline = null, avatar_url = null,
+          skill_weight = null } = req.body || {};
   if (!title || !description) {
     return res.status(400).json({ error: 'title and description are required' });
   }
@@ -96,12 +97,16 @@ router.post('/', authRequired, async (req, res) => {
   const avatar = (typeof avatar_url === 'string' && avatar_url.length) ? avatar_url : null;
   const size = team_size != null ? Math.max(1, Math.min(50, Number(team_size) || 0)) || null : null;
   const tl = timeline ? String(timeline).slice(0, 20) : null;
+  // Chief-chosen skills-vs-interests importance (0..1). Defaults to the legacy 0.70.
+  const sw = skill_weight != null && !isNaN(Number(skill_weight))
+    ? Math.max(0, Math.min(1, Number(skill_weight)))
+    : 0.70;
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     const [r] = await conn.query(
-      'INSERT INTO projects (owner_id, title, description, category, avatar_url, team_size, timeline) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [req.user.id, title, description, cat, avatar, size, tl]
+      'INSERT INTO projects (owner_id, title, description, category, avatar_url, team_size, timeline, skill_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.user.id, title, description, cat, avatar, size, tl, sw]
     );
     const id = r.insertId;
     await conn.query(

@@ -4,9 +4,15 @@
 
 const pool = require('../config/db');
 
-// score = W_SKILL * skill_match + W_INTEREST * interest_match    (∈ [0, 1])
-const W_SKILL    = 0.7;
-const W_INTEREST = 0.3;
+// score = wSkill * skill_match + (1 - wSkill) * interest_match    (∈ [0, 1])
+// wSkill is per-project (projects.skill_weight), chosen by the team chief at
+// creation. Defaults to 0.70 (the legacy fixed 70% skills / 30% interests).
+const DEFAULT_SKILL_WEIGHT = 0.7;
+
+const clampWeight = (w) => {
+  const n = Number(w);
+  return isNaN(n) ? DEFAULT_SKILL_WEIGHT : Math.max(0, Math.min(1, n));
+};
 
 const round = (x) => Number(x.toFixed(3));
 
@@ -20,11 +26,13 @@ function jaccard(a, b) {
 
 async function rankUsersForProject(projectId, limit = 10) {
   const [projectRows] = await pool.query(
-    'SELECT id, owner_id FROM projects WHERE id = ?',
+    'SELECT id, owner_id, skill_weight FROM projects WHERE id = ?',
     [projectId]
   );
   if (!projectRows.length) return [];
   const project = projectRows[0];
+  const wSkill = clampWeight(project.skill_weight);
+  const wInterest = 1 - wSkill;
 
   const [reqSkills] = await pool.query(
     'SELECT skill_id, weight FROM project_required_skills WHERE project_id = ?',
@@ -104,7 +112,7 @@ async function rankUsersForProject(projectId, limit = 10) {
         userInterests.get(u.id) || new Set(),
         projectInterestSet
       );
-      const score = W_SKILL * skill_match + W_INTEREST * interest_match;
+      const score = wSkill * skill_match + wInterest * interest_match;
       return {
         user_id: u.id,
         full_name: u.full_name,
@@ -140,7 +148,7 @@ async function rankProjectsForUser(userId, limit = 10) {
 
   // Pre-filter: only open projects requiring at least one of the user's skills.
   const [projects] = await pool.query(
-    `SELECT DISTINCT p.id, p.title, p.description, p.owner_id, u.full_name AS owner_name
+    `SELECT DISTINCT p.id, p.title, p.description, p.owner_id, p.skill_weight, u.full_name AS owner_name
        FROM projects p
        JOIN users u ON u.id = p.owner_id
        JOIN project_required_skills prs ON prs.project_id = p.id
@@ -188,7 +196,8 @@ async function rankProjectsForUser(userId, limit = 10) {
         userInterestSet,
         intByProject.get(p.id) || new Set()
       );
-      const score = W_SKILL * skill_match + W_INTEREST * interest_match;
+      const wSkill = clampWeight(p.skill_weight);
+      const score = wSkill * skill_match + (1 - wSkill) * interest_match;
       return {
         project_id: p.id,
         title: p.title,
