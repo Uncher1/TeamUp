@@ -19,6 +19,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/app_strings.dart';
 import '../../core/theme.dart';
 import '../../design_system/ds.dart';
+import '../../design_system/gif_picker_sheet.dart';
 import '../../models/conversation.dart';
 import '../../models/message.dart';
 import '../../providers/auth_provider.dart';
@@ -287,6 +288,17 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
     _scrollToBottom();
   }
 
+  Future<void> _pickGif() async {
+    final url = await GifPickerSheet.show(context);
+    if (url == null || !mounted) return;
+    await context.read<ChatProvider>().sendMessage('', attachment: {
+      'type': 'gif',
+      'name': 'gif',
+      'data': url,
+    });
+    _scrollToBottom();
+  }
+
   static String fmtSecs(int s) => '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
 
   /// Ring the other person (1:1 DM call). Calls start as audio; the camera and
@@ -371,6 +383,7 @@ class _ChatThreadScreenState extends State<ChatThreadScreen> {
                     onSend: _send,
                     onAttach: _pickAttachment,
                     onMic: _startRecord,
+                    onGif: _pickGif,
                     editing: _editing != null,
                     onCancelEdit: _cancelEdit,
                     staged: _pending,
@@ -487,6 +500,7 @@ class _Bubble extends StatelessWidget {
                 ),
               ),
             if (message.hasImage) _imageAttachment(context),
+            if (message.hasGif) _gifAttachment(context),
             if (message.hasAudio) _AudioBubble(dataUrl: message.attachmentData!, mine: mine),
             if (message.hasFile) _fileAttachment(context),
             if (message.hasAttachments) _multiAttachments(context),
@@ -596,6 +610,30 @@ class _Bubble extends StatelessWidget {
           width: 220,
           fit: BoxFit.fitWidth,
           gaplessPlayback: true,
+          errorBuilder: (_, _, _) => const Icon(Icons.broken_image, size: 40),
+        ),
+      ),
+    );
+  }
+
+  Widget _gifAttachment(BuildContext context) {
+    final url = message.attachmentData!;
+    return GestureDetector(
+      onTap: () => showZoomableImage(context, imageUrl: url),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          url,
+          width: 220,
+          fit: BoxFit.fitWidth,
+          gaplessPlayback: true,
+          loadingBuilder: (c, child, p) => p == null
+              ? child
+              : Container(
+                  width: 220, height: 160,
+                  color: context.palette.slate100,
+                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
           errorBuilder: (_, _, _) => const Icon(Icons.broken_image, size: 40),
         ),
       ),
@@ -1054,6 +1092,7 @@ class _InputBar extends StatelessWidget {
   final VoidCallback onSend;
   final VoidCallback onAttach;
   final VoidCallback onMic;
+  final VoidCallback onGif;
   final bool editing;
   final VoidCallback onCancelEdit;
   final List<_Staged> staged;
@@ -1064,6 +1103,7 @@ class _InputBar extends StatelessWidget {
     required this.onSend,
     required this.onAttach,
     required this.onMic,
+    required this.onGif,
     this.editing = false,
     required this.onCancelEdit,
     this.staged = const [],
@@ -1182,7 +1222,13 @@ class _InputBar extends StatelessWidget {
               ),
             ),
           ),
-          // Attaching/recording don't apply while editing an existing message.
+          // Attaching/recording/GIFs don't apply while editing an existing message.
+          if (!editing)
+            IconButton(
+              icon: Icon(Icons.gif_box_outlined, color: context.palette.textMuted),
+              onPressed: onGif,
+              tooltip: context.tr('gif.button'),
+            ),
           if (!editing)
             IconButton(
               icon: Icon(Icons.mic_none_rounded, color: context.palette.textMuted),

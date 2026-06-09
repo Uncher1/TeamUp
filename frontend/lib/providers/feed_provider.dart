@@ -103,9 +103,9 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<bool> createPost(
-      {required String type, required String content, String? image}) async {
+      {required String type, required String content, String? image, String? gif}) async {
     try {
-      final created = await _repo.create(type: type, content: content, image: image);
+      final created = await _repo.create(type: type, content: content, image: image, gif: gif);
       posts.insert(0, created);
       notifyListeners();
       return true;

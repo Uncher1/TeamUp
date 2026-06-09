@@ -443,13 +443,22 @@ class _PostCard extends StatelessWidget {
               onTap: () => showZoomableImage(context, imageUrl: post.image),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.memory(
-                  base64Decode(post.image!.split(',').last),
-                  width: double.infinity,
-                  fit: BoxFit.fitWidth,
-                  gaplessPlayback: true,
-                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                ),
+                // A GIF is a remote URL; an uploaded photo is a base64 data URL.
+                child: post.image!.startsWith('http')
+                    ? Image.network(
+                        post.image!,
+                        width: double.infinity,
+                        fit: BoxFit.fitWidth,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      )
+                    : Image.memory(
+                        base64Decode(post.image!.split(',').last),
+                        width: double.infinity,
+                        fit: BoxFit.fitWidth,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      ),
               ),
             ),
           ],

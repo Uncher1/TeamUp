@@ -18,12 +18,14 @@ class FeedRepository {
   }
 
   Future<Post> create(
-      {required String type, required String content, int? projectId, String? image}) async {
+      {required String type, required String content, int? projectId,
+       String? image, String? gif}) async {
     final res = await api.dio.post('/posts', data: {
       'type': type,
       'content': content,
       'project_id': projectId,
       'image': ?image,
+      'gif': ?gif,
     });
     return Post.fromJson(res.data as Map<String, dynamic>);
   }

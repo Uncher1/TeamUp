@@ -49,10 +49,11 @@ async function createMessage(conversationId, senderId, rawContent, attachment, a
     if (list.length) attachments = list;
   }
 
-  // Single attachment: audio (voice notes), or legacy single image/file.
+  // Single attachment: audio (voice notes), a GIF (a remote URL, not bytes), or
+  // a legacy single image/file.
   let att = null;
   if (!attachments && attachment && typeof attachment === 'object') {
-    const type = ['image', 'file', 'audio'].includes(attachment.type) ? attachment.type : null;
+    const type = ['image', 'file', 'audio', 'gif'].includes(attachment.type) ? attachment.type : null;
     const data = typeof attachment.data === 'string' ? attachment.data : '';
     if (type && data) {
       if (data.length > MAX_ATTACHMENT_CHARS) throw httpError(413, 'attachment too large');

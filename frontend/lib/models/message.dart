@@ -38,6 +38,7 @@ class Message {
   bool get hasImage => attachmentType == 'image' && (attachmentData?.isNotEmpty ?? false);
   bool get hasFile => attachmentType == 'file' && (attachmentData?.isNotEmpty ?? false);
   bool get hasAudio => attachmentType == 'audio' && (attachmentData?.isNotEmpty ?? false);
+  bool get hasGif => attachmentType == 'gif' && (attachmentData?.isNotEmpty ?? false);
   bool get hasPoll => attachmentType == 'poll' && poll != null;
   bool get hasAttachments => attachments.isNotEmpty;
 

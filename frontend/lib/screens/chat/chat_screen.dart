@@ -95,6 +95,9 @@ class _ConvTile extends StatelessWidget {
       case 'audio':
         body = context.tr('chat.lastVoice');
         break;
+      case 'gif':
+        body = context.tr('gif.lastGif');
+        break;
       case 'poll':
         body = context.tr('chat.lastPoll');
         break;

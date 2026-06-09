@@ -48,7 +48,20 @@ router.post('/', authRequired, async (req, res) => {
   if (image && image.length > 7 * 1024 * 1024) {
     return res.status(400).json({ error: 'image too large' });
   }
-  // A post needs text OR an image.
+  // Optional GIF: a GIPHY URL (stored in the image column, mutually exclusive with
+  // an uploaded image - we keep only the URL, never the bytes). No files in posts.
+  // Parse the URL and check the hostname strictly (a substring regex would let
+  // e.g. evilgiphy.com through).
+  let gif = null;
+  try {
+    const u = new URL(req.body?.gif || '');
+    const host = u.hostname.toLowerCase();
+    if (u.protocol === 'https:' && (host === 'giphy.com' || host.endsWith('.giphy.com'))) {
+      gif = u.toString().slice(0, 500);
+    }
+  } catch (_) { /* not a valid URL -> no gif */ }
+  if (gif) image = gif;
+  // A post needs text OR an image/GIF.
   if (!content && !image) return res.status(400).json({ error: 'content is required' });
   if (content.length > 4000) return res.status(400).json({ error: 'content too long' });
 
