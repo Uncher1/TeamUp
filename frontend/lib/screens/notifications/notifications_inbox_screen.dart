@@ -11,6 +11,7 @@ import '../../design_system/ds.dart';
 import '../../design_system/menu_drawer.dart';
 import '../../models/app_notification.dart';
 import '../../providers/notifications_provider.dart';
+import '../profile/friends_screen.dart';
 
 /// Maps a notification type to the shell section to open when it's tapped.
 AppSection _sectionFor(String type) {
@@ -26,6 +27,32 @@ AppSection _sectionFor(String type) {
     default:
       return AppSection.home;
   }
+}
+
+/// Section to open for a notification, preferring its link target (more reliable
+/// than the type). Friend notifications are handled separately (they push the
+/// Friends screen rather than switching section) - see [openFriendNotification].
+AppSection sectionForNotification(AppNotification n) {
+  switch (n.linkType) {
+    case 'conversation':
+      return AppSection.chat;
+    case 'project':
+    case 'team_invite':
+      return AppSection.myTeams;
+    default:
+      return _sectionFor(n.type);
+  }
+}
+
+/// True when tapping [n] should open the Friends screen instead of a section.
+bool isFriendNotification(AppNotification n) => n.linkType == 'friends';
+
+/// Pushes the Friends screen on [nav], opening the Requests tab for an incoming
+/// request and the Friends tab for an accepted one.
+void openFriendNotification(NavigatorState nav, AppNotification n) {
+  nav.push(MaterialPageRoute(
+    builder: (_) => FriendsScreen(initialTab: n.type == 'friend_request' ? 1 : 0),
+  ));
 }
 
 class NotificationsInboxScreen extends StatefulWidget {
@@ -103,7 +130,11 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
           onTap: () {
             final n = provider.items[i];
             context.read<NotificationsProvider>().markRead(n.id);
-            widget.onNavigate?.call(_sectionFor(n.type));
+            if (isFriendNotification(n)) {
+              openFriendNotification(Navigator.of(context), n);
+            } else {
+              widget.onNavigate?.call(sectionForNotification(n));
+            }
           },
         ),
       ),

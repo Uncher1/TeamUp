@@ -27,22 +27,6 @@ import '../teams/my_teams_screen.dart';
 // Helpers shared between shell and popup
 // ---------------------------------------------------------------------------
 
-/// Maps a notification type to the shell section to navigate to.
-AppSection _sectionFor(String type) {
-  switch (type) {
-    case 'message':
-      return AppSection.chat;
-    case 'application':
-    case 'team_join':
-    case 'team_invite':
-    case 'project_update':
-    case 'project_complete':
-      return AppSection.myTeams;
-    default:
-      return AppSection.home;
-  }
-}
-
 IconData _iconFor(String type) {
   switch (type) {
     case 'team_invite':
@@ -394,10 +378,14 @@ class _NotificationPopupContent extends StatelessWidget {
               _PopupNotifRow(
                 n: n,
                 onTap: () {
-                  final section = _sectionFor(n.type);
+                  final nav = Navigator.of(context);
                   context.read<NotificationsProvider>().markRead(n.id);
-                  Navigator.pop(context);
-                  onNavigateSection(section);
+                  nav.pop(); // close the popup first
+                  if (isFriendNotification(n)) {
+                    openFriendNotification(nav, n);
+                  } else {
+                    onNavigateSection(sectionForNotification(n));
+                  }
                 },
               ),
 

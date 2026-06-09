@@ -12,7 +12,9 @@ import '../../repositories/user_repo.dart';
 import 'user_profile_screen.dart';
 
 class FriendsScreen extends StatefulWidget {
-  const FriendsScreen({super.key});
+  /// 0 = Friends tab, 1 = Requests tab.
+  final int initialTab;
+  const FriendsScreen({super.key, this.initialTab = 0});
 
   @override
   State<FriendsScreen> createState() => _FriendsScreenState();
@@ -76,6 +78,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final reqCount = _requests?.length ?? 0;
     return DefaultTabController(
       length: 2,
+      initialIndex: widget.initialTab.clamp(0, 1),
       child: Scaffold(
         body: SafeArea(
           child: Column(
