@@ -56,7 +56,18 @@ async function createMessage(conversationId, senderId, rawContent, attachment, a
     const type = ['image', 'file', 'audio', 'gif'].includes(attachment.type) ? attachment.type : null;
     const data = typeof attachment.data === 'string' ? attachment.data : '';
     if (type && data) {
-      if (data.length > MAX_ATTACHMENT_CHARS) throw httpError(413, 'attachment too large');
+      if (type === 'gif') {
+        // A GIF is a remote URL: enforce the same strict GIPHY allowlist as posts.
+        let ok = false;
+        try {
+          const u = new URL(data);
+          const host = u.hostname.toLowerCase();
+          ok = u.protocol === 'https:' && (host === 'giphy.com' || host.endsWith('.giphy.com'));
+        } catch (_) { ok = false; }
+        if (!ok || data.length > 500) throw httpError(400, 'invalid gif url');
+      } else if (data.length > MAX_ATTACHMENT_CHARS) {
+        throw httpError(413, 'attachment too large');
+      }
       att = { type, name: String(attachment.name || '').slice(0, 255) || null, data };
     }
   }
