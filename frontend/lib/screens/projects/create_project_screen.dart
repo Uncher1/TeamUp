@@ -290,7 +290,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         const SizedBox(height: 10),
         TextField(
           controller: _title,
-          maxLength: 80,
+          maxLength: 20,
           // Rebuild so the team avatar shows live initials from the title.
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(labelText: context.tr('proj.titleLabel')),

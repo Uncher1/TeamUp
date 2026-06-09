@@ -80,10 +80,13 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   @override
   Widget build(BuildContext context) {
     final canPost = _ctrl.text.trim().isNotEmpty || _imageDataUrl != null;
+    final mq = MediaQuery.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: 20, right: 20, top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        // viewInsets = keyboard; padding.bottom = Android nav bar (it drops to 0
+        // when the keyboard covers it, so the two never double-count).
+        bottom: mq.viewInsets.bottom + mq.padding.bottom + 20,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

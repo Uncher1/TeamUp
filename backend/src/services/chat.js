@@ -77,7 +77,8 @@ async function createMessage(conversationId, senderId, rawContent, attachment, a
   const [rows] = await pool.query(
     `SELECT m.id, m.conversation_id, m.sender_id, u.full_name AS sender_name,
             u.role AS sender_role, m.content,
-            m.attachment_type, m.attachment_name, m.attachment_data, m.attachments, m.created_at
+            m.attachment_type, m.attachment_name, m.attachment_data, m.attachments,
+            m.edited, m.created_at
        FROM messages m JOIN users u ON u.id = m.sender_id
       WHERE m.id = ?`,
     [r.insertId]
@@ -85,4 +86,39 @@ async function createMessage(conversationId, senderId, rawContent, attachment, a
   return rows[0];
 }
 
-module.exports = { userInConversation, createMessage };
+/**
+ * Returns the id of the direct (1:1) conversation between two users, creating it
+ * if it doesn't exist yet. Used when two people become friends so a DM is ready
+ * immediately. Returns null for invalid/self pairs.
+ */
+async function ensureDirectConversation(userA, userB) {
+  const a = Number(userA), b = Number(userB);
+  if (!a || !b || a === b) return null;
+  const [existing] = await pool.query(
+    `SELECT c.id FROM conversations c
+       JOIN conversation_members x ON x.conversation_id = c.id AND x.user_id = ?
+       JOIN conversation_members y ON y.conversation_id = c.id AND y.user_id = ?
+      WHERE c.type = 'direct' LIMIT 1`,
+    [a, b]
+  );
+  if (existing.length) return existing[0].id;
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [r] = await conn.query("INSERT INTO conversations (type) VALUES ('direct')");
+    const id = r.insertId;
+    await conn.query(
+      'INSERT INTO conversation_members (conversation_id, user_id) VALUES (?, ?), (?, ?)',
+      [id, a, id, b]
+    );
+    await conn.commit();
+    return id;
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
+module.exports = { userInConversation, createMessage, ensureDirectConversation };

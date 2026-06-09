@@ -100,7 +100,7 @@ class ChatProvider extends ChangeNotifier {
   void _applyEdit(int messageId, String content) {
     final i = messages.indexWhere((m) => m.id == messageId);
     if (i >= 0) {
-      messages = [...messages]..[i] = messages[i].copyWith(content: content);
+      messages = [...messages]..[i] = messages[i].copyWith(content: content, edited: true);
       notifyListeners();
     }
   }

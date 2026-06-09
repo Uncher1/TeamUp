@@ -7,6 +7,7 @@ const pool = require('./config/db');
 const { verify } = require('./utils/jwt');
 const { userInConversation, createMessage } = require('./services/chat');
 const { notifyNewMessage } = require('./services/notifications');
+const onlineTracker = require('./services/onlineTracker');
 
 /**
  * Attaches a Socket.IO server to an existing HTTP server.
@@ -38,6 +39,17 @@ function initSocket(server) {
 
   io.on('connection', (socket) => {
     socket.join(`user:${socket.userId}`);
+    // Track real connectivity so presence reflects actual activity, not just the
+    // stored manual status. Tell the user's friends/teammates to refresh.
+    onlineTracker.connect(socket.userId);
+    socket.broadcast.emit('presence:change', { userId: socket.userId, online: true });
+
+    socket.on('disconnect', () => {
+      onlineTracker.disconnect(socket.userId);
+      if (!onlineTracker.isOnline(socket.userId)) {
+        socket.broadcast.emit('presence:change', { userId: socket.userId, online: false });
+      }
+    });
 
     socket.on('conversation:join', async (conversationId, ack) => {
       const id = Number(conversationId);

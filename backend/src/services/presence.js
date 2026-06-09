@@ -7,6 +7,7 @@
 // their online status. When a viewer isn't allowed, we report 'offline' so the
 // real status (online/dnd) stays private.
 const pool = require('../config/db');
+const { isOnline } = require('./onlineTracker');
 
 // Per-user { visibility: 'everyone'|'friends'|'nobody', online: bool } where
 // `online` reflects the privacy-tab "show online status" toggle (default true).
@@ -54,6 +55,10 @@ async function applyPresenceVisibility(viewerId, rows, { idKey = 'id', statusKey
   for (const r of rows) {
     const id = r[idKey];
     if (!id || id === viewerId) continue;
+    // Real connectivity drives online/offline; a disconnected user is offline
+    // whatever their stored status. A connected user keeps their manual status
+    // (online / dnd, or offline if they chose invisible mode).
+    if (!isOnline(id)) { r[statusKey] = 'offline'; continue; }
     const { visibility, online } = _cfg(cfg, id);
     const hidden = !online ||
         visibility === 'nobody' ||
@@ -66,6 +71,7 @@ async function applyPresenceVisibility(viewerId, rows, { idKey = 'id', statusKey
 /// Single-user variant: returns the status the [viewerId] is allowed to see.
 async function effectivePresence(viewerId, targetId, status) {
   if (!targetId || targetId === viewerId) return status;
+  if (!isOnline(targetId)) return 'offline';
   const cfg = await settingsFor([targetId]);
   const { visibility, online } = _cfg(cfg, targetId);
   if (!online || visibility === 'nobody') return 'offline';

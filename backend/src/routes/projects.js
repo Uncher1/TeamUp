@@ -7,6 +7,7 @@ const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { createNotification } = require('../services/notifications');
 const { getSettings, enabled } = require('../services/settings');
+const { applyPresenceVisibility } = require('../services/presence');
 
 // True if the user may moderate others' content (moderator or admin).
 async function isPrivileged(userId) {
@@ -16,7 +17,7 @@ async function isPrivileged(userId) {
 
 const router = express.Router();
 
-async function loadProject(id) {
+async function loadProject(id, viewerId) {
   const [projects] = await pool.query(
     `SELECT p.id, p.title, p.description, p.category, p.avatar_url, p.team_size, p.timeline,
             p.status, p.created_at,
@@ -45,6 +46,7 @@ async function loadProject(id) {
       WHERE pm.project_id = ?`,
     [id]
   );
+  if (viewerId) await applyPresenceVisibility(viewerId, members);
   return { ...project, required_skills: skills, interests, members };
 }
 
@@ -122,7 +124,7 @@ router.post('/', authRequired, async (req, res) => {
       );
     }
     await conn.commit();
-    res.status(201).json(await loadProject(id));
+    res.status(201).json(await loadProject(id, req.user.id));
   } catch (e) {
     await conn.rollback();
     throw e;
@@ -134,7 +136,7 @@ router.post('/', authRequired, async (req, res) => {
 router.get('/:id', authRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!id) return res.status(400).json({ error: 'invalid id' });
-  const project = await loadProject(id);
+  const project = await loadProject(id, req.user.id);
   if (!project) return res.status(404).json({ error: 'project not found' });
   res.json(project);
 });

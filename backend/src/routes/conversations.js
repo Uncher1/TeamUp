@@ -35,7 +35,7 @@ router.get('/', authRequired, async (req, res) => {
        LEFT JOIN projects p ON p.id = c.project_id
        LEFT JOIN conversation_members cm2 ON cm2.conversation_id = c.id AND cm2.user_id != ?
        LEFT JOIN users other ON other.id = cm2.user_id AND c.type = 'direct'
-      WHERE c.type = 'project'
+      WHERE c.type IN ('project', 'direct')
          OR EXISTS (SELECT 1 FROM messages msg WHERE msg.conversation_id = c.id)
       ORDER BY last_message_at DESC, c.created_at DESC`,
     [req.user.id, req.user.id]
@@ -116,7 +116,7 @@ router.get('/:id/messages', authRequired, async (req, res) => {
 
   let sql = `SELECT m.id, m.sender_id, u.full_name AS sender_name, u.role AS sender_role,
                     m.content, m.attachment_type, m.attachment_name, m.attachment_data,
-                    m.attachments, m.created_at
+                    m.attachments, m.edited, m.created_at
                FROM messages m JOIN users u ON u.id = m.sender_id
               WHERE m.conversation_id = ?`;
   const args = [id];
@@ -251,11 +251,11 @@ router.patch('/:id/messages/:mid', authRequired, async (req, res) => {
   if (!rows.length) return res.status(404).json({ error: 'message not found' });
   if (rows[0].sender_id !== req.user.id) return res.status(403).json({ error: 'not your message' });
   if (rows[0].attachment_type) return res.status(400).json({ error: 'only text messages can be edited' });
-  await pool.query('UPDATE messages SET content = ? WHERE id = ?', [content, mid]);
+  await pool.query('UPDATE messages SET content = ?, edited = 1 WHERE id = ?', [content, mid]);
   req.app.get('io')?.to(`conversation:${id}`).emit('message:update', {
-    id: mid, conversation_id: id, content,
+    id: mid, conversation_id: id, content, edited: true,
   });
-  res.json({ id: mid, content });
+  res.json({ id: mid, content, edited: true });
 });
 
 // Delete a message: the author, or - in a team (project) chat - the team owner.

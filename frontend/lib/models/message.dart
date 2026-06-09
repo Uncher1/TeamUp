@@ -15,6 +15,8 @@ class Message {
   final Map<String, dynamic>? poll; // present on poll messages
   /// Multi-attachment messages: list of {type:'image'|'file', name, data}.
   final List<Map<String, dynamic>> attachments;
+  /// True once the text was edited after sending (shows a grey "edited" marker).
+  final bool edited;
   final DateTime createdAt;
 
   const Message({
@@ -29,6 +31,7 @@ class Message {
     this.attachmentData,
     this.poll,
     this.attachments = const [],
+    this.edited = false,
     required this.createdAt,
   });
 
@@ -38,7 +41,7 @@ class Message {
   bool get hasPoll => attachmentType == 'poll' && poll != null;
   bool get hasAttachments => attachments.isNotEmpty;
 
-  Message copyWith({Map<String, dynamic>? poll, String? content}) => Message(
+  Message copyWith({Map<String, dynamic>? poll, String? content, bool? edited}) => Message(
         id: id,
         conversationId: conversationId,
         senderId: senderId,
@@ -50,6 +53,7 @@ class Message {
         attachmentData: attachmentData,
         poll: poll ?? this.poll,
         attachments: attachments,
+        edited: edited ?? this.edited,
         createdAt: createdAt,
       );
 
@@ -70,6 +74,7 @@ class Message {
                 .map((e) => Map<String, dynamic>.from(e))
                 .toList()
             : const [],
+        edited: j['edited'] == true || j['edited'] == 1,
         createdAt: DateTime.parse(j['created_at'] as String),
       );
 }

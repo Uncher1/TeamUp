@@ -464,12 +464,34 @@ class _Bubble extends StatelessWidget {
                     style: TextStyle(color: mine ? Colors.white : context.palette.textPrimary, height: 1.3)),
               ),
             const SizedBox(height: 3),
-            Text(
-              _hm(message.createdAt),
-              style: TextStyle(
-                fontSize: 10,
-                color: mine ? Colors.white70 : context.palette.textMuted,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (message.edited) ...[
+                  Text(
+                    context.tr('chat.edited'),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic,
+                      color: mine ? Colors.white70 : context.palette.textMuted,
+                    ),
+                  ),
+                  Text(
+                    ' . ',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: mine ? Colors.white70 : context.palette.textMuted,
+                    ),
+                  ),
+                ],
+                Text(
+                  _hm(message.createdAt),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: mine ? Colors.white70 : context.palette.textMuted,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1443,7 +1465,7 @@ class _TeamSettingsDialogState extends State<_TeamSettingsDialog> {
             const SizedBox(height: 12),
             TextField(
               controller: _title,
-              maxLength: 80,
+              maxLength: 20,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(labelText: context.tr('team.name')),
             ),

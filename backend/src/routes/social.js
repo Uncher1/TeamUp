@@ -9,6 +9,8 @@ const pool = require('../config/db');
 const { authRequired } = require('../middleware/auth');
 const { createNotification } = require('../services/notifications');
 const { sendAbuseReport } = require('../services/mailer');
+const { applyPresenceVisibility } = require('../services/presence');
+const { ensureDirectConversation } = require('../services/chat');
 
 const router = express.Router();
 
@@ -80,6 +82,7 @@ router.get('/friends', authRequired, async (req, res) => {
       ORDER BY u.full_name`,
     [req.user.id, req.user.id, req.user.id]
   );
+  await applyPresenceVisibility(req.user.id, rows);
   res.json(rows);
 });
 
@@ -92,6 +95,7 @@ router.get('/friends/requests', authRequired, async (req, res) => {
       ORDER BY f.created_at DESC`,
     [req.user.id]
   );
+  await applyPresenceVisibility(req.user.id, rows);
   res.json(rows);
 });
 
@@ -111,6 +115,9 @@ router.post('/friends/:userId', authRequired, async (req, res) => {
     // They already requested me → accept.
     await pool.query("UPDATE friendships SET status = 'accepted' WHERE id = ?", [existing.id]);
     notifyAccept(req, other);
+    // Becoming friends opens a DM right away (best-effort).
+    ensureDirectConversation(req.user.id, other)
+      .catch((e) => console.error('[dm] auto-create failed:', e.message));
     return res.json({ friend_status: 'friends' });
   }
   await pool.query(
@@ -138,6 +145,9 @@ router.post('/friends/:userId/accept', authRequired, async (req, res) => {
   );
   if (!r.affectedRows) return res.status(400).json({ error: 'no pending request' });
   notifyAccept(req, other);
+  // Becoming friends opens a DM right away (best-effort).
+  ensureDirectConversation(req.user.id, other)
+    .catch((e) => console.error('[dm] auto-create failed:', e.message));
   res.json({ friend_status: 'friends' });
 });
 
