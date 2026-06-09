@@ -40,15 +40,15 @@ function initSocket(server) {
   io.on('connection', (socket) => {
     socket.join(`user:${socket.userId}`);
     // Track real connectivity so presence reflects actual activity, not just the
-    // stored manual status. Tell the user's friends/teammates to refresh.
+    // stored manual status. We do NOT broadcast a presence event here: the REST
+    // endpoints already compute each viewer's allowed view via the presence
+    // visibility rules (effectivePresence/applyPresenceVisibility), and a global
+    // broadcast would leak online/offline past those rules. Clients pick up the
+    // change on their next fetch/refresh.
     onlineTracker.connect(socket.userId);
-    socket.broadcast.emit('presence:change', { userId: socket.userId, online: true });
 
     socket.on('disconnect', () => {
       onlineTracker.disconnect(socket.userId);
-      if (!onlineTracker.isOnline(socket.userId)) {
-        socket.broadcast.emit('presence:change', { userId: socket.userId, online: false });
-      }
     });
 
     socket.on('conversation:join', async (conversationId, ack) => {
