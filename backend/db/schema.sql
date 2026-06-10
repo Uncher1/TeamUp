@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
   bio           TEXT,
   avatar_url    MEDIUMTEXT,
   phone         VARCHAR(40),
+  is_student    TINYINT(1) NOT NULL DEFAULT 0, -- gates the optional Academic section
   school        VARCHAR(120),
   department    VARCHAR(120),
   study_year    VARCHAR(40),

@@ -21,7 +21,8 @@ class User {
   final String? phone;
   final String? location;
 
-  // Academic
+  // Academic (only relevant/shown when the user marks themselves a student)
+  final bool isStudent;
   final String? school;
   final String? department;
   final String? studyYear;
@@ -45,6 +46,7 @@ class User {
     this.interests = const [],
     this.phone,
     this.location,
+    this.isStudent = false,
     this.school,
     this.department,
     this.studyYear,
@@ -79,6 +81,7 @@ class User {
             const [],
         phone: json['phone'] as String?,
         location: json['location'] as String?,
+        isStudent: json['is_student'] == 1 || json['is_student'] == true,
         school: json['school'] as String?,
         department: json['department'] as String?,
         studyYear: json['study_year'] as String?,
@@ -101,6 +104,7 @@ class User {
     List<Interest>? interests,
     String? phone,
     String? location,
+    bool? isStudent,
     String? school,
     String? department,
     String? studyYear,
@@ -122,6 +126,7 @@ class User {
       interests: interests ?? this.interests,
       phone: phone ?? this.phone,
       location: location ?? this.location,
+      isStudent: isStudent ?? this.isStudent,
       school: school ?? this.school,
       department: department ?? this.department,
       studyYear: studyYear ?? this.studyYear,

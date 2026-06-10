@@ -90,11 +90,11 @@ class ProfileScreen extends StatelessWidget {
                       AppCard(
                         child: Column(
                           children: [
-                            if (user.school != null && user.school!.isNotEmpty)
+                            if (user.isStudent && user.school != null && user.school!.isNotEmpty)
                               _InfoRow(icon: Icons.school_outlined, text: user.school!),
-                            if (user.department != null && user.department!.isNotEmpty)
+                            if (user.isStudent && user.department != null && user.department!.isNotEmpty)
                               _InfoRow(icon: Icons.account_tree_outlined, text: user.department!),
-                            if (user.studyYear != null && user.studyYear!.isNotEmpty)
+                            if (user.isStudent && user.studyYear != null && user.studyYear!.isNotEmpty)
                               _InfoRow(icon: Icons.calendar_today_outlined, text: user.studyYear!),
                             if (user.location != null && user.location!.isNotEmpty)
                               _InfoRow(icon: Icons.location_on_outlined, text: user.location!),
@@ -184,9 +184,10 @@ class ProfileScreen extends StatelessWidget {
   }
 
   bool _hasInfoFields(User user) =>
-      (user.school != null && user.school!.isNotEmpty) ||
-      (user.department != null && user.department!.isNotEmpty) ||
-      (user.studyYear != null && user.studyYear!.isNotEmpty) ||
+      (user.isStudent &&
+              ((user.school != null && user.school!.isNotEmpty) ||
+                  (user.department != null && user.department!.isNotEmpty) ||
+                  (user.studyYear != null && user.studyYear!.isNotEmpty))) ||
       (user.location != null && user.location!.isNotEmpty) ||
       (user.phone != null && user.phone!.isNotEmpty);
 

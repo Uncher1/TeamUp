@@ -23,7 +23,7 @@ const router = express.Router();
 async function loadProfile(userId) {
   const [users] = await pool.query(
     `SELECT id, email, full_name, role, presence_status, bio, avatar_url, created_at, email_verified,
-            phone, school, department, study_year, location,
+            is_student, phone, school, department, study_year, location,
             github, linkedin, twitter, website
        FROM users WHERE id = ?`,
     [userId]
@@ -53,16 +53,21 @@ router.get('/me', authRequired, async (req, res) => {
 router.patch('/me', authRequired, async (req, res) => {
   // NOTE: e-mail is intentionally NOT editable here - it goes through the
   // confirm-by-code flow (POST /me/email/request + /me/change/confirm).
-  const { full_name, bio, avatar_url,
+  const { full_name, bio, avatar_url, is_student,
           phone, school, department, study_year, location,
           github, linkedin, twitter, website, presence_status } = req.body || {};
   // Presence is a small whitelist; anything else is ignored (left unchanged).
   const presence = ['online', 'dnd', 'offline'].includes(presence_status) ? presence_status : null;
+  // is_student is a boolean toggle; null (absent) leaves it unchanged.
+  const isStudent = (is_student === true || is_student === 1) ? 1
+                  : (is_student === false || is_student === 0) ? 0
+                  : null;
   await pool.query(
     `UPDATE users SET
         full_name  = COALESCE(?, full_name),
         bio        = COALESCE(?, bio),
         avatar_url = COALESCE(?, avatar_url),
+        is_student = COALESCE(?, is_student),
         phone      = COALESCE(?, phone),
         school     = COALESCE(?, school),
         department = COALESCE(?, department),
@@ -74,7 +79,7 @@ router.patch('/me', authRequired, async (req, res) => {
         website    = COALESCE(?, website),
         presence_status = COALESCE(?, presence_status)
       WHERE id = ?`,
-    [full_name ?? null, bio ?? null, avatar_url ?? null,
+    [full_name ?? null, bio ?? null, avatar_url ?? null, isStudent,
      phone ?? null, school ?? null, department ?? null, study_year ?? null, location ?? null,
      github ?? null, linkedin ?? null, twitter ?? null, website ?? null, presence, req.user.id]
   );

@@ -354,11 +354,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             AppCard(
               child: Column(
                 children: [
-                  if (_nonEmpty(user.school))
+                  if (user.isStudent && _nonEmpty(user.school))
                     _InfoRow(Icons.school_outlined, user.school!),
-                  if (_nonEmpty(user.department))
+                  if (user.isStudent && _nonEmpty(user.department))
                     _InfoRow(Icons.account_tree_outlined, user.department!),
-                  if (_nonEmpty(user.studyYear))
+                  if (user.isStudent && _nonEmpty(user.studyYear))
                     _InfoRow(Icons.calendar_today_outlined, user.studyYear!),
                   if (_nonEmpty(user.location))
                     _InfoRow(Icons.location_on_outlined, user.location!),
@@ -431,9 +431,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   bool _nonEmpty(String? s) => s != null && s.isNotEmpty;
 
   bool _hasInfo(PublicProfile p) =>
-      _nonEmpty(p.user.school) ||
-      _nonEmpty(p.user.department) ||
-      _nonEmpty(p.user.studyYear) ||
+      (p.user.isStudent &&
+              (_nonEmpty(p.user.school) ||
+                  _nonEmpty(p.user.department) ||
+                  _nonEmpty(p.user.studyYear))) ||
       _nonEmpty(p.user.location) ||
       _nonEmpty(p.user.phone);
 

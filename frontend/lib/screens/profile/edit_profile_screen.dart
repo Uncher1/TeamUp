@@ -35,7 +35,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _phone;
   late final TextEditingController _location;
 
-  // Académique
+  // Académique (affichée seulement si l'utilisateur se déclare étudiant)
+  bool _isStudent = false;
   late final TextEditingController _school;
   late final TextEditingController _department;
   late final TextEditingController _studyYear;
@@ -69,6 +70,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _bio = TextEditingController(text: user?.bio ?? '');
     _phone = TextEditingController(text: user?.phone ?? '');
     _location = TextEditingController(text: user?.location ?? '');
+    _isStudent = user?.isStudent ?? false;
     _school = TextEditingController(text: user?.school ?? '');
     _department = TextEditingController(text: user?.department ?? '');
     _studyYear = TextEditingController(text: user?.studyYear ?? '');
@@ -164,6 +166,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         bio: _val(_bio),
         phone: _val(_phone),
         location: _val(_location),
+        isStudent: _isStudent,
         school: _val(_school),
         department: _val(_department),
         studyYear: _val(_studyYear),
@@ -291,35 +294,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Academic ─────────────────────────────────────────────
-                  SectionLabel(context.tr('ep.academic')),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _school,
-                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
-                    decoration: InputDecoration(
-                      labelText: context.tr('cp.school'),
-                      prefixIcon: const Icon(Icons.school_outlined),
-                    ),
+                  // ── Academic (only for users who mark themselves students) ─
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _isStudent,
+                    onChanged: (v) => setState(() => _isStudent = v),
+                    title: Text(context.tr('ep.isStudent'),
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(context.tr('ep.isStudentHint'),
+                        style: TextStyle(fontSize: 12, color: context.palette.textMuted)),
                   ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: _department,
-                    inputFormatters: [LengthLimitingTextInputFormatter(120)],
-                    decoration: InputDecoration(
-                      labelText: context.tr('ep.department'),
-                      prefixIcon: const Icon(Icons.account_tree_outlined),
+                  if (_isStudent) ...[
+                    const SizedBox(height: 6),
+                    SectionLabel(context.tr('ep.academic')),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _school,
+                      inputFormatters: [LengthLimitingTextInputFormatter(120)],
+                      decoration: InputDecoration(
+                        labelText: context.tr('cp.school'),
+                        prefixIcon: const Icon(Icons.school_outlined),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: _studyYear,
-                    inputFormatters: [LengthLimitingTextInputFormatter(40)],
-                    decoration: InputDecoration(
-                      labelText: context.tr('ep.year'),
-                      prefixIcon: const Icon(Icons.calendar_today_outlined),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _department,
+                      inputFormatters: [LengthLimitingTextInputFormatter(120)],
+                      decoration: InputDecoration(
+                        labelText: context.tr('ep.department'),
+                        prefixIcon: const Icon(Icons.account_tree_outlined),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _studyYear,
+                      inputFormatters: [LengthLimitingTextInputFormatter(40)],
+                      decoration: InputDecoration(
+                        labelText: context.tr('ep.year'),
+                        prefixIcon: const Icon(Icons.calendar_today_outlined),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
 
                   // ── Links ─────────────────────────────────────────────────

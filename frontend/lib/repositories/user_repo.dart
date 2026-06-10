@@ -67,6 +67,7 @@ class UserRepository {
     String? email,
     String? phone,
     String? location,
+    bool? isStudent,
     String? school,
     String? department,
     String? studyYear,
@@ -83,6 +84,7 @@ class UserRepository {
     if (email != null) data['email'] = email;
     if (phone != null) data['phone'] = phone;
     if (location != null) data['location'] = location;
+    if (isStudent != null) data['is_student'] = isStudent;
     if (school != null) data['school'] = school;
     if (department != null) data['department'] = department;
     if (studyYear != null) data['study_year'] = studyYear;
