@@ -1,6 +1,6 @@
 # TeamUp - Backend
 
-REST + WebSocket API for **TeamUp**, a student social network for forming
+REST + WebSocket API for **TeamUp**, a social network for forming
 project teams. Team 28.
 
 ## Stack

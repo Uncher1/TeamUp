@@ -1,12 +1,16 @@
 # TeamUp
 
-**A mobile social network that helps students form project teams.**
+<p align="center">
+  <img src="branding/intro/teamup-intro.gif" alt="TeamUp intro animation" width="640" />
+</p>
 
-Students publish project ideas, declare their skills, interests and goals, and
+**A mobile social network that helps people form project teams.**
+
+People publish project ideas, declare their skills, interests and goals, and
 get matched with complementary teammates through a smart ranking algorithm -
 then plan, recruit and chat, all in one native app.
 
-> Engineering-school project - Team 28.
+> A Team 28 project.
 
 ---
 
@@ -26,8 +30,8 @@ automatically - no configuration needed.
 - **Authentication** - email + password with **email verification** (one-time
   `XXXX-XXXX` code), **Google Sign-In** (native), and confirm-by-email for
   sensitive changes (email / password).
-- **Profiles** - bio, school, skills (with proficiency level), interests,
-  avatar, and social links.
+- **Profiles** - bio, skills (with proficiency level), interests, avatar,
+  social links, and an optional academic section for students.
 - **Smart matching** - weighted skill score + Jaccard interest similarity to
   rank the most complementary teammates and projects.
 - **Projects** - create and manage projects (category, required skills, team

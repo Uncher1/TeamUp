@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TeamUp - intro preview</title>
+<style>
+  @font-face {
+    font-family: 'Outfit';
+    font-weight: 700;
+    font-style: normal;
+    src: url('Outfit-Bold.ttf') format('truetype');
+    font-display: block;
+  }
+  html, body {
+    margin: 0;
+    background: #e2e8f0;
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    color: #0f172a;
+  }
+  .wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  canvas {
+    width: 720px;
+    height: 378px;          /* 1200x630 scaled for the screen */
+    border-radius: 14px;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+    background: #f8fafc;
+  }
+  .bar { display: flex; gap: 12px; align-items: center; }
+  button {
+    font: 600 14px/1 inherit;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #0f172a;
+    cursor: pointer;
+  }
+  button:hover { background: #f1f5f9; }
+  #status { font-size: 13px; color: #64748b; min-width: 220px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <canvas id="stage" width="1200" height="630"></canvas>
+  <div class="bar">
+    <button id="replay">Rejouer</button>
+    <button id="rec">Enregistrer WebM</button>
+    <span id="status">Pret.</span>
+  </div>
+</div>
+
+<script src="frame.js"></script>
+<script>
+  const intro = window.TeamUpIntro;
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const statusEl = document.getElementById('status');
+  const W = intro.WIDTH, H = intro.HEIGHT, LOOP = intro.LOOP;
+
+  let startMs = null;        // live preview clock
+  let looping = true;
+
+  function frameAt(tSec) { intro.drawFrame(ctx, tSec, { width: W, height: H }); }
+
+  function tick(now) {
+    if (!looping) return;
+    if (startMs === null) startMs = now;
+    const t = (now - startMs) / 1000;
+    frameAt(t);
+    requestAnimationFrame(tick);
+  }
+
+  function startPreview() {
+    looping = true;
+    startMs = null;
+    requestAnimationFrame(tick);
+  }
+
+  document.getElementById('replay').onclick = () => { startMs = null; };
+
+  // ---- WebM recording (one full loop, real-time) --------------------------
+  async function recordWebM() {
+    looping = false;                       // take over the draw loop
+    const fps = 30;
+    const stream = canvas.captureStream(fps);
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : 'video/webm';
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000 });
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+
+    const done = new Promise((res) => { rec.onstop = res; });
+    statusEl.textContent = 'Enregistrement WebM...';
+    rec.start();
+
+    const t0 = performance.now();
+    await new Promise((resolve) => {
+      function step(now) {
+        const t = (now - t0) / 1000;
+        frameAt(t % LOOP);
+        if (t >= LOOP + 0.05) return resolve();
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+    rec.stop();
+    await done;
+
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'teamup-intro.webm';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    statusEl.textContent = 'WebM telecharge (' + Math.round(blob.size / 1024) + ' Ko). Apercu relance.';
+    window.__webmBytes = blob.size;
+    startPreview();
+  }
+
+  document.getElementById('rec').onclick = recordWebM;
+  window.startRecording = recordWebM;     // callable from automation
+
+  // Wait for the Outfit font before first paint so measurements are correct.
+  (async () => {
+    try { await document.fonts.load('700 112px "Outfit"'); await document.fonts.ready; }
+    catch (e) {}
+    window.__fontReady = true;
+    startPreview();
+  })();
+</script>
+</body>
+</html>

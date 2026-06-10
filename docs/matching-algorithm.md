@@ -7,13 +7,13 @@
 
 We have two entities:
 
-- **Students** with declared **skills** (proficiency level `1..5`) and **interests**.
+- **People** with declared **skills** (proficiency level `1..5`) and **interests**.
 - **Projects** with declared **required skills** (importance weight `1..5`) and **interest tags**.
 
 The matcher answers two symmetric questions:
 
-1. *Given a project, which students should we recommend?*
-2. *Given a student, which projects should we suggest?*
+1. *Given a project, which people should we recommend?*
+2. *Given a person, which projects should we suggest?*
 
 The output is a **ranked list** (most relevant first), with a `score ∈ [0, 1]`
 that is fully interpretable.

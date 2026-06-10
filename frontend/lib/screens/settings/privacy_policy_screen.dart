@@ -1,4 +1,4 @@
-// TeamUp - student team-matching app
+// TeamUp - team-matching social network
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
@@ -44,7 +44,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
 const List<(String, String)> _en = [
   ('1. Who we are (data controller)',
-      'TeamUp is a student application built by Team 28 as part of an engineering-school project. For the purposes of the EU General Data Protection Regulation (GDPR), the team acts as the data controller for the personal data processed in the app. You can reach us at any time at teamup.team28@gmail.com for any privacy question or to exercise your rights.'),
+      'TeamUp is an application built by Team 28 as part of an engineering-school project. For the purposes of the EU General Data Protection Regulation (GDPR), the team acts as the data controller for the personal data processed in the app. You can reach us at any time at teamup.team28@gmail.com for any privacy question or to exercise your rights.'),
   ('2. Data we collect',
       'Account data: your email address and full name (and, for Google Sign-In, the identifier Google returns). '
           'Profile data (all optional, provided by you): biography, school, department, year of study, location, skills, interests, profile photo, phone number, presence status and social links (GitHub, LinkedIn, website…). '
@@ -67,13 +67,13 @@ const List<(String, String)> _en = [
   ('9. How long we keep it',
       'We keep your personal data for as long as your account exists. When you delete your account (Settings → Delete account), your profile, projects, posts, comments, messages, polls, friend/block/report records and related data are permanently erased from the live database; residual copies in short-lived technical backups are overwritten in the normal backup cycle. Some minimal records may be kept longer only where the law requires it.'),
   ('10. Security',
-      'We apply reasonable technical measures: passwords are stored hashed with bcrypt (never in clear text), all traffic is encrypted over HTTPS/TLS, access to the API requires an authentication token, sensitive actions are rate-limited, and the database connection is encrypted. As TeamUp is a student project provided “as is”, we cannot guarantee absolute security; please use a unique password.'),
+      'We apply reasonable technical measures: passwords are stored hashed with bcrypt (never in clear text), all traffic is encrypted over HTTPS/TLS, access to the API requires an authentication token, sensitive actions are rate-limited, and the database connection is encrypted. As TeamUp is a project provided “as is”, we cannot guarantee absolute security; please use a unique password.'),
   ('11. Your rights',
       'Under the GDPR you have the right to access, rectify, erase, restrict and object to the processing of your data, and the right to data portability. In the app you can: view and edit your data (Profile → Edit), export it as a structured file (Settings → Download my data / receive by email), and permanently delete your account (Settings → Delete account). You can also email teamup.team28@gmail.com for any request. We aim to respond within one month. You also have the right to lodge a complaint with a supervisory authority - in France, the CNIL (www.cnil.fr).'),
   ('12. Cookies and tracking',
       'The app uses no advertising cookies and no third-party tracking. It only stores, locally on your device, the authentication token and your preferences (theme, language) needed for it to work.'),
   ('13. Minors',
-      'TeamUp is intended for students. If you are below the age of digital consent in your country (for example 15 in France), please use the app only with the agreement of a parent or guardian.'),
+      'TeamUp is intended for a general audience. If you are below the age of digital consent in your country (for example 15 in France), please use the app only with the agreement of a parent or guardian.'),
   ('14. Changes to this policy',
       'We may update this policy as the app evolves. The date at the top reflects the latest version; significant changes will be made visible in the app.'),
   ('15. Contact and complaints',
@@ -82,7 +82,7 @@ const List<(String, String)> _en = [
 
 const List<(String, String)> _fr = [
   ('1. Qui sommes-nous (responsable de traitement)',
-      'TeamUp est une application étudiante développée par l’Équipe 28 dans le cadre d’un projet d’école d’ingénieurs. Au sens du Règlement général sur la protection des données (RGPD), l’équipe agit en tant que responsable de traitement des données personnelles traitées dans l’app. Tu peux nous joindre à tout moment à teamup.team28@gmail.com pour toute question relative à la confidentialité ou pour exercer tes droits.'),
+      'TeamUp est une application développée par l’Équipe 28 dans le cadre d’un projet d’école d’ingénieurs. Au sens du Règlement général sur la protection des données (RGPD), l’équipe agit en tant que responsable de traitement des données personnelles traitées dans l’app. Tu peux nous joindre à tout moment à teamup.team28@gmail.com pour toute question relative à la confidentialité ou pour exercer tes droits.'),
   ('2. Données que nous collectons',
       'Données de compte : ton adresse e-mail et ton nom complet (et, pour la connexion Google, l’identifiant renvoyé par Google). '
           'Données de profil (toutes facultatives, fournies par toi) : biographie, école, filière, année d’étude, localisation, compétences, centres d’intérêt, photo de profil, numéro de téléphone, statut de présence et liens (GitHub, LinkedIn, site web…). '
@@ -105,13 +105,13 @@ const List<(String, String)> _fr = [
   ('9. Durée de conservation',
       'Nous conservons tes données personnelles tant que ton compte existe. Lorsque tu supprimes ton compte (Réglages → Supprimer le compte), ton profil, tes projets, publications, commentaires, messages, sondages, enregistrements d’ami/blocage/signalement et données associées sont effacés définitivement de la base active ; les copies résiduelles dans les sauvegardes techniques de courte durée sont écrasées lors du cycle de sauvegarde normal. Certaines données minimales peuvent être conservées plus longtemps uniquement si la loi l’impose.'),
   ('10. Sécurité',
-      'Nous appliquons des mesures techniques raisonnables : les mots de passe sont stockés hachés avec bcrypt (jamais en clair), tout le trafic est chiffré en HTTPS/TLS, l’accès à l’API nécessite un jeton d’authentification, les actions sensibles sont limitées en débit et la connexion à la base de données est chiffrée. TeamUp étant un projet étudiant fourni « en l’état », nous ne pouvons garantir une sécurité absolue ; utilise un mot de passe unique.'),
+      'Nous appliquons des mesures techniques raisonnables : les mots de passe sont stockés hachés avec bcrypt (jamais en clair), tout le trafic est chiffré en HTTPS/TLS, l’accès à l’API nécessite un jeton d’authentification, les actions sensibles sont limitées en débit et la connexion à la base de données est chiffrée. TeamUp étant un projet fourni « en l’état », nous ne pouvons garantir une sécurité absolue ; utilise un mot de passe unique.'),
   ('11. Tes droits',
       'Au titre du RGPD, tu disposes des droits d’accès, de rectification, d’effacement, de limitation et d’opposition au traitement, ainsi que du droit à la portabilité. Dans l’app, tu peux : consulter et modifier tes données (Profil → Modifier), les exporter dans un fichier structuré (Réglages → Télécharger mes données / recevoir par e-mail) et supprimer définitivement ton compte (Réglages → Supprimer le compte). Tu peux aussi écrire à teamup.team28@gmail.com pour toute demande. Nous nous efforçons de répondre sous un mois. Tu as également le droit d’introduire une réclamation auprès d’une autorité de contrôle - en France, la CNIL (www.cnil.fr).'),
   ('12. Cookies et pistage',
       'L’app n’utilise aucun cookie publicitaire ni pistage tiers. Elle ne stocke localement, sur ton appareil, que le jeton d’authentification et tes préférences (thème, langue) nécessaires à son fonctionnement.'),
   ('13. Mineurs',
-      'TeamUp s’adresse aux étudiants. Si tu n’as pas l’âge du consentement numérique dans ton pays (par exemple 15 ans en France), utilise l’app uniquement avec l’accord d’un parent ou tuteur.'),
+      'TeamUp s’adresse à un public général. Si tu n’as pas l’âge du consentement numérique dans ton pays (par exemple 15 ans en France), utilise l’app uniquement avec l’accord d’un parent ou tuteur.'),
   ('14. Modifications de cette politique',
       'Nous pouvons mettre à jour cette politique à mesure que l’app évolue. La date en haut indique la dernière version ; les changements importants seront rendus visibles dans l’app.'),
   ('15. Contact et réclamations',

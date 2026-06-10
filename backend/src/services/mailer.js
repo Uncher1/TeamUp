@@ -1,4 +1,4 @@
-// TeamUp - student team-matching app
+// TeamUp - team-matching social network
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
@@ -25,8 +25,8 @@ function brandedHtml({ title, intro, note, lang = 'en' }) {
     "If you didn't initiate this action, secure your account right away.",
     "Si tu n'es pas à l'origine de cette action, sécurise ton compte sans tarder."
   );
-  const footer = t(lang, '&copy; 2026 TeamUp &middot; Student project',
-    '&copy; 2026 TeamUp &middot; Projet &eacute;tudiant');
+  const footer = t(lang, '&copy; 2026 TeamUp &middot; Team 28',
+    '&copy; 2026 TeamUp &middot; Team 28');
   return `<!doctype html>
 <html lang="${lang}"><body style="margin:0;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
   <div style="max-width:480px;margin:0 auto;padding:24px;">

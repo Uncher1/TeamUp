@@ -1,0 +1,5 @@
+node_modules/
+.frames/
+*.b64
+check_*.png
+lockup*.png

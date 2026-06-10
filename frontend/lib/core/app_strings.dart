@@ -1,4 +1,4 @@
-// TeamUp - student team-matching app
+// TeamUp - team-matching social network
 // Copyright (C) 2026 Team 28
 // Licensed under the GNU Affero General Public License v3.0 (see LICENSE).
 
@@ -90,7 +90,7 @@ const Map<String, Map<String, String>> _strings = {
     'update.failed': 'Update failed. Opening the download page instead.',
     'update.permission': 'Please allow installing apps, then try again.',
     'onb.s1.title': 'Welcome to TeamUp',
-    'onb.s1.sub': 'The network that connects students to build project teams.',
+    'onb.s1.sub': 'The network that connects people to build project teams.',
     'onb.s2.title': 'Find the right teammates',
     'onb.s2.sub': 'Skill- and interest-based matching suggests the most relevant profiles.',
     'onb.s3.title': 'Collaborate in real time',
@@ -224,7 +224,7 @@ const Map<String, Map<String, String>> _strings = {
     'feed.share': 'Share',
     'feed.shareTitle': 'Share this post',
     'feed.shareIntro': '{name} shared this on TeamUp:',
-    'feed.shareFooter': '- via TeamUp, the app that helps students find their team.',
+    'feed.shareFooter': '- via TeamUp, the app that helps people find their team.',
     'feed.shareSubject': '{name} on TeamUp',
     'feed.seeTranslation': 'See translation',
     'feed.seeOriginal': 'See original',
@@ -266,10 +266,10 @@ const Map<String, Map<String, String>> _strings = {
     // About
     'about.users': 'Users',
     'about.projects': 'Projects',
-    'about.schools': 'Schools',
-    'about.desc': 'TeamUp is a student social network that helps students collaborate on projects, find teammates with complementary skills, and build together.',
+    'about.schools': 'Teams',
+    'about.desc': 'TeamUp is a social network for people looking for collaborators to build projects together - or the other way around.',
     'about.madeBy': 'Made with ❤️ by',
-    'about.copyright': '© 2026 - Student project',
+    'about.copyright': '© 2026 - Team 28',
 
     // Theme color
     'theme.choose': 'Choose a color',
@@ -667,7 +667,7 @@ const Map<String, Map<String, String>> _strings = {
     'update.failed': 'Échec de la mise à jour. Ouverture de la page de téléchargement.',
     'update.permission': 'Autorise l’installation d’applis, puis réessaie.',
     'onb.s1.title': 'Bienvenue sur TeamUp',
-    'onb.s1.sub': 'Le réseau qui connecte les étudiants pour monter des équipes de projet.',
+    'onb.s1.sub': 'Le réseau qui connecte les personnes pour monter des équipes de projet.',
     'onb.s2.title': 'Trouve les bons coéquipiers',
     'onb.s2.sub': "Un matching par compétences et centres d'intérêt te propose les profils les plus pertinents.",
     'onb.s3.title': 'Collabore en temps réel',
@@ -801,7 +801,7 @@ const Map<String, Map<String, String>> _strings = {
     'feed.share': 'Partager',
     'feed.shareTitle': 'Partager cette publication',
     'feed.shareIntro': '{name} a partagé ceci sur TeamUp :',
-    'feed.shareFooter': '- via TeamUp, l’app qui aide les étudiants à trouver leur équipe.',
+    'feed.shareFooter': '- via TeamUp, l’app qui aide les personnes à trouver leur équipe.',
     'feed.shareSubject': '{name} sur TeamUp',
     'feed.seeTranslation': 'Voir la traduction',
     'feed.seeOriginal': 'Voir l’original',
@@ -843,10 +843,10 @@ const Map<String, Map<String, String>> _strings = {
     // About
     'about.users': 'Utilisateurs',
     'about.projects': 'Projets',
-    'about.schools': 'Écoles',
-    'about.desc': 'TeamUp est un réseau social étudiant qui aide les étudiants à collaborer sur des projets, à trouver des coéquipiers aux compétences complémentaires et à construire ensemble.',
+    'about.schools': 'Équipes',
+    'about.desc': 'TeamUp est un réseau social pour les personnes qui cherchent des collègues avec qui collaborer sur des projets, ou l’inverse.',
     'about.madeBy': 'Fait avec ❤️ par',
-    'about.copyright': '© 2026 - Projet étudiant',
+    'about.copyright': '© 2026 - Team 28',
 
     // Theme color
     'theme.choose': 'Choisir une couleur',
